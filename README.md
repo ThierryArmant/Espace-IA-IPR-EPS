@@ -93,3 +93,30 @@ Conservez les copies dans un emplacement protégé et vérifiez la restauration 
 Faites valider l’hébergement, l’authentification, les sauvegardes et les règles de conservation par l’académie avant l’import de documents réels. Derrière un proxy, le plafond de tentatives par IP est partagé tant que l’adresse cliente n’est pas transmise et reconnue via une chaîne de proxys de confiance.
 
 Les invitations et demandes passent par la messagerie de l’animateur. La coédition Office doit être intégrée et testée sur une instance de l’éditeur validée par l’académie. Albert et les autres modules de RESANA restent à raccorder.
+
+
+## Espace documentaire GitHub Pages et Jalios
+
+La page `espace-documentaire.html` contient l’interface de navigation et de dépôt PDF.
+Le dépôt reste désactivé tant que `static/jalios-config.js` ne référence aucun service.
+Le contrat ci-dessous est celui du raccordement attendu, et non celui de l’API
+Jalios native. Il doit être mis en œuvre ou adapté côté académique avant activation.
+
+- **GET** sur l’URL du service, avec `folder` facultatif. Sans paramètre, le service
+  utilise la racine IA-IPR EPS. Réponse JSON
+  `{"folder":{"id":"…","name":"…"},"folders":[{"id":"…","name":"…"}],"files":[{"name":"…","url":"…"}],"canUpload":true,"csrfToken":"…"}`.
+  Jalios doit filtrer les dossiers et fichiers selon le compte académique connecté.
+  Les liens sont des URL protégées sur le site pédagogique.
+- **POST** sur la même URL avec `folder`, un formulaire multipart (champ `file`) et
+  l’en-tête `X-CSRF-Token`. Le service contrôle le compte, la destination autorisée,
+  le type et la taille du fichier, ainsi que le jeton CSRF avant l’enregistrement.
+  Il répond `{"uploaded":true}` uniquement après la création du document dans Jalios.
+- Le service doit répondre `401` sans session et `403` pour un accès refusé.
+  Il doit autoriser l’origine `https://thierryarmant.github.io` si la connexion
+  académique est compatible avec cet accès depuis le navigateur. Vérifier aussi
+  la transmission de la session intersite et les règles de déploiement académique.
+  Aucune clé API partagée ni aucun identifiant académique ne doit être publié.
+
+Recette attendue : depuis l’interface GitHub, déposer un PDF fictif, vérifier sa
+présence dans le dossier Jalios choisi, puis tester la consultation et le dépôt
+avec un compte autorisé et un compte qui ne l’est pas.

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Documents · IA-IPR EPS</title>
+  <link rel="stylesheet" href="static/hub.css">
+  <script src="static/espace-documentaire.js" type="module"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./"><span class="mark">EPS</span><span><small>ESPACE DE TRAVAIL</small><strong>IA-IPR EPS</strong></span></a>
+  </header>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Arborescence">
+      <p class="eyebrow">EXPLORATEUR</p>
+      <h2>Dossiers</h2>
+      <nav id="dossiers" aria-label="Dossiers disponibles"></nav>
+    </aside>
+    <main class="main">
+      <section class="hero tone-bleu">
+        <div>
+          <p class="eyebrow">ESPACE DOCUMENTAIRE</p>
+          <h1 id="titre">Documents de l’IA IPR EPS</h1>
+        </div>
+      </section>
+      <p class="notice" id="etat" role="status" aria-live="polite">Connexion documentaire Jalios en préparation.</p>
+      <section class="card" aria-labelledby="documents">
+        <h2 id="documents">Documents</h2>
+        <ul id="fichiers"></ul>
+        <p id="vide" hidden>Aucun document dans ce dossier.</p>
+      </section>
+      <section class="card" aria-labelledby="depot">
+        <h2 id="depot">Déposer un PDF</h2>
+        <form id="formulaire">
+          <fieldset id="depot-commandes" disabled>
+            <label>Choisir un fichier PDF <input type="file" name="file" accept=".pdf,application/pdf" required></label>
+            <button type="submit">Déposer dans Jalios</button>
+          </fieldset>
+        </form>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
