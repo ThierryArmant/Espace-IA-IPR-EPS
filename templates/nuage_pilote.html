@@ -17,14 +17,14 @@
     <h2>Créer dans Nuage</h2>
     <p>Les fichiers de test sont créés dans IA IPR EPS → Pilote Hub et s’ouvrent dans Nuage.</p>
     <div class="actions">
-      <form action="{{ url_for('create_office', kind='texte') }}" method="post" target="_blank">
+      <form action="{{ url_for('create_office', kind='texte') }}" method="post">
         <input type="hidden" name="csrf" value="{{ csrf }}"><button>Créer un document texte</button>
       </form>
-      <form action="{{ url_for('create_office', kind='tableur') }}" method="post" target="_blank">
+      <form action="{{ url_for('create_office', kind='tableur') }}" method="post">
         <input type="hidden" name="csrf" value="{{ csrf }}"><button>Créer un tableur</button>
       </form>
     </div>
-    <p class="subtle">Après la création, rechargez cette page pour retrouver le document ici.</p>
+    <p class="subtle">Après avoir fermé le document dans Nuage, revenez à cette page pour retrouver la liste.</p>
     {% for name, link in office_files %}
     <p>{% if link %}<a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %}</p>
     {% endfor %}
