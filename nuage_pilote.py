@@ -54,7 +54,7 @@ def blank_office_document(kind):
 
 
 def office_link(response):
-    file_id = response.findtext(f"{DAV}propstat/{DAV}prop/{OC}fileid", "")
+    file_id = response.findtext(f"{DAV}propstat/{DAV}prop/{OC}fileid", "").strip()
     if re.fullmatch(r"[1-9][0-9]{0,19}", file_id):
         return f"{NUAGE_STORAGE}/index.php/f/{file_id}"
     return None
@@ -139,6 +139,17 @@ def create_app():
             "Authorization": f"Basic {credentials}", **(headers or {}),
         })
 
+    def list_pilot_files():
+        status, data = dav("PROPFIND", payload=FILE_ID_QUERY,
+                           headers={**FILE_ID_HEADERS, "Depth": "1"}, limit=512 * 1024)
+        if status != 207:
+            return status, {}
+        root = ElementTree.fromstring(data)
+        return status, {
+            unquote(item.findtext(f"{DAV}href", "").rsplit("/", 1)[-1]): item
+            for item in root.findall(f"{DAV}response")
+        }
+
     @app.get("/")
     def home():
         connected = key() in accounts
@@ -146,16 +157,13 @@ def create_app():
         office_files = {}
         if connected:
             try:
-                status, data = dav("PROPFIND", payload=FILE_ID_QUERY,
-                                   headers={**FILE_ID_HEADERS, "Depth": "1"}, limit=512 * 1024)
+                status, items = list_pilot_files()
                 if status == 207:
-                    root = ElementTree.fromstring(data)
-                    for node in root.findall(f"{DAV}response"):
-                        name = unquote(node.findtext(f"{DAV}href", "").rsplit("/", 1)[-1])
+                    for name, item in items.items():
                         if TEST_NAME.fullmatch(name):
                             files.append(name)
                         elif OFFICE_NAME.fullmatch(name):
-                            office_files[name] = office_link(node)
+                            office_files[name] = office_link(item)
                 elif status == 404:
                     flash("Le sous-dossier « Pilote Hub » sera créé au premier essai.")
                 else:
@@ -251,29 +259,46 @@ def create_app():
         if kind not in OFFICE_TYPES:
             abort(404)
         extension, mime, data = blank_office_document(kind)
-        name = f"hub-test-{secrets.token_hex(12)}.{extension}"
+        pending_files = session.get("office_pending", {})
+        name = pending_files.get(kind) or f"hub-test-{secrets.token_hex(12)}.{extension}"
+        pending_files[kind] = name
+        session["office_pending"] = pending_files
+        headers = {"Content-Type": mime, "If-None-Match": "*"}
+        status = None
         try:
-            status, _ = dav("MKCOL")
-            if status not in {201, 405}:
-                flash(f"Le dossier de test n’a pas pu être créé (Nuage {status}).")
-                return redirect(url_for("home"))
-            status, _ = dav("PUT", name, payload=data, headers={
-                "Content-Type": mime, "If-None-Match": "*",
-            })
-            if status != 201:
-                flash(f"Nuage n’a pas confirmé la création ({status}).")
-                return redirect(url_for("home"))
-            status, xml = dav("PROPFIND", name, payload=FILE_ID_QUERY,
-                              headers={**FILE_ID_HEADERS, "Depth": "0"})
-            if status == 207:
-                item = ElementTree.fromstring(xml).find(f"{DAV}response")
-                link = office_link(item) if item is not None else None
-                if link:
-                    return redirect(link, code=303)
-            flash("Document créé dans Nuage. Vous pouvez le retrouver dans « Pilote Hub ».")
+            status, _ = dav("PUT", name, payload=data, headers=headers)
+            if status in {404, 409}:
+                folder_status, _ = dav("MKCOL")
+                if folder_status in {201, 405}:
+                    status = None
+                    status, _ = dav("PUT", name, payload=data, headers=headers)
+                else:
+                    status = folder_status
+        except (ValueError, URLError, OSError):
+            pass
+        if status is not None and status not in {201, 412} and status < 500:
+            pending_files.pop(kind, None)
+            session["office_pending"] = pending_files
+            flash(f"Création refusée par Nuage ({status}).")
+            return redirect(url_for("home"), code=303)
+
+        # The PUT can succeed even when the reply is interrupted. Look up the
+        # same name in the listing that the pilot already uses for open links.
+        try:
+            _, items = list_pilot_files()
+            item = items.get(name)
         except (ValueError, ElementTree.ParseError, URLError, OSError):
-            flash("La réponse de Nuage est indisponible. Vérifiez « Pilote Hub » avant de réessayer.")
-        return redirect(url_for("home"))
+            item = None
+        if status == 201 or item is not None:
+            pending_files.pop(kind, None)
+            session["office_pending"] = pending_files
+            link = office_link(item) if item is not None else None
+            if link:
+                return redirect(link, code=303)
+            flash("Fichier créé dans Nuage. Retrouvez-le dans la liste ci-dessous ou dans « Pilote Hub ».")
+        else:
+            flash("Nuage n’a pas confirmé la création. Un nouvel essai reprendra le même fichier.")
+        return redirect(url_for("home"), code=303)
 
     @app.get("/fichier/<name>")
     def download(name):
