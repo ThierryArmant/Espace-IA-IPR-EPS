@@ -50,3 +50,9 @@ CREATE TABLE IF NOT EXISTS login_codes (
     remaining INTEGER NOT NULL CHECK(remaining > 0)
 );
 CREATE INDEX IF NOT EXISTS login_codes_expires ON login_codes(expires);
+
+CREATE TABLE IF NOT EXISTS node_id_watermark (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+    last_deleted_id INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO node_id_watermark(singleton,last_deleted_id) VALUES(1,0);

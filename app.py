@@ -251,8 +251,14 @@ def create_app():
         return value
 
     def insert_node(parent, name, kind, color="bleu", content=None):
-        cursor = g.db.execute("INSERT INTO nodes(parent,name,kind,color,content) VALUES(?,?,?,?,?)",
-                              (parent, name, kind, color, content))
+        cursor = g.db.execute(
+            """INSERT INTO nodes(id,parent,name,kind,color,content)
+               SELECT MAX((SELECT MAX(id) FROM nodes), last_deleted_id) + 1, ?, ?, ?, ?, ?
+               FROM node_id_watermark WHERE singleton=1""",
+            (parent, name, kind, color, content),
+        )
+        if cursor.rowcount != 1:
+            raise RuntimeError("Appliquez la migration de la base du Hub.")
         return cursor.lastrowid
 
     @app.errorhandler(400)
@@ -357,6 +363,40 @@ def create_app():
             flash(str(error) if isinstance(error, ValueError) else "Ce nom existe déjà dans ce dossier.")
             return redirect(url_for("folder", node_id=node_id))
         return redirect(url_for("folder", node_id=child))
+
+    @app.post("/dossier/<int:node_id>/renommer")
+    def rename_folder(node_id):
+        node = allowed(node_id, WRITE, "folder")
+        if node["parent"] is None:
+            abort(403, "Le dossier racine ne peut pas être renommé.")
+        try:
+            name = clean_name(request.form.get("name", ""))
+            g.db.execute("UPDATE nodes SET name=?, updated=strftime('%Y-%m-%d %H:%M','now') WHERE id=?",
+                         (name, node_id))
+            g.db.commit()
+            flash("Dossier renommé.")
+        except (ValueError, sqlite3.IntegrityError) as error:
+            g.db.rollback()
+            flash(str(error) if isinstance(error, ValueError) else "Ce nom existe déjà dans ce dossier.")
+        return redirect(url_for("folder", node_id=node_id))
+
+    @app.post("/dossier/<int:node_id>/supprimer")
+    def delete_folder(node_id):
+        node = allowed(node_id, WRITE, "folder")
+        if node["parent"] is None:
+            abort(403, "Le dossier racine ne peut pas être supprimé.")
+        if request.form.get("confirm") != "yes":
+            abort(400, "Confirmez la suppression du dossier.")
+        if g.db.execute("SELECT 1 FROM nodes WHERE parent=? LIMIT 1", (node_id,)).fetchone():
+            flash("Videz ce dossier avant de le supprimer.")
+            return redirect(url_for("folder", node_id=node_id))
+        g.db.execute("UPDATE node_id_watermark SET last_deleted_id=MAX(last_deleted_id, ?) WHERE singleton=1",
+                     (node_id,))
+        g.db.execute("DELETE FROM rules WHERE node=?", (node_id,))
+        g.db.execute("DELETE FROM nodes WHERE id=?", (node_id,))
+        g.db.commit()
+        flash("Dossier supprimé.")
+        return redirect(url_for("folder", node_id=node["parent"]))
 
     @app.post("/dossier/<int:node_id>/couleur")
     def folder_color(node_id):

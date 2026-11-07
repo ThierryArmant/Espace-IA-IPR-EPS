@@ -110,3 +110,22 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .entry-art { display: block; width: 100%; height: auto; border-radius: .85rem; }
 .entry-form { margin: 1rem auto 0; max-width: 100%; padding: clamp(1.15rem, 3vw, 1.8rem); }
 .entry-form h1 { margin-bottom: .5rem; }
+
+/* Folder actions sit beside the folder link, outside its disclosure control. */
+.has-folder-actions { position: relative; }
+.has-folder-actions > .branch,
+.has-folder-actions > details:not(.folder-actions) > summary { padding-inline-end: 2.1rem; }
+.folder-actions { position: relative; }
+.has-folder-actions > .folder-actions { position: absolute; inset-block-start: 0; inset-inline-end: 0; }
+.folder-actions > summary { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .4rem; background: #e5edf7; color: #244663; font: 700 1.15rem/1 system-ui; list-style: none; cursor: pointer; }
+.folder-actions > summary::-webkit-details-marker { display: none; }
+.folder-actions > summary:hover, .folder-actions[open] > summary { background: #d5e4f4; }
+.folder-actions-panel { position: absolute; z-index: 10; inset-inline-end: 0; inset-block-start: 100%; width: min(15rem, 72vw); padding: .4rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--paper); box-shadow: 0 8px 24px #18365326; }
+.folder-actions-panel summary { padding: .45rem; font-weight: 650; cursor: pointer; }
+.folder-actions-panel form { display: grid; gap: .45rem; padding: .35rem; }
+.folder-actions-panel .delete-action { color: #842d36; }
+.folder-actions-panel .confirm-folder { display: flex; align-items: center; gap: .4rem; }
+.folder-actions-panel .confirm-folder input { width: auto; }
+@media (max-width: 760px) {
+  .sidebar:has(.folder-actions[open]) { max-height: none; overflow: visible; }
+}

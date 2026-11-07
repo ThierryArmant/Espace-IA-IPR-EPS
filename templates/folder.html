@@ -1,8 +1,37 @@
 {% extends "base.html" %}
+{% macro folder_actions(item) %}
+<details class="folder-actions">
+<summary aria-label="Actions pour {{ item.name }}" title="Actions pour {{ item.name }}">⋯</summary>
+<div class="folder-actions-panel">
+<details><summary>Ajouter un sous-dossier</summary>
+<form method="post" action="{{ url_for('add_folder',node_id=item.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Nom du sous-dossier <input name="name" required maxlength="180"></label>
+<button>Créer</button>
+</form></details>
+{% if item.parent is not none %}
+<details><summary>Renommer</summary>
+<form method="post" action="{{ url_for('rename_folder',node_id=item.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Nouveau nom <input name="name" value="{{ item.name }}" required maxlength="180"></label>
+<button>Enregistrer</button>
+</form></details>
+<details><summary class="delete-action">Supprimer</summary>
+<form method="post" action="{{ url_for('delete_folder',node_id=item.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<p>Seuls les dossiers vides peuvent être supprimés.</p>
+<label class="confirm-folder"><input type="checkbox" name="confirm" value="yes" required> Je confirme la suppression</label>
+<button class="danger">Supprimer le dossier</button>
+</form></details>
+{% endif %}
+</div>
+</details>
+{% endmacro %}
 {% macro branch(items) %}
 <ul class="tree">
 {% for item in items %}
-<li>
+{% set writable = rights(item) is writable %}
+<li{% if writable %} class="has-folder-actions"{% endif %}>
 {% if children[item.id] %}
 <details {% if item.id in active %}open{% endif %}>
 <summary><a class="branch tone-{{ item.color }}" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}>
@@ -12,6 +41,7 @@
 {% else %}
 <a class="branch leaf tone-{{ item.color }}" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}><span class="folder-icon" aria-hidden="true"></span>{{ item.name }}<span class="access" title="Accès autorisé" aria-label="Accès autorisé">●</span></a>
 {% endif %}
+{% if writable %}{{ folder_actions(item) }}{% endif %}
 </li>
 {% endfor %}
 </ul>
@@ -30,6 +60,7 @@
 <div class="hero tone-{{ node.color }}">
   <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
   <div class="actions">
+  {% if mask is writable %}{{ folder_actions(node) }}{% endif %}
   {% if g.user.admin and node.id!=1 %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}
   {% if mask is downloadable %}<a class="button secondary" href="{{ url_for('export_zip',node_id=node.id) }}">Exporter le ZIP</a>{% endif %}
   </div>
