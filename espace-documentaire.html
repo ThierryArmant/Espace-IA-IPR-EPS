@@ -6,10 +6,26 @@
   <meta name="referrer" content="no-referrer">
   <title>Documents · IA-IPR EPS</title>
   <link rel="stylesheet" href="static/hub.css">
-  <script src="static/navigation-dossiers.js" defer></script>
+  <script src="static/navigation-dossiers.js?v=2" defer></script>
   <style>
     .shell.nuage-shell { grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); }
     .folder-entry { display: flex; gap: .65rem; align-items: center; margin: .75rem .3rem; padding: .7rem; border-radius: .55rem; }
+    .nuage-shell .sidebar { max-height: none; overflow: visible; }
+    .branche-dossier { position: relative; display: flex; align-items: stretch; margin: .75rem .3rem; border-radius: .55rem; }
+    .branche-dossier .folder-entry { flex: 1; min-width: 0; margin: 0; }
+    .basculer-dossier { flex: 0 0 2.4rem; padding: 0; border: 0; border-radius: .55rem; background: transparent; color: #294f75; font: 700 1.4rem/1 system-ui; cursor: pointer; }
+    .basculer-dossier:hover, .basculer-dossier[aria-expanded="true"] { background: #fff9; }
+    .sous-dossiers { position: absolute; z-index: 3; inset-inline-start: 100%; inset-block-start: 0; width: clamp(15rem, 30vw, 23rem); max-height: min(55vh, 32rem); overflow: auto; margin: 0; padding: .4rem; list-style: none; background: #fff; border: 1px solid #a8bfd4; border-radius: .55rem; box-shadow: 0 10px 24px #1b36572b; }
+    .sous-dossiers[hidden], [data-dossier][hidden], #panneau-sous-dossier[hidden] { display: none; }
+    .sous-dossier { display: flex; align-items: center; gap: .65rem; padding: .55rem .6rem; border-radius: .35rem; color: #244663; font-size: .86rem; font-weight: 650; text-decoration: none; }
+    .sous-dossier .folder-icon { flex-shrink: 0; }
+    .sous-dossier:hover, .sous-dossier[aria-current] { background: #e8f1f9; text-decoration: underline; }
+    .folder-entry:focus-visible, .basculer-dossier:focus-visible, .sous-dossier:focus-visible { outline: 2px solid #294f75; outline-offset: -2px; }
+    @media (max-width: 760px) {
+      .branche-dossier { flex-wrap: wrap; }
+      .sous-dossiers { position: static; flex: 0 0 100%; width: auto; max-height: 19rem; box-shadow: none; }
+      .basculer-dossier[aria-expanded="true"] span { display: inline-block; transform: rotate(90deg); }
+    }
     .folder-entry { text-decoration: none; border: 1px solid transparent; }
     .folder-entry span { font-weight: 650; }
     .folder-entry:hover, .folder-entry[aria-current] { border-color: #567ca1; text-decoration: underline; }
@@ -31,11 +47,101 @@
       <p class="eyebrow">EXPLORATEUR</p>
       <h2>Dossiers</h2>
       <nav aria-label="Dossiers de l’espace IA-IPR EPS" id="arborescence">
-        <a class="folder-entry tone-bleu" href="#dossier-ia-ipr-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">01</span><span>IA IPR EPS</span></a>
-        <a class="folder-entry tone-menthe" href="#dossier-cmi-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">02</span><span>CMI EPS</span></a>
-        <a class="folder-entry tone-lavande" href="#dossier-ctia-dasen"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">03</span><span>CTIA DASEN</span></a>
-        <a class="folder-entry tone-rose" href="#dossier-formateurs-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">04</span><span>Formateurs EPS</span></a>
-        <a class="folder-entry tone-sable" href="#dossier-unss-ip"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">05</span><span>UNSS / IP</span></a>
+        <div class="branche-dossier tone-bleu">
+          <a class="folder-entry" href="#dossier-ia-ipr-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">01</span><span class="nom-dossier">IA IPR EPS</span></a>
+          <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-ia-ipr-eps-sous-dossiers" aria-label="Sous-dossiers de IA IPR EPS"><span aria-hidden="true">›</span></button>
+          <ul class="sous-dossiers" id="dossier-ia-ipr-eps-sous-dossiers" hidden>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--activites-artistiques"><span class="folder-icon" aria-hidden="true"></span>ACTIVITES ARTISTIQUES</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--bi-qualification"><span class="folder-icon" aria-hidden="true"></span>BI QUALIFICATION</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--caffa"><span class="folder-icon" aria-hidden="true"></span>CAFFA</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--concours"><span class="folder-icon" aria-hidden="true"></span>CONCOURS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--coordo-eps"><span class="folder-icon" aria-hidden="true"></span>COORDO EPS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--dnl"><span class="folder-icon" aria-hidden="true"></span>DNL</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--enseignement-optionnel-eps"><span class="folder-icon" aria-hidden="true"></span>ENSEIGNEMENT OPTIONNEL EPS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--eppcs"><span class="folder-icon" aria-hidden="true"></span>EPPCS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--etablissements"><span class="folder-icon" aria-hidden="true"></span>ETABLISSEMENTS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--formation-continue"><span class="folder-icon" aria-hidden="true"></span>FORMATION CONTINUE</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--formation-initiale"><span class="folder-icon" aria-hidden="true"></span>FORMATION INITIALE</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--gestion-rh"><span class="folder-icon" aria-hidden="true"></span>GESTION RH</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--groupes-ressources"><span class="folder-icon" aria-hidden="true"></span>GROUPES RESSOURCES</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--inspections"><span class="folder-icon" aria-hidden="true"></span>INSPECTIONS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--notes-recteur"><span class="folder-icon" aria-hidden="true"></span>NOTES RECTEUR</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--pilotage"><span class="folder-icon" aria-hidden="true"></span>PILOTAGE</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--reunion-de-travail"><span class="folder-icon" aria-hidden="true"></span>REUNION DE TRAVAIL</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--sport-et-education"><span class="folder-icon" aria-hidden="true"></span>SPORT ET EDUCATION</a></li>
+            <li><a class="sous-dossier" href="#dossier-ia-ipr-eps--textes"><span class="folder-icon" aria-hidden="true"></span>TEXTES</a></li>
+          </ul>
+        </div>
+        <div class="branche-dossier tone-menthe">
+          <a class="folder-entry" href="#dossier-cmi-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">02</span><span class="nom-dossier">CMI EPS</span></a>
+          <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-cmi-eps-sous-dossiers" aria-label="Sous-dossiers de CMI EPS"><span aria-hidden="true">›</span></button>
+          <ul class="sous-dossiers" id="dossier-cmi-eps-sous-dossiers" hidden>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--cten"><span class="folder-icon" aria-hidden="true"></span>CTEN</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--documents-de-rentree"><span class="folder-icon" aria-hidden="true"></span>DOCUMENTS DE RENTREE</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--fc"><span class="folder-icon" aria-hidden="true"></span>FC</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--formation-prepa-concours-capeps-interne"><span class="folder-icon" aria-hidden="true"></span>FORMATION PREPA CONCOURS CAPEPS INTERNE</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--fstg"><span class="folder-icon" aria-hidden="true"></span>FSTG</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--generation-2024"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2024</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--groupes-de-reflexion"><span class="folder-icon" aria-hidden="true"></span>GROUPES DE REFLEXION</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--lettres-d-informations"><span class="folder-icon" aria-hidden="true"></span>LETTRES D'INFORMATIONS</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--lettres-impa"><span class="folder-icon" aria-hidden="true"></span>LETTRES IMPA</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--listes-de-travail"><span class="folder-icon" aria-hidden="true"></span>LISTES DE TRAVAIL</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--pilotage-ip"><span class="folder-icon" aria-hidden="true"></span>PILOTAGE IP</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--rapports-d-inspections"><span class="folder-icon" aria-hidden="true"></span>Rapports d'inspections</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--reunions-de-service"><span class="folder-icon" aria-hidden="true"></span>RÉUNIONS DE SERVICE</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--soutient-les-communications"><span class="folder-icon" aria-hidden="true"></span>SOUTIENT LES COMMUNICATIONS</a></li>
+            <li><a class="sous-dossier" href="#dossier-cmi-eps--unss"><span class="folder-icon" aria-hidden="true"></span>UNSS</a></li>
+          </ul>
+        </div>
+        <div class="branche-dossier tone-lavande">
+          <a class="folder-entry" href="#dossier-ctia-dasen"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">03</span><span class="nom-dossier">CTIA DASEN</span></a>
+          <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-ctia-dasen-sous-dossiers" aria-label="Sous-dossiers de CTIA DASEN"><span aria-hidden="true">›</span></button>
+          <ul class="sous-dossiers" id="dossier-ctia-dasen-sous-dossiers" hidden>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--2h-de-sport-hebdomadaire"><span class="folder-icon" aria-hidden="true"></span>2H DE SPORT HEBDOMADAIRE</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--30-min-apq"><span class="folder-icon" aria-hidden="true"></span>30 MIN APQ</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--copil-sport-education"><span class="folder-icon" aria-hidden="true"></span>COPIL SPORT EDUCATION</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--cr-reunion-de-travail"><span class="folder-icon" aria-hidden="true"></span>CR REUNION DE TRAVAIL</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--doc-de-rentree"><span class="folder-icon" aria-hidden="true"></span>DOC DE RENTREE</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--dsp"><span class="folder-icon" aria-hidden="true"></span>DSP</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2024"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2024</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2030</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--gt-savoir-nager"><span class="folder-icon" aria-hidden="true"></span>GT SAVOIR NAGER</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026"><span class="folder-icon" aria-hidden="true"></span>RS 2026</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--ses"><span class="folder-icon" aria-hidden="true"></span>SES</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--shn"><span class="folder-icon" aria-hidden="true"></span>SHN</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--sport-etudes"><span class="folder-icon" aria-hidden="true"></span>SPORT ETUDES</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--srav"><span class="folder-icon" aria-hidden="true"></span>SRAV</a></li>
+            <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss"><span class="folder-icon" aria-hidden="true"></span>SSS</a></li>
+          </ul>
+        </div>
+        <div class="branche-dossier tone-rose">
+          <a class="folder-entry" href="#dossier-formateurs-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">04</span><span class="nom-dossier">Formateurs EPS</span></a>
+          <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-formateurs-eps-sous-dossiers" aria-label="Sous-dossiers de Formateurs EPS"><span aria-hidden="true">›</span></button>
+          <ul class="sous-dossiers" id="dossier-formateurs-eps-sous-dossiers" hidden>
+            <li><a class="sous-dossier" href="#dossier-formateurs-eps--agenda-stages"><span class="folder-icon" aria-hidden="true"></span>AGENDA STAGES</a></li>
+            <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa"><span class="folder-icon" aria-hidden="true"></span>COMPLEMENTS APSA</a></li>
+            <li><a class="sous-dossier" href="#dossier-formateurs-eps--docs-administratifs"><span class="folder-icon" aria-hidden="true"></span>DOCS ADMINISTRATIFS</a></li>
+            <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements"><span class="folder-icon" aria-hidden="true"></span>FORM ETABLISSEMENTS</a></li>
+            <li><a class="sous-dossier" href="#dossier-formateurs-eps--jingle-web-radio"><span class="folder-icon" aria-hidden="true"></span>JINGLE WEB RADIO</a></li>
+          </ul>
+        </div>
+        <div class="branche-dossier tone-sable">
+          <a class="folder-entry" href="#dossier-unss-ip"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">05</span><span class="nom-dossier">UNSS / IP</span></a>
+          <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-unss-ip-sous-dossiers" aria-label="Sous-dossiers de UNSS / IP"><span aria-hidden="true">›</span></button>
+          <ul class="sous-dossiers" id="dossier-unss-ip-sous-dossiers" hidden>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--para-sport-et-partage"><span class="folder-icon" aria-hidden="true"></span>PARA SPORT ET PARTAGE</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--sport-etudes"><span class="folder-icon" aria-hidden="true"></span>SPORT ETUDES</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--sss"><span class="folder-icon" aria-hidden="true"></span>SSS</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--unss-13"><span class="folder-icon" aria-hidden="true"></span>UNSS 13</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--unss-acad"><span class="folder-icon" aria-hidden="true"></span>UNSS ACAD</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--unss04"><span class="folder-icon" aria-hidden="true"></span>UNSS04</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--unss05"><span class="folder-icon" aria-hidden="true"></span>UNSS05</a></li>
+            <li><a class="sous-dossier" href="#dossier-unss-ip--unss84"><span class="folder-icon" aria-hidden="true"></span>UNSS84</a></li>
+          </ul>
+        </div>
         <a class="folder-entry tone-menthe" href="#dossier-gtep-evaluation"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">06</span><span>GTEP Évaluation</span></a>
       </nav>
     </aside>
@@ -52,8 +158,7 @@
         <p class="eyebrow">TRAVAIL EN COURS</p>
         <h2 id="titre-dossier-ia-ipr-eps">IA IPR EPS</h2>
         <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
-        <p class="subtle">Exemples de sous-dossiers RESANA</p>
-        <ul class="tiles"><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Activités artistiques</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Examens</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Inspections</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Formation continue</li></ul>
+        <p class="subtle">Survolez un dossier ou ouvrez sa flèche pour afficher ses sous-dossiers.</p>
       </section>
       <section class="card document-card" data-dossier id="dossier-cmi-eps" aria-labelledby="titre-dossier-cmi-eps">
         <p class="eyebrow">TRAVAIL EN COURS</p>
@@ -79,6 +184,11 @@
         <p class="eyebrow">TRAVAIL EN COURS</p>
         <h2 id="titre-dossier-gtep-evaluation">GTEP Évaluation</h2>
         <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" id="panneau-sous-dossier" aria-labelledby="titre-sous-dossier" hidden>
+        <p class="eyebrow" id="parent-sous-dossier"></p>
+        <h2 id="titre-sous-dossier" tabindex="-1"></h2>
+        <p>Ce dossier est vide.</p>
       </section>
       <section class="card document-card" aria-labelledby="titre-archives">
         <p class="eyebrow">STOCKAGE NUAGE</p>
