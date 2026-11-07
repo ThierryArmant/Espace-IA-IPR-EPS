@@ -9,7 +9,7 @@ body { isolation: isolate; margin: 0; min-width: 300px; min-height: 100vh; }
 body::before {
   content: ""; position: fixed; inset: 0; z-index: -1;
   background: linear-gradient(rgba(245, 251, 255, .26), rgba(245, 251, 255, .26)),
-    #e1f2fb url("fond-sainte-victoire-piste.webp") center / cover no-repeat;
+    #e1f2fb url("fond-sainte-victoire-photo.webp") center / cover no-repeat;
 }
 .main .crumb {
   width: fit-content; max-width: 100%; padding: .38rem .6rem;
