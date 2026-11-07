@@ -6,10 +6,17 @@
   <meta name="referrer" content="no-referrer">
   <title>Documents · IA-IPR EPS</title>
   <link rel="stylesheet" href="static/hub.css">
+  <script src="static/navigation-dossiers.js" defer></script>
   <style>
     .shell.nuage-shell { grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); }
     .folder-entry { display: flex; gap: .65rem; align-items: center; margin: .75rem .3rem; padding: .7rem; border-radius: .55rem; }
+    .folder-entry { text-decoration: none; border: 1px solid transparent; }
     .folder-entry span { font-weight: 650; }
+    .folder-entry:hover, .folder-entry[aria-current] { border-color: #567ca1; text-decoration: underline; }
+    .folder-entry[aria-current] { box-shadow: inset 3px 0 #294f75; }
+    .folder-number { color: #45617d; font-size: .78rem; min-width: 1.3rem; }
+    .presentation-label { background: #fff7df; color: #634a11; }
+    .document-card [hidden] { display: none; }
     .document-card { max-width: 47rem; }
     .document-card .actions { margin: 1rem 0; }
     @media (max-width: 760px) { .shell.nuage-shell { grid-template-columns: minmax(0, 1fr); } }
@@ -23,8 +30,13 @@
     <aside class="sidebar" aria-label="Arborescence">
       <p class="eyebrow">EXPLORATEUR</p>
       <h2>Dossiers</h2>
-      <nav aria-label="Dossiers de l’espace IA-IPR EPS">
-        <a class="folder-entry tone-bleu" href="#dossier-ia-ipr-eps"><span class="folder-icon" aria-hidden="true"></span><span>IA IPR EPS</span></a>
+      <nav aria-label="Dossiers de l’espace IA-IPR EPS" id="arborescence">
+        <a class="folder-entry tone-bleu" href="#dossier-ia-ipr-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">01</span><span>IA IPR EPS</span></a>
+        <a class="folder-entry tone-menthe" href="#dossier-cmi-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">02</span><span>CMI EPS</span></a>
+        <a class="folder-entry tone-lavande" href="#dossier-ctia-dasen"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">03</span><span>CTIA DASEN</span></a>
+        <a class="folder-entry tone-rose" href="#dossier-formateurs-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">04</span><span>Formateurs EPS</span></a>
+        <a class="folder-entry tone-sable" href="#dossier-unss-ip"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">05</span><span>UNSS / IP</span></a>
+        <a class="folder-entry tone-menthe" href="#dossier-gtep-evaluation"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">06</span><span>GTEP Évaluation</span></a>
       </nav>
     </aside>
     <main class="main">
@@ -32,12 +44,46 @@
         <div>
           <p class="eyebrow">ESPACE DOCUMENTAIRE</p>
           <h1>Documents IA-IPR EPS</h1>
-          <p>Accès réservé aux collègues autorisés dans Nuage.</p>
+          <p>Les six dossiers de l’espace RESANA, réunis dans une même interface.</p>
+          <p class="badge presentation-label">Aperçu de l’organisation</p>
         </div>
       </section>
-      <section class="card document-card" id="dossier-ia-ipr-eps" aria-labelledby="nom-dossier">
-        <h2 id="nom-dossier">IA IPR EPS</h2>
-        <p>Ouvrez le dossier pour consulter, télécharger ou déposer des documents selon vos droits.</p>
+      <section class="card document-card" data-dossier id="dossier-ia-ipr-eps" aria-labelledby="titre-dossier-ia-ipr-eps">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-ia-ipr-eps">IA IPR EPS</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+        <p class="subtle">Exemples de sous-dossiers RESANA</p>
+        <ul class="tiles"><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Activités artistiques</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Examens</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Inspections</li><li class="tile tone-bleu"><span class="folder-icon" aria-hidden="true"></span>Formation continue</li></ul>
+      </section>
+      <section class="card document-card" data-dossier id="dossier-cmi-eps" aria-labelledby="titre-dossier-cmi-eps">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-cmi-eps">CMI EPS</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" data-dossier id="dossier-ctia-dasen" aria-labelledby="titre-dossier-ctia-dasen">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-ctia-dasen">CTIA DASEN</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" data-dossier id="dossier-formateurs-eps" aria-labelledby="titre-dossier-formateurs-eps">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-formateurs-eps">Formateurs EPS</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" data-dossier id="dossier-unss-ip" aria-labelledby="titre-dossier-unss-ip">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-unss-ip">UNSS / IP</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" data-dossier id="dossier-gtep-evaluation" aria-labelledby="titre-dossier-gtep-evaluation">
+        <p class="eyebrow">TRAVAIL EN COURS</p>
+        <h2 id="titre-dossier-gtep-evaluation">GTEP Évaluation</h2>
+        <p>Les documents de travail seront disponibles ici après le raccordement de l’espace privé.</p>
+      </section>
+      <section class="card document-card" aria-labelledby="titre-archives">
+        <p class="eyebrow">STOCKAGE NUAGE</p>
+        <h2 id="titre-archives">Dossiers terminés et archives</h2>
+        <p>Ouvrez le dossier partagé dans Nuage avec votre compte académique. Nuage applique les droits de chaque collègue.</p>
         <div class="actions">
           <a class="button" href="https://nuage01.apps.education.fr/index.php/gf/jtrx5/255281940" target="_blank" rel="noopener noreferrer">Ouvrir le dossier dans Nuage <span aria-hidden="true">↗</span></a>
         </div>
