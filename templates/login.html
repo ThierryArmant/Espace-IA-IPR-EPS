@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card login">
+<p class="eyebrow">ACCÈS SUR INVITATION</p>
+<h1>{{ 'Activer mon compte' if invitation else 'Connexion' }}</h1>
+{% if invitation %}<p class="subtle">{{ invitation.email }}</p>{% endif %}
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% if not invitation %}<label>Adresse électronique <input name="email" type="email" required autocomplete="username"></label>{% endif %}
+<label>{{ 'Choisir un mot de passe' if invitation else 'Mot de passe' }}
+<input name="password" type="password" required maxlength="256" {% if invitation %}minlength="14" autocomplete="new-password"{% else %}autocomplete="current-password"{% endif %}></label>
+<button>{{ 'Activer' if invitation else 'Se connecter' }}</button>
+</form></section>
+{% endblock %}

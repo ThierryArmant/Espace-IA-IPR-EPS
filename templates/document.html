@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="crumb" aria-label="Chemin">{% for item in trail[:-1] %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% endfor %}<span aria-current="page">{{ node.name }}</span></nav>
+<div class="hero tone-bleu"><div><p class="eyebrow">DOCUMENT</p><h1>{{ node.name }}</h1></div>
+<div class="actions">{% if mask is downloadable %}<a class="button" href="{{ url_for('download',node_id=node.id) }}">Télécharger</a>{% endif %}
+{% if g.user.admin %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}</div>
+</div>
+<section class="card">
+{% if suffix=='.pdf' %}
+<form class="actions" method="get"><label>Page <input type="number" name="page" min="1" max="1000" value="{{ page }}"></label><button class="secondary">Afficher</button></form>
+<img class="pdf" src="{{ url_for('preview_pdf',node_id=node.id,page=page) }}" alt="Page {{ page }} du document. Si elle n’apparaît pas, vérifiez le numéro de page.">
+{% elif preview %}
+<a class="button secondary" href="{{ url_for('preview_text',node_id=node.id) }}">Lire le texte</a>
+{% else %}
+<p class="subtle">L’aperçu en ligne de ce format est en préparation.</p>
+{% endif %}
+</section>
+{% endblock %}

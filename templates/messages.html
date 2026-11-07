@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero tone-rose"><div><p class="eyebrow">COLLABORATION</p><h1>Demandes par courriel</h1><p>Préparez un message pour un membre de l’espace.</p></div></div>
+<section class="card"><form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Destinataire <select name="recipient" required><option value="">Choisir</option>{% for person in people %}<option value="{{ person.id }}">{{ person.email }}</option>{% endfor %}</select></label>
+<label>Objet <input name="subject" maxlength="120" required></label>
+<label>Message <textarea name="body" rows="7" maxlength="2000" required></textarea></label>
+<button>Préparer le courriel</button></form></section>
+{% endblock %}

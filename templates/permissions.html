@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% macro rule_form(kind, subjects, label) %}
+<section class="card"><h2>{{ label }}</h2>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="kind" value="{{ kind }}">
+<label>{{ 'Personne' if kind=='user' else 'Groupe' }} <select name="subject" required><option value="">Choisir</option>
+{% for entry in subjects if kind!='user' or not entry.admin %}<option value="{{ entry.id }}">{{ entry.email if kind=='user' else entry.name }}</option>{% endfor %}
+</select></label>
+<fieldset><legend>Droits à appliquer</legend>
+<label class="check"><input type="checkbox" name="read" value="1"> Consulter</label>
+<label class="check"><input type="checkbox" name="download" value="1"> Télécharger</label>
+{% if node.kind=='folder' %}<label class="check"><input type="checkbox" name="write" value="1"> Ajouter des dossiers et des documents</label>{% endif %}
+</fieldset>
+<p class="subtle">Laissez les cases vides pour définir une règle sans accès.</p>
+<div class="actions"><button name="action" value="apply">Appliquer</button><button class="secondary" name="action" value="inherit">Retirer cette règle</button></div>
+</form></section>
+{% endmacro %}
+{% block content %}
+<nav class="crumb"><a href="{{ url_for('folder',node_id=node.parent) }}">Retour au dossier parent</a></nav>
+<div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Droits d’accès</h1><p>{{ node.name }}</p></div></div>
+<section class="card"><h2>Règles de ce niveau</h2>
+<p>Une règle individuelle prime sur les groupes au même niveau. Sans règle locale, le contenu hérite de son dossier parent. Les dossiers de premier niveau commencent sans accès collaborateur.</p>
+{% for rule in rules %}
+<p class="rule"><strong>{{ rule.label }}</strong> · {{ 'Personne' if rule.subject_kind=='user' else 'Groupe' }}
+<span class="badge {{ 'granted' if rule.mask else 'denied' }}">{{ 'Accès autorisé' if rule.mask else 'Accès refusé' }}</span>
+{% if rule.mask is readable %} · Consultation{% endif %}{% if rule.mask is downloadable %} · Téléchargement{% endif %}{% if rule.mask is writable and node.kind=='folder' %} · Ajout{% endif %}</p>
+{% else %}<p class="empty">Aucune règle locale.</p>{% endfor %}
+</section>
+<div class="split">{{ rule_form('group',groups,'Régler les droits d’un groupe') }}{{ rule_form('user',people,'Régler les droits d’une personne') }}</div>
+{% endblock %}

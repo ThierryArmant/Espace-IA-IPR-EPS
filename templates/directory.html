@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero tone-menthe"><div><p class="eyebrow">ADMINISTRATION</p><h1>Annuaire</h1><p>Invitations, groupes et accès des collaborateurs.</p></div></div>
+<div class="split">
+<section class="card"><h2>Inviter un collaborateur</h2><form method="post" action="{{ url_for('invite') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Adresse électronique <input name="email" type="email" required maxlength="254"></label><button>Préparer l’invitation</button>
+</form></section>
+<section class="card"><h2>Créer un groupe</h2><form method="post" action="{{ url_for('add_group') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
+</form>
+{% if groups %}<p class="subtle">{{ groups|map(attribute='name')|join(' · ') }}</p>{% endif %}</section>
+</div>
+<section class="card"><h2>Comptes</h2>
+{% for person in people %}
+<div class="member"><div><strong>{{ person.email }}</strong>
+<p class="subtle">{{ 'Animateur' if person.admin else ('Actif' if person.active else ('Suspendu' if person.activated else 'En attente d’activation')) }}</p></div>
+{% if not person.admin %}
+<form method="post" action="{{ url_for('manage_user',user_id=person.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% if groups %}<fieldset><legend>Groupes</legend>
+{% for group in groups %}<label class="check"><input type="checkbox" name="groups" value="{{ group.id }}" {% if group.id in members[person.id] %}checked{% endif %}>{{ group.name }}</label>{% endfor %}</fieldset>{% endif %}
+<div class="actions">
+{% if groups %}<button class="secondary" name="action" value="groups">Enregistrer les groupes</button>{% endif %}
+{% if person.active or not person.activated %}<button class="danger" name="action" value="suspend">{{ 'Suspendre le compte' if person.active else 'Révoquer l’invitation' }}</button>
+{% else %}<button name="action" value="resume">Réactiver</button>{% endif %}
+</div></form>
+{% endif %}</div>
+{% endfor %}
+</section>
+{% endblock %}

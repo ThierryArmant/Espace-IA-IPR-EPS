@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css') }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ url_for('folder') }}"><span class="mark">EPS</span><span><small>ESPACE DE TRAVAIL</small><strong>IA-IPR EPS</strong></span></a>
+  {% if g.user %}
+  <div class="identity"><span class="role">{{ 'Animateur' if g.user.admin else 'Collaborateur' }}</span>
+  <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="quiet">Déconnexion</button></form></div>
+  {% endif %}
+</header>
+<div class="shell {% if not g.user %}signed-out{% endif %}">
+{% block sidebar %}{% endblock %}
+<main class="main">
+{% for message in get_flashed_messages() %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
+{% block content %}{% endblock %}
+</main>
+{% if g.user %}
+<nav class="rail" aria-label="Modules">
+  <a class="rail-doc" href="{{ url_for('folder') }}"><span aria-hidden="true">▤</span>Documents</a>
+  {% if g.user.admin %}
+  <a class="rail-team" href="{{ url_for('directory') }}"><span aria-hidden="true">♙</span>Annuaire</a>
+  <a class="rail-mail" href="{{ url_for('messages') }}"><span aria-hidden="true">✉</span>Demandes</a>
+  {% endif %}
+</nav>
+{% endif %}
+</div>
+</body>
+</html>
