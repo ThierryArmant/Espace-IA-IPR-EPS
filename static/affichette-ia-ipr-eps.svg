@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 290" role="img" aria-labelledby="title desc">
+  <title id="title">IA-IPR EPS — Accéder à l’espace de travail</title>
+  <desc id="desc">Espace de travail de l’inspection pédagogique régionale en éducation physique et sportive.</desc>
+  <defs>
+    <linearGradient id="fond">
+      <stop stop-color="#e5effb"/>
+      <stop offset="1" stop-color="#eee8fa"/>
+    </linearGradient>
+  </defs>
+  <rect width="760" height="290" rx="26" fill="url(#fond)"/>
+  <path d="M567 67h56l18 17h65a15 15 0 0 1 15 15v103a15 15 0 0 1-15 15H567a15 15 0 0 1-15-15V82a15 15 0 0 1 15-15Z" fill="#c5dcf3"/>
+  <rect x="596" y="116" width="104" height="79" rx="12" fill="#f9fbff"/>
+  <path d="M617 140h58m-58 15h44m-44 15h33" stroke="#6c89aa" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="702" cy="202" r="24" fill="#cfeadd"/>
+  <path d="m694 202 6 6 11-12" fill="none" stroke="#176647" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="system-ui, sans-serif" fill="#243e5e">
+    <text x="45" y="58" font-size="16" font-weight="700" letter-spacing="2">ESPACE DE TRAVAIL</text>
+    <text x="43" y="131" font-size="66" font-weight="750">IA-IPR EPS</text>
+    <text x="46" y="169" font-size="21">Inspection pédagogique régionale</text>
+    <rect x="45" y="203" width="252" height="47" rx="13" fill="#294f75"/>
+    <text x="62" y="234" font-size="18" font-weight="650" fill="#fff">Accéder à l’espace  →</text>
+  </g>
+</svg>

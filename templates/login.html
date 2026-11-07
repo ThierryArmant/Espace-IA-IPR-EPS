@@ -1,14 +1,42 @@
 {% extends "base.html" %}
+{% block title %}Accès à l’espace IA-IPR EPS{% endblock %}
 {% block content %}
-<section class="card login">
-<p class="eyebrow">ACCÈS SUR INVITATION</p>
-<h1>{{ 'Activer mon compte' if invitation else 'Connexion' }}</h1>
-{% if invitation %}<p class="subtle">{{ invitation.email }}</p>{% endif %}
-<form method="post">
-<input type="hidden" name="csrf" value="{{ csrf }}">
-{% if not invitation %}<label>Adresse électronique <input name="email" type="email" required autocomplete="username"></label>{% endif %}
-<label>{{ 'Choisir un mot de passe' if invitation else 'Mot de passe' }}
-<input name="password" type="password" required maxlength="256" {% if invitation %}minlength="14" autocomplete="new-password"{% else %}autocomplete="current-password"{% endif %}></label>
-<button>{{ 'Activer' if invitation else 'Se connecter' }}</button>
-</form></section>
+<section class="entry" aria-label="Accès à l’espace IA-IPR EPS">
+  <img class="entry-art" src="{{ url_for('static',filename='affichette-ia-ipr-eps.svg') }}" alt="IA-IPR EPS · Espace de travail de l’inspection pédagogique régionale" width="760" height="290">
+  <section class="card login entry-form">
+    <p class="eyebrow">ESPACE RÉSERVÉ AUX MEMBRES AUTORISÉS</p>
+    {% if invitation %}
+      <h1>Activer mon accès</h1>
+      <p class="subtle">{{ invitation.email }}</p>
+      <form method="post">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        {% if not use_code %}<label>Choisir un mot de passe
+          <input name="password" type="password" required minlength="14" maxlength="256" autocomplete="new-password">
+        </label>{% endif %}
+        <button>Activer mon compte</button>
+      </form>
+    {% elif enter_code %}
+      <h1>Saisir mon code</h1>
+      <p class="subtle">Le code à huit chiffres reçu par courriel est valable 10 minutes.</p>
+      <form method="post">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="action" value="verify-code">
+        <label>Code de connexion <input name="code" type="text" required inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="one-time-code"></label>
+        <div class="actions"><button>Entrer dans l’espace</button><a href="{{ url_for('login', nouveau=1) }}">Demander un nouveau code</a></div>
+      </form>
+    {% else %}
+      <h1>Se connecter</h1>
+      <p class="subtle">{{ 'Utilisez l’adresse électronique à laquelle votre accès a été accordé.' if use_code else 'Renseignez votre adresse électronique et votre mot de passe.' }}</p>
+      <form method="post">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        {% if use_code %}<input type="hidden" name="action" value="request-code">{% endif %}
+        <label>Adresse électronique <input name="email" type="email" required maxlength="254" autocomplete="username"></label>
+        {% if not use_code %}<label>Mot de passe
+          <input name="password" type="password" required maxlength="256" autocomplete="current-password">
+        </label>{% endif %}
+        <button>{{ 'Recevoir mon code' if use_code else 'Entrer dans l’espace' }}</button>
+      </form>
+    {% endif %}
+  </section>
+</section>
 {% endblock %}

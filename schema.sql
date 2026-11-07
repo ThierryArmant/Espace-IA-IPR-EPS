@@ -41,3 +41,12 @@ CREATE TABLE IF NOT EXISTS invites (
 CREATE TABLE IF NOT EXISTS attempts (key TEXT NOT NULL, at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS attempts_key ON attempts(key);
 INSERT OR IGNORE INTO nodes(id,parent,name,kind,color) VALUES(1,NULL,'Espace IA-IPR EPS','folder','bleu');
+CREATE TABLE IF NOT EXISTS login_codes (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    session_version INTEGER,
+    digest TEXT NOT NULL,
+    expires INTEGER NOT NULL,
+    remaining INTEGER NOT NULL CHECK(remaining > 0)
+);
+CREATE INDEX IF NOT EXISTS login_codes_expires ON login_codes(expires);

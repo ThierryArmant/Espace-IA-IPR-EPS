@@ -97,3 +97,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .rail a { display: flex; align-items: center; gap: .3rem; padding: .4rem .55rem; }
   .sidebar { border-right: 0; border-bottom: 1px solid var(--border); max-height: 16rem; overflow: auto; }
 }
+.entry { max-width: 52rem; margin: clamp(.8rem, 4vh, 2.5rem) auto; }
+.entry-art { display: block; width: 100%; height: auto; border-radius: .85rem; }
+.entry-form { margin: 1rem auto 0; max-width: 100%; padding: clamp(1.15rem, 3vw, 1.8rem); }
+.entry-form h1 { margin-bottom: .5rem; }

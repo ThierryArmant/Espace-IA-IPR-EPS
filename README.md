@@ -28,14 +28,39 @@ Ouvrez http://127.0.0.1:8080. La commande d’initialisation demande le mot de p
 
 Les PDF sont consultables page par page et les textes TXT/CSV ont un aperçu. Les fichiers Office peuvent être déposés et téléchargés selon les droits accordés.
 
+## Lien sur le site académique EPS
+
+Dans le site académique, créez une entrée **IA-IPR EPS** et utilisez
+[`static/affichette-ia-ipr-eps.svg`](static/affichette-ia-ipr-eps.svg) comme visuel.
+Liez l’image ou le bouton à l’adresse HTTPS du Hub suivie de `/connexion`.
+Texte alternatif conseillé : **Accéder à l’espace IA-IPR EPS**.
+Le Hub reste une application distincte reliée par ce lien. La page publique
+du site académique ne contient aucun document privé ni identifiant.
+
+En mode code, l’utilisateur saisit son adresse autorisée, reçoit un code individuel
+à huit chiffres, puis dispose de 10 minutes pour le saisir. Chaque code est valable
+une seule fois, avec cinq essais maximum. Les nouveaux membres activent d’abord leur
+invitation. L’animateur gère ensuite les droits par groupe, personne et dossier.
+
 ## Installation sur un serveur
 
 Prérequis : un serveur Linux autorisé par l’académie, Docker avec Compose, un nom de domaine pointant vers le serveur et les ports 80 et 443 disponibles. Le service Flask reste sur le réseau interne de Compose. Caddy reçoit les connexions HTTPS et gère le certificat. SQLite est conservé dans le volume `hub-data`, indépendamment des conteneurs.
 
-Depuis la racine du dépôt sur le serveur, remplacez les deux valeurs d’exemple avant de lancer l’installation.
+Depuis la racine du dépôt sur le serveur, renseignez le domaine du Hub et le relais
+SMTP autorisé à envoyer les codes. Le mode `email_code` est sélectionné par défaut
+dans Compose. Le port 465 utilise SMTP sur TLS, les autres ports utilisent STARTTLS.
+Si le relais requiert une authentification, ajoutez `HUB_SMTP_USER` et
+`HUB_SMTP_PASSWORD` au fichier `.env` privé de l’hôte. Le lancement local sans
+Compose conserve le mode mot de passe par défaut.
 
 ```bash
-printf 'HUB_DOMAIN=hub-eps.exemple.fr\n' > .env
+(umask 077 && cat > .env <<'CONFIG'
+HUB_DOMAIN=hub-eps.exemple.fr
+HUB_SMTP_HOST=smtp.exemple.fr
+HUB_SMTP_PORT=587
+HUB_SMTP_FROM=hub-eps@exemple.fr
+CONFIG
+)
 install -d -m 700 secrets
 # À faire une seule fois. Conservez cette clé entre les mises à jour.
 if [ ! -e secrets/hub_key ]; then
@@ -48,7 +73,10 @@ docker compose up -d
 docker compose ps
 ```
 
-La commande d’initialisation demande le mot de passe de l’animateur. Le dossier `secrets` est privé sur l’hôte. Le fichier de clé est lisible par l’utilisateur applicatif à travers le montage Compose. Vérifiez ensuite la connexion via le domaine HTTPS configuré. Si un reverse proxy académique existe déjà, utilisez sa configuration de publication à la place du service Caddy.
+La commande d’initialisation demande le mot de passe de l’animateur. Le dossier `secrets` est privé sur l’hôte. Le fichier de clé est lisible par l’utilisateur applicatif à travers le montage Compose. Vérifiez ensuite la réception d’un code sur le compte Animateur et l’accès via le
+domaine HTTPS configuré. Pour une base existante, utilisez
+`docker compose run --rm hub flask --app app migrate-db` à la place de
+`init-db`, après une sauvegarde et avant le redémarrage. Si un reverse proxy académique existe déjà, utilisez sa configuration de publication à la place du service Caddy.
 
 ### Sauvegarder
 

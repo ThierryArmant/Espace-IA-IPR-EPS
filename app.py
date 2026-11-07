@@ -23,6 +23,8 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from login_code import CodeMailer, login_with_code, start_session
+
 VIEW, DOWNLOAD, WRITE = 1, 2, 4
 ALL = VIEW | DOWNLOAD | WRITE
 LIMIT = 32 * 1024 * 1024
@@ -53,6 +55,10 @@ def create_app():
     if (not origin.hostname or origin.username or origin.password or origin.path not in ("", "/")
             or origin.query or origin.fragment or (origin.scheme != "https" and not local_http)):
         raise RuntimeError("Définissez HUB_PUBLIC_URL avec l’origine HTTPS du Hub.")
+    auth_mode = os.environ.get("HUB_AUTH_MODE", "password")
+    if auth_mode not in {"password", "email_code"}:
+        raise RuntimeError("HUB_AUTH_MODE doit être password ou email_code.")
+    mailer = CodeMailer.from_environment() if auth_mode == "email_code" else None
     app.config.update(
         TRUSTED_HOSTS=[origin.hostname] if not local_http else ["localhost", "127.0.0.1"],
         SECRET_KEY=secret,
@@ -96,6 +102,14 @@ def create_app():
                        (email, generate_password_hash(password)))
         click.echo("Espace initialisé.")
 
+    @app.cli.command("migrate-db")
+    def migrate_db():
+        with closing(connect()) as db, db:
+            if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'").fetchone():
+                raise click.ClickException("Initialisez d’abord la base du Hub.")
+            db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+        click.echo("Schéma du Hub mis à jour.")
+
     @app.cli.command("backup-db")
     @click.argument("destination", type=click.Path(path_type=Path))
     def backup_db(destination):
@@ -127,6 +141,8 @@ def create_app():
         try:
             with closing(connect()) as db:
                 ready = db.execute("SELECT 1 FROM users WHERE admin=1 AND active=1").fetchone()
+                if mailer:
+                    db.execute("SELECT 1 FROM login_codes LIMIT 1")
         except sqlite3.Error:
             ready = False
         return ("OK", 200) if ready else ("Indisponible", 503)
@@ -259,6 +275,8 @@ def create_app():
     def login():
         if g.user:
             return redirect(url_for("folder"))
+        if mailer:
+            return login_with_code(mailer)
         if request.method == "POST":
             email = request.form.get("email", "").strip().lower()[:254]
             password = request.form.get("password", "")
@@ -273,11 +291,7 @@ def create_app():
             stored_hash = user["password"] if user else DUMMY_PASSWORD
             if len(password) <= 256 and check_password_hash(stored_hash, password) and user:
                 g.db.commit()
-                session.clear()
-                session["user"] = user["id"]
-                session["version"] = user["session_version"]
-                session.permanent = True
-                return redirect(url_for("folder"))
+                return start_session(user["id"], user["session_version"])
             g.db.executemany("INSERT INTO attempts VALUES(?,?)", [(key, now) for key in keys])
             g.db.commit()
             flash("Identifiants incorrects.")
@@ -300,16 +314,17 @@ def create_app():
             abort(404)
         if request.method == "POST":
             password = request.form.get("password", "")
-            if not 14 <= len(password) <= 256:
+            if not mailer and not 14 <= len(password) <= 256:
                 flash("Choisissez un mot de passe de 14 à 256 caractères.")
             else:
+                password_hash = "email-code-only" if mailer else generate_password_hash(password)
                 g.db.execute("UPDATE users SET password=?, active=1 WHERE id=?",
-                             (generate_password_hash(password), invitation["id"]))
+                             (password_hash, invitation["id"]))
                 g.db.execute("DELETE FROM invites WHERE user_id=?", (invitation["id"],))
                 g.db.commit()
                 session.clear()
                 return redirect(url_for("login"))
-        return render_template("login.html", invitation=invitation)
+        return render_template("login.html", invitation=invitation, use_code=bool(mailer))
 
     @app.get("/")
     @app.get("/dossier/<int:node_id>")

@@ -10,7 +10,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py schema.sql ./
+COPY app.py login_code.py schema.sql ./
 COPY templates/ templates/
 COPY static/ static/
 USER hub
