@@ -27,37 +27,45 @@
 </div>
 </details>
 {% endmacro %}
-{% macro branch(items) %}
-<ul class="tree">
+{% macro branch(items, active, principal=false) %}
+{% set palette = ['bleu','menthe','lavande','rose','sable','menthe'] %}
+<ul class="explorateur-liste{{ ' explorateur-racines' if principal else '' }}">
 {% for item in items %}
-{% set writable = rights(item) is writable %}
-<li{% if writable %} class="has-folder-actions"{% endif %}>
+{% set tone = palette[(loop.index0) % (palette|length)] if principal and item.color=='bleu' else item.color %}
+<li class="explorateur-branche{% if principal %} explorateur-racine{% endif %}">
+<div class="explorateur-ligne{% if principal %} tone-{{ tone }}{% endif %}">
+<a class="explorateur-lien" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}>
+<span class="folder-icon" aria-hidden="true"></span>{% if principal %}<span class="explorateur-numero" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span>{% endif %}
+<span>{{ item.name }}</span></a>
 {% if children[item.id] %}
-<details {% if item.id in active %}open{% endif %}>
-<summary><a class="branch tone-{{ item.color }}" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}>
-<span class="folder-icon" aria-hidden="true"></span>{{ item.name }}<span class="access" title="Accès autorisé" aria-label="Accès autorisé">●</span></a></summary>
-{{ branch(children[item.id]) }}
-</details>
-{% else %}
-<a class="branch leaf tone-{{ item.color }}" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}><span class="folder-icon" aria-hidden="true"></span>{{ item.name }}<span class="access" title="Accès autorisé" aria-label="Accès autorisé">●</span></a>
+<button class="explorateur-fleche" type="button" aria-expanded="{{ 'true' if not principal and item.id in active else 'false' }}" aria-controls="branche-{{ item.id }}" aria-label="Sous-dossiers de {{ item.name }}"><span aria-hidden="true">›</span></button>
 {% endif %}
-{% if writable %}{{ folder_actions(item) }}{% endif %}
+{% if rights(item) is writable %}{{ folder_actions(item) }}{% endif %}
+</div>
+{% if children[item.id] %}
+<div class="explorateur-enfants{% if principal %} explorateur-panneau{% endif %}" id="branche-{{ item.id }}"{% if principal or item.id not in active %} hidden{% endif %}>
+{{ branch(children[item.id], active) }}
+</div>
+{% endif %}
 </li>
 {% endfor %}
 </ul>
 {% endmacro %}
+{% block scripts %}<script src="{{ url_for('static', filename='explorateur-prive.js') }}" defer></script>{% endblock %}
 {% block sidebar %}
 {% set active=trail|map(attribute='id')|list %}
 <aside class="sidebar" aria-label="Arborescence">
 <p class="eyebrow">EXPLORATEUR</p><h2>Dossiers</h2>
 <a class="root" href="{{ url_for('folder') }}">Tous mes dossiers</a>
-{{ branch(children[1]) }}
+<nav class="explorateur-prive" aria-label="Dossiers de l’espace IA-IPR EPS">
+{{ branch(children[1], active, true) }}
+</nav>
 </aside>
 {% endblock %}
 {% block content %}
 {% set mask=rights(node) %}
 <nav class="crumb" aria-label="Chemin">{% for item in trail %}{% if not loop.last %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}{% endfor %}</nav>
-<div class="hero tone-{{ node.color }}">
+<div class="hero hero-dossier-prive tone-{{ node.color }}">
   <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
   <div class="actions">
   {% if mask is writable %}{{ folder_actions(node) }}{% endif %}
@@ -79,11 +87,6 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Couleur <select name="color">{% for color in colors %}<option {% if color==node.color %}selected{% endif %}>{{ color }}</option>{% endfor %}</select></label><button>Appliquer</button></form></details>
 {% endif %}
 </div>
-{% endif %}
-{% if children[node.id] %}
-<section aria-label="Sous-dossiers" class="tiles">
-{% for item in children[node.id] %}<a class="tile tone-{{ item.color }}" href="{{ url_for('folder',node_id=item.id) }}"><span class="folder-icon" aria-hidden="true"></span>{{ item.name }}</a>{% endfor %}
-</section>
 {% endif %}
 <section class="panel">
 <div class="panel-head"><h2>Documents</h2><form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
