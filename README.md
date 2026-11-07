@@ -97,8 +97,10 @@ Les invitations et demandes passent par la messagerie de l’animateur. La coéd
 
 ## Espace documentaire GitHub Pages et Jalios
 
-La page `espace-documentaire.html` contient l’interface de navigation et de dépôt PDF.
-Le dépôt reste désactivé tant que `static/jalios-config.js` ne référence aucun service.
+La page `espace-documentaire.html` affiche l’arborescence et le lien vers le dossier Nuage.
+Le navigateur ouvre les documents dans Nuage, qui applique les droits d’accès.
+Les scripts Jalios conservés dans `static/` sont une base pour un éventuel dépôt intégré.
+Ils nécessitent un service configuré dans `static/jalios-config.js` et ne sont pas chargés sur cette page.
 Le contrat ci-dessous est celui du raccordement attendu, et non celui de l’API
 Jalios native. Il doit être mis en œuvre ou adapté côté académique avant activation.
 

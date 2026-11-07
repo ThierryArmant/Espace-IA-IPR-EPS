@@ -6,39 +6,42 @@
   <meta name="referrer" content="no-referrer">
   <title>Documents · IA-IPR EPS</title>
   <link rel="stylesheet" href="static/hub.css">
-  <script src="static/espace-documentaire.js" type="module"></script>
+  <style>
+    .nuage-shell { grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); }
+    .folder-entry { display: flex; gap: .65rem; align-items: center; margin: .75rem .3rem; padding: .7rem; border-radius: .55rem; }
+    .folder-entry span { font-weight: 650; }
+    .document-card { max-width: 47rem; }
+    .document-card .actions { margin: 1rem 0; }
+    @media (max-width: 760px) { .nuage-shell { grid-template-columns: minmax(0, 1fr); } }
+  </style>
 </head>
 <body>
   <header class="top">
     <a class="brand" href="./"><span class="mark">EPS</span><span><small>ESPACE DE TRAVAIL</small><strong>IA-IPR EPS</strong></span></a>
   </header>
-  <div class="shell">
+  <div class="shell nuage-shell">
     <aside class="sidebar" aria-label="Arborescence">
       <p class="eyebrow">EXPLORATEUR</p>
       <h2>Dossiers</h2>
-      <nav id="dossiers" aria-label="Dossiers disponibles"></nav>
+      <nav aria-label="Dossiers de l’espace IA-IPR EPS">
+        <a class="folder-entry tone-bleu" href="#dossier-ia-ipr-eps"><span class="folder-icon" aria-hidden="true"></span><span>IA IPR EPS</span></a>
+      </nav>
     </aside>
     <main class="main">
       <section class="hero tone-bleu">
         <div>
           <p class="eyebrow">ESPACE DOCUMENTAIRE</p>
-          <h1 id="titre">Documents de l’IA IPR EPS</h1>
+          <h1>Documents IA-IPR EPS</h1>
+          <p>Accès réservé aux collègues autorisés dans Nuage.</p>
         </div>
       </section>
-      <p class="notice" id="etat" role="status" aria-live="polite">Connexion documentaire Jalios en préparation.</p>
-      <section class="card" aria-labelledby="documents">
-        <h2 id="documents">Documents</h2>
-        <ul id="fichiers"></ul>
-        <p id="vide" hidden>Aucun document dans ce dossier.</p>
-      </section>
-      <section class="card" aria-labelledby="depot">
-        <h2 id="depot">Déposer un PDF</h2>
-        <form id="formulaire">
-          <fieldset id="depot-commandes" disabled>
-            <label>Choisir un fichier PDF <input type="file" name="file" accept=".pdf,application/pdf" required></label>
-            <button type="submit">Déposer dans Jalios</button>
-          </fieldset>
-        </form>
+      <section class="card document-card" id="dossier-ia-ipr-eps" aria-labelledby="nom-dossier">
+        <h2 id="nom-dossier">IA IPR EPS</h2>
+        <p>Ouvrez le dossier pour consulter, télécharger ou déposer des documents selon vos droits.</p>
+        <div class="actions">
+          <a class="button" href="https://nuage01.apps.education.fr/index.php/gf/jtrx5/255281940" target="_blank" rel="noopener noreferrer">Ouvrir le dossier dans Nuage <span aria-hidden="true">↗</span></a>
+        </div>
+        <p class="subtle">Le dossier s’ouvre dans un nouvel onglet. Si Nuage indique que vous n’êtes pas connecté, connectez-vous avec votre compte académique, puis revenez ici et cliquez de nouveau. <a href="https://nuage.apps.education.fr/" target="_blank" rel="noopener noreferrer">Se connecter à Nuage</a></p>
       </section>
     </main>
   </div>
