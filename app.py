@@ -38,6 +38,11 @@ class ImportErrorZIP(ValueError):
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     secret = os.environ.get("HUB_SECRET_KEY", "")
+    secret_file = os.environ.get("HUB_SECRET_KEY_FILE")
+    if secret_file:
+        if secret:
+            raise RuntimeError("Définissez une seule source pour la clé de session.")
+        secret = Path(secret_file).read_text(encoding="utf-8").strip()
     if len(secret) < 32:
         raise RuntimeError("Définissez HUB_SECRET_KEY (au moins 32 caractères).")
     Path(app.instance_path).mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -91,9 +96,44 @@ def create_app():
                        (email, generate_password_hash(password)))
         click.echo("Espace initialisé.")
 
+    @app.cli.command("backup-db")
+    @click.argument("destination", type=click.Path(path_type=Path))
+    def backup_db(destination):
+        # SQLite takes a consistent copy, including changes still in the WAL.
+        with closing(connect()) as source:
+            try:
+                ready = source.execute("SELECT 1 FROM users WHERE admin=1 AND active=1").fetchone()
+            except sqlite3.Error as error:
+                raise click.ClickException("La base du Hub est absente ou illisible.") from error
+            if not ready:
+                raise click.ClickException("La base du Hub doit être initialisée.")
+            try:
+                descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except OSError as error:
+                raise click.ClickException(str(error)) from error
+            os.close(descriptor)
+            try:
+                with closing(sqlite3.connect(destination)) as target:
+                    source.backup(target)
+                    if target.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+                        raise sqlite3.DatabaseError("Contrôle de la sauvegarde échoué.")
+            except sqlite3.Error as error:
+                destination.unlink(missing_ok=True)
+                raise click.ClickException(str(error)) from error
+        click.echo("Sauvegarde SQLite vérifiée.")
+
+    @app.get("/sante")
+    def health():
+        try:
+            with closing(connect()) as db:
+                ready = db.execute("SELECT 1 FROM users WHERE admin=1 AND active=1").fetchone()
+        except sqlite3.Error:
+            ready = False
+        return ("OK", 200) if ready else ("Indisponible", 503)
+
     @app.before_request
     def prepare():
-        if request.endpoint == "static" or isinstance(request.routing_exception, SecurityError):
+        if request.endpoint in {"static", "health"} or isinstance(request.routing_exception, SecurityError):
             return
         g.db = connect()
         g.db.execute("BEGIN IMMEDIATE" if request.method == "POST" else "BEGIN")

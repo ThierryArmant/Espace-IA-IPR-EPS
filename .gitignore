@@ -3,3 +3,4 @@ __pycache__/
 instance/
 *.sqlite3*
 .env
+secrets/

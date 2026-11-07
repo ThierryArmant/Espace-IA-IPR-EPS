@@ -1,0 +1,43 @@
+services:
+  hub:
+    build: .
+    restart: unless-stopped
+    environment:
+      HUB_PUBLIC_URL: "https://${HUB_DOMAIN:?Indiquez HUB_DOMAIN dans .env}"
+      HUB_SECRET_KEY_FILE: /run/secrets/hub_key
+    secrets:
+      - hub_key
+    volumes:
+      - hub-data:/var/lib/ipr
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request, urllib.parse; host = urllib.parse.urlsplit(os.environ['HUB_PUBLIC_URL']).netloc; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8080/sante', headers={'Host': host}), timeout=4).close()"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      hub:
+        condition: service_healthy
+    environment:
+      HUB_DOMAIN: "${HUB_DOMAIN:?Indiquez HUB_DOMAIN dans .env}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+secrets:
+  hub_key:
+    file: ./secrets/hub_key
+
+volumes:
+  hub-data:
+  caddy-data:
+  caddy-config:

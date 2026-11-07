@@ -28,8 +28,40 @@ Ouvrez http://127.0.0.1:8080. La commande d’initialisation demande le mot de p
 
 Les PDF sont consultables page par page et les textes TXT/CSV ont un aperçu. Les fichiers Office peuvent être déposés et téléchargés selon les droits accordés.
 
-## Avant une mise en service académique
+## Installation sur un serveur
 
-Le site n’est pas déployé par ce dépôt. Pour une installation de recette, utilisez une instance HTTPS avec `HUB_PUBLIC_URL` fixé à l’origine publique exacte, `HUB_LOCAL_HTTP` désactivé, une clé de session privée et un chemin `HUB_DATABASE` placé sur un volume persistant privé. Prévoyez des sauvegardes restaurables de SQLite et évitez de consigner les chemins contenant des liens d’activation dans les journaux. Un seul serveur d’application utilise cette base locale. Faites valider l’hébergement, l’authentification, les sauvegardes et les règles de conservation par l’académie avant l’import de documents réels.
+Prérequis : un serveur Linux autorisé par l’académie, Docker avec Compose, un nom de domaine pointant vers le serveur et les ports 80 et 443 disponibles. Le service Flask reste sur le réseau interne de Compose. Caddy reçoit les connexions HTTPS et gère le certificat. SQLite est conservé dans le volume `hub-data`, indépendamment des conteneurs.
 
-La coédition bureautique reste à intégrer et à tester sur une instance de l’éditeur institutionnel validée par l’académie. Les invitations et demandes passent actuellement par la messagerie de l’animateur. Albert et les autres modules de RESANA ne sont pas raccordés dans cette version.
+Depuis la racine du dépôt sur le serveur, remplacez les deux valeurs d’exemple avant de lancer l’installation.
+
+```bash
+printf 'HUB_DOMAIN=hub-eps.exemple.fr\n' > .env
+install -d -m 700 secrets
+# À faire une seule fois. Conservez cette clé entre les mises à jour.
+if [ ! -e secrets/hub_key ]; then
+  (umask 077 && openssl rand -hex 32 > secrets/hub_key)
+  chmod 0444 secrets/hub_key
+fi
+docker compose build hub
+docker compose run --rm hub flask --app app init-db --email animateur@exemple.fr
+docker compose up -d
+docker compose ps
+```
+
+La commande d’initialisation demande le mot de passe de l’animateur. Le dossier `secrets` est privé sur l’hôte. Le fichier de clé est lisible par l’utilisateur applicatif à travers le montage Compose. Vérifiez ensuite la connexion via le domaine HTTPS configuré. Si un reverse proxy académique existe déjà, utilisez sa configuration de publication à la place du service Caddy.
+
+### Sauvegarder
+
+```bash
+backup="hub-$(date -u +%Y%m%dT%H%M%SZ).sqlite3"
+docker compose exec -T hub flask --app app backup-db "/var/lib/ipr/$backup"
+(umask 077 && docker compose cp "hub:/var/lib/ipr/$backup" "./$backup")
+```
+
+Conservez les copies dans un emplacement protégé et vérifiez la restauration sur une instance isolée. Une restauration se fait serveur arrêté, à partir d’une copie validée, en remplaçant la base et en écartant ses anciens fichiers WAL et SHM. La clé de session doit être sauvegardée séparément. Protégez les liens d’activation dans les journaux du reverse proxy.
+
+### Périmètre de mise en service
+
+Faites valider l’hébergement, l’authentification, les sauvegardes et les règles de conservation par l’académie avant l’import de documents réels. Derrière un proxy, le plafond de tentatives par IP est partagé tant que l’adresse cliente n’est pas transmise et reconnue via une chaîne de proxys de confiance.
+
+Les invitations et demandes passent par la messagerie de l’animateur. La coédition Office doit être intégrée et testée sur une instance de l’éditeur validée par l’académie. Albert et les autres modules de RESANA restent à raccorder.
