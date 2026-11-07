@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <title>Documents · IA-IPR EPS</title>
-  <link rel="stylesheet" href="static/hub.css">
+  <link rel="stylesheet" href="static/hub.css?v=escaliers">
   <script src="static/navigation-dossiers.js?v=3" defer></script>
   <style>
     .shell.nuage-shell { grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); }
@@ -15,7 +15,7 @@
     .branche-dossier .folder-entry { flex: 1; min-width: 0; margin: 0; }
     .basculer-dossier { flex: 0 0 2.4rem; padding: 0; border: 0; border-radius: .55rem; background: transparent; color: #294f75; font: 700 1.4rem/1 system-ui; cursor: pointer; }
     .basculer-dossier:hover, .basculer-dossier[aria-expanded="true"] { background: #fff9; }
-    .sous-dossiers { position: absolute; z-index: 3; inset-inline-start: 100%; inset-block-start: 0; width: clamp(15rem, 30vw, 23rem); max-height: min(55vh, 32rem); overflow: auto; margin: 0; padding: .4rem; list-style: none; background: #fff; border: 1px solid #a8bfd4; border-radius: .55rem; box-shadow: 0 10px 24px #1b36572b; }
+    .sous-dossiers { position: absolute; z-index: 3; inset-inline-start: 100%; inset-block-start: 0; width: clamp(19rem, 40vw, 31rem); max-height: min(55vh, 32rem); overflow: auto; margin: 0; padding: .4rem; list-style: none; background: #fff; border: 1px solid #a8bfd4; border-radius: .55rem; box-shadow: 0 10px 24px #1b36572b; }
     .sous-dossiers[hidden], [data-dossier][hidden], #panneau-sous-dossier[hidden] { display: none; }
     .sous-dossier { display: flex; align-items: center; gap: .65rem; padding: .55rem .6rem; border-radius: .35rem; color: #244663; font-size: .86rem; font-weight: 650; text-decoration: none; }
     .sous-branche { position: relative; }
@@ -24,7 +24,8 @@
     .niveau-suivant > summary::-webkit-details-marker { display: none; }
     .niveau-suivant > summary:hover, .niveau-suivant[open] > summary { background: #e8f1f9; }
     .niveau-suivant[open] > summary span { transform: rotate(90deg); }
-    .niveau-suivant > ul { margin: 0 0 .25rem .95rem; padding: 0 0 0 .35rem; list-style: none; border-inline-start: 1px solid #d6e3ef; }
+    .niveau-suivant > ul { --retrait-dossier: clamp(.9rem, 2vw, 1.65rem); }
+    .sous-dossier { overflow-wrap: anywhere; }
     .sous-dossier .folder-icon { flex-shrink: 0; }
     .sous-dossier:hover, .sous-dossier[aria-current] { background: #e8f1f9; text-decoration: underline; }
     .folder-entry:focus-visible, .basculer-dossier:focus-visible, .sous-dossier:focus-visible { outline: 2px solid #294f75; outline-offset: -2px; }
