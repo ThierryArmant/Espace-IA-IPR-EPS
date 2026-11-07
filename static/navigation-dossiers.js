@@ -35,7 +35,8 @@ function afficherDossier() {
   panneauSousDossier.hidden = !sousDossier;
   if (sousDossier) {
     titreSousDossier.textContent = sousDossier.textContent.trim();
-    parentSousDossier.textContent = dossier.querySelector(".nom-dossier").textContent;
+    parentSousDossier.textContent = [dossier.querySelector(".nom-dossier").textContent, sousDossier.dataset.parent]
+      .filter(Boolean).join(" › ");
   }
 }
 
@@ -62,12 +63,23 @@ for (const branche of branches) {
   });
 }
 
+for (const branche of arborescence.querySelectorAll(".sous-branche")) {
+  branche.addEventListener("pointerenter", (event) => {
+    if (event.pointerType === "mouse") branche.querySelector(".niveau-suivant").open = true;
+  });
+}
+
 for (const link of sousDossierLinks) {
   link.addEventListener("click", (event) => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     if (location.hash !== link.hash) history.pushState(null, "", link.hash);
     afficherDossier();
+    const niveauSuivant = link.nextElementSibling;
+    if (niveauSuivant?.matches(".niveau-suivant")) {
+      niveauSuivant.open = true;
+      return;
+    }
     ouvrirBranche(null);
     titreSousDossier.focus();
   });

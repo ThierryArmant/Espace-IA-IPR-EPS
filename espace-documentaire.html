@@ -6,7 +6,7 @@
   <meta name="referrer" content="no-referrer">
   <title>Documents · IA-IPR EPS</title>
   <link rel="stylesheet" href="static/hub.css">
-  <script src="static/navigation-dossiers.js?v=2" defer></script>
+  <script src="static/navigation-dossiers.js?v=3" defer></script>
   <style>
     .shell.nuage-shell { grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); }
     .folder-entry { display: flex; gap: .65rem; align-items: center; margin: .75rem .3rem; padding: .7rem; border-radius: .55rem; }
@@ -18,6 +18,13 @@
     .sous-dossiers { position: absolute; z-index: 3; inset-inline-start: 100%; inset-block-start: 0; width: clamp(15rem, 30vw, 23rem); max-height: min(55vh, 32rem); overflow: auto; margin: 0; padding: .4rem; list-style: none; background: #fff; border: 1px solid #a8bfd4; border-radius: .55rem; box-shadow: 0 10px 24px #1b36572b; }
     .sous-dossiers[hidden], [data-dossier][hidden], #panneau-sous-dossier[hidden] { display: none; }
     .sous-dossier { display: flex; align-items: center; gap: .65rem; padding: .55rem .6rem; border-radius: .35rem; color: #244663; font-size: .86rem; font-weight: 650; text-decoration: none; }
+    .sous-branche { position: relative; }
+    .sous-branche > .sous-dossier { padding-inline-end: 2.4rem; }
+    .niveau-suivant > summary { position: absolute; inset-block-start: 0; inset-inline-end: 0; display: grid; place-items: center; width: 2.35rem; height: 2.25rem; list-style: none; border-radius: .35rem; color: #294f75; font: 700 1.2rem/1 system-ui; cursor: pointer; }
+    .niveau-suivant > summary::-webkit-details-marker { display: none; }
+    .niveau-suivant > summary:hover, .niveau-suivant[open] > summary { background: #e8f1f9; }
+    .niveau-suivant[open] > summary span { transform: rotate(90deg); }
+    .niveau-suivant > ul { margin: 0 0 .25rem .95rem; padding: 0 0 0 .35rem; list-style: none; border-inline-start: 1px solid #d6e3ef; }
     .sous-dossier .folder-icon { flex-shrink: 0; }
     .sous-dossier:hover, .sous-dossier[aria-current] { background: #e8f1f9; text-decoration: underline; }
     .folder-entry:focus-visible, .basculer-dossier:focus-visible, .sous-dossier:focus-visible { outline: 2px solid #294f75; outline-offset: -2px; }
@@ -77,7 +84,38 @@
           <a class="folder-entry" href="#dossier-cmi-eps"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">02</span><span class="nom-dossier">CMI EPS</span></a>
           <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-cmi-eps-sous-dossiers" aria-label="Sous-dossiers de CMI EPS"><span aria-hidden="true">›</span></button>
           <ul class="sous-dossiers" id="dossier-cmi-eps-sous-dossiers" hidden>
-            <li><a class="sous-dossier" href="#dossier-cmi-eps--cten"><span class="folder-icon" aria-hidden="true"></span>CTEN</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-cmi-eps--cten"><span class="folder-icon" aria-hidden="true"></span>CTEN</a>
+              <details class="niveau-suivant" name="dossier-cmi-eps-branches">
+                <summary aria-label="Sous-dossiers de CTEN"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-cmi-eps--cten--2023-2024" data-parent="CTEN"><span class="folder-icon" aria-hidden="true"></span>2023-2024</a>
+                    <details class="niveau-suivant" name="dossier-cmi-eps--cten-branches">
+                      <summary aria-label="Sous-dossiers de 2023-2024"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2023-2024--edt-cten-2023-2024" data-parent="CTEN › 2023-2024"><span class="folder-icon" aria-hidden="true"></span>EDT CTEN 2023 2024</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2023-2024--liste-des-visites-repartitions-cmi-23-24" data-parent="CTEN › 2023-2024"><span class="folder-icon" aria-hidden="true"></span>LISTE DES VISITES REPARTITIONS CMI 23-24</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2023-2024--mise-en-place-tutorat-neo-cten" data-parent="CTEN › 2023-2024"><span class="folder-icon" aria-hidden="true"></span>MISE EN PLACE TUTORAT NEO CTEN</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2023-2024--rapports-de-visite-23-24" data-parent="CTEN › 2023-2024"><span class="folder-icon" aria-hidden="true"></span>RAPPORTS DE VISITE 23-24</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-cmi-eps--cten--2024-2025" data-parent="CTEN"><span class="folder-icon" aria-hidden="true"></span>2024-2025</a>
+                    <details class="niveau-suivant" name="dossier-cmi-eps--cten-branches">
+                      <summary aria-label="Sous-dossiers de 2024-2025"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2024-2025--diapo-de-rentree-24" data-parent="CTEN › 2024-2025"><span class="folder-icon" aria-hidden="true"></span>Diapo de rentrée 24</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2024-2025--doc-visite-d-accompagnement-24-25" data-parent="CTEN › 2024-2025"><span class="folder-icon" aria-hidden="true"></span>DOC Visite d’accompagnement 24 25</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2024-2025--edt-cten-24-25" data-parent="CTEN › 2024-2025"><span class="folder-icon" aria-hidden="true"></span>EDT CTEN 24-25</a></li>
+                        <li><a class="sous-dossier" href="#dossier-cmi-eps--cten--2024-2025--les-archives" data-parent="CTEN › 2024-2025"><span class="folder-icon" aria-hidden="true"></span>LES ARCHIVES</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-cmi-eps--documents-de-rentree"><span class="folder-icon" aria-hidden="true"></span>DOCUMENTS DE RENTREE</a></li>
             <li><a class="sous-dossier" href="#dossier-cmi-eps--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a></li>
             <li><a class="sous-dossier" href="#dossier-cmi-eps--fc"><span class="folder-icon" aria-hidden="true"></span>FC</a></li>
@@ -99,22 +137,114 @@
           <a class="folder-entry" href="#dossier-ctia-dasen"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">03</span><span class="nom-dossier">CTIA DASEN</span></a>
           <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-ctia-dasen-sous-dossiers" aria-label="Sous-dossiers de CTIA DASEN"><span aria-hidden="true">›</span></button>
           <ul class="sous-dossiers" id="dossier-ctia-dasen-sous-dossiers" hidden>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--2h-de-sport-hebdomadaire"><span class="folder-icon" aria-hidden="true"></span>2H DE SPORT HEBDOMADAIRE</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--30-min-apq"><span class="folder-icon" aria-hidden="true"></span>30 MIN APQ</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--2h-de-sport-hebdomadaire"><span class="folder-icon" aria-hidden="true"></span>2H DE SPORT HEBDOMADAIRE</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de 2H DE SPORT HEBDOMADAIRE"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--2h-de-sport-hebdomadaire--rs2023" data-parent="2H DE SPORT HEBDOMADAIRE"><span class="folder-icon" aria-hidden="true"></span>RS2023</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--2h-de-sport-hebdomadaire--rs2024" data-parent="2H DE SPORT HEBDOMADAIRE"><span class="folder-icon" aria-hidden="true"></span>RS2024</a></li>
+                </ul>
+              </details>
+            </li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--30-min-apq"><span class="folder-icon" aria-hidden="true"></span>30 MIN APQ</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de 30 MIN APQ"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--30-min-apq--rs2023" data-parent="30 MIN APQ"><span class="folder-icon" aria-hidden="true"></span>RS2023</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--30-min-apq--rs2024" data-parent="30 MIN APQ"><span class="folder-icon" aria-hidden="true"></span>RS2024</a></li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--copil-sport-education"><span class="folder-icon" aria-hidden="true"></span>COPIL SPORT EDUCATION</a></li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--cr-reunion-de-travail"><span class="folder-icon" aria-hidden="true"></span>CR REUNION DE TRAVAIL</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--doc-de-rentree"><span class="folder-icon" aria-hidden="true"></span>DOC DE RENTREE</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--doc-de-rentree"><span class="folder-icon" aria-hidden="true"></span>DOC DE RENTREE</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de DOC DE RENTREE"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--doc-de-rentree--rs2024" data-parent="DOC DE RENTREE"><span class="folder-icon" aria-hidden="true"></span>RS2024</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--doc-de-rentree--rs2025" data-parent="DOC DE RENTREE"><span class="folder-icon" aria-hidden="true"></span>RS2025</a></li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--dsp"><span class="folder-icon" aria-hidden="true"></span>DSP</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--examens"><span class="folder-icon" aria-hidden="true"></span>EXAMENS</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de EXAMENS"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--bulletin-academique-examens-eps" data-parent="EXAMENS"><span class="folder-icon" aria-hidden="true"></span>BULLETIN ACADEMIQUE EXAMENS EPS</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-spe" data-parent="EXAMENS"><span class="folder-icon" aria-hidden="true"></span>EPREUVES PONCTUELLES ENS SPE</a></li>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-obligatoires" data-parent="EXAMENS"><span class="folder-icon" aria-hidden="true"></span>EPREUVES PONCTUELLES ENS OBLIGATOIRES</a>
+                    <details class="niveau-suivant" name="dossier-ctia-dasen--examens-branches">
+                      <summary aria-label="Sous-dossiers de EPREUVES PONCTUELLES ENS OBLIGATOIRES"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-obligatoires--fiches-d-evaluation" data-parent="EXAMENS › EPREUVES PONCTUELLES ENS OBLIGATOIRES"><span class="folder-icon" aria-hidden="true"></span>FICHES D’EVALUATION</a></li>
+                        <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-obligatoires--organisation" data-parent="EXAMENS › EPREUVES PONCTUELLES ENS OBLIGATOIRES"><span class="folder-icon" aria-hidden="true"></span>ORGANISATION</a></li>
+                        <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-obligatoires--statistiques-epreuves-ponctuelles" data-parent="EXAMENS › EPREUVES PONCTUELLES ENS OBLIGATOIRES"><span class="folder-icon" aria-hidden="true"></span>STATISTIQUES EPREUVES PONCTUELLES</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--epreuves-ponctuelles-ens-option" data-parent="EXAMENS"><span class="folder-icon" aria-hidden="true"></span>EPREUVES PONCTUELLES ENS OPTION</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--examens--rapport-cai-pn" data-parent="EXAMENS"><span class="folder-icon" aria-hidden="true"></span>RAPPORT CAI PN</a></li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2024"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2024</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2030</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030"><span class="folder-icon" aria-hidden="true"></span>GENERATION 2030</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de GENERATION 2030"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030--labelisations" data-parent="GENERATION 2030"><span class="folder-icon" aria-hidden="true"></span>LABELISATIONS</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030--pilotage-acad-g2030" data-parent="GENERATION 2030"><span class="folder-icon" aria-hidden="true"></span>PILOTAGE ACAD G2030</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--generation-2030--pilotage-national-g2030" data-parent="GENERATION 2030"><span class="folder-icon" aria-hidden="true"></span>PILOTAGE NATIONAL G2030</a></li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--gt-savoir-nager"><span class="folder-icon" aria-hidden="true"></span>GT SAVOIR NAGER</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026"><span class="folder-icon" aria-hidden="true"></span>RS 2026</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026"><span class="folder-icon" aria-hidden="true"></span>RS 2026</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de RS 2026"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--2hsc" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>2HSC</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--dge" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>DGE</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--g-2030" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>G 2030</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--info-rentree" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>INFO RENTREE</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--savoir-nager" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>SAVOIR NAGER</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--rs-2026--sss" data-parent="RS 2026"><span class="folder-icon" aria-hidden="true"></span>SSS</a></li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--ses"><span class="folder-icon" aria-hidden="true"></span>SES</a></li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--shn"><span class="folder-icon" aria-hidden="true"></span>SHN</a></li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--sport-etudes"><span class="folder-icon" aria-hidden="true"></span>SPORT ETUDES</a></li>
             <li><a class="sous-dossier" href="#dossier-ctia-dasen--srav"><span class="folder-icon" aria-hidden="true"></span>SRAV</a></li>
-            <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss"><span class="folder-icon" aria-hidden="true"></span>SSS</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-ctia-dasen--sss"><span class="folder-icon" aria-hidden="true"></span>SSS</a>
+              <details class="niveau-suivant" name="dossier-ctia-dasen-branches">
+                <summary aria-label="Sous-dossiers de SSS"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss--listes-sss" data-parent="SSS"><span class="folder-icon" aria-hidden="true"></span>LISTES SSS</a></li>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-ctia-dasen--sss--pilotage" data-parent="SSS"><span class="folder-icon" aria-hidden="true"></span>PILOTAGE</a>
+                    <details class="niveau-suivant" name="dossier-ctia-dasen--sss-branches">
+                      <summary aria-label="Sous-dossiers de PILOTAGE"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss--pilotage--rs2024" data-parent="SSS › PILOTAGE"><span class="folder-icon" aria-hidden="true"></span>RS2024</a></li>
+                        <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss--pilotage--rs2025" data-parent="SSS › PILOTAGE"><span class="folder-icon" aria-hidden="true"></span>RS2025</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss--textes" data-parent="SSS"><span class="folder-icon" aria-hidden="true"></span>TEXTES</a></li>
+                  <li><a class="sous-dossier" href="#dossier-ctia-dasen--sss--webinaires" data-parent="SSS"><span class="folder-icon" aria-hidden="true"></span>WEBINAIRES</a></li>
+                </ul>
+              </details>
+            </li>
           </ul>
         </div>
         <div class="branche-dossier tone-rose">
@@ -122,9 +252,49 @@
           <button class="basculer-dossier" type="button" aria-expanded="false" aria-controls="dossier-formateurs-eps-sous-dossiers" aria-label="Sous-dossiers de Formateurs EPS"><span aria-hidden="true">›</span></button>
           <ul class="sous-dossiers" id="dossier-formateurs-eps-sous-dossiers" hidden>
             <li><a class="sous-dossier" href="#dossier-formateurs-eps--agenda-stages"><span class="folder-icon" aria-hidden="true"></span>AGENDA STAGES</a></li>
-            <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa"><span class="folder-icon" aria-hidden="true"></span>COMPLEMENTS APSA</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa"><span class="folder-icon" aria-hidden="true"></span>COMPLEMENTS APSA</a>
+              <details class="niveau-suivant" name="dossier-formateurs-eps-branches">
+                <summary aria-label="Sous-dossiers de COMPLEMENTS APSA"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--listes-stagiaires-par-stage" data-parent="COMPLEMENTS APSA"><span class="folder-icon" aria-hidden="true"></span>Listes stagiaires par stage</a></li>
+                  <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--outils-administratifs" data-parent="COMPLEMENTS APSA"><span class="folder-icon" aria-hidden="true"></span>Outils administratifs</a></li>
+                  <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--productions-formateurs" data-parent="COMPLEMENTS APSA"><span class="folder-icon" aria-hidden="true"></span>Productions formateurs</a></li>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--supports-de-formation" data-parent="COMPLEMENTS APSA"><span class="folder-icon" aria-hidden="true"></span>Supports de formation</a>
+                    <details class="niveau-suivant" name="dossier-formateurs-eps--complements-apsa-branches">
+                      <summary aria-label="Sous-dossiers de Supports de formation"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--supports-de-formation--2024-2025" data-parent="COMPLEMENTS APSA › Supports de formation"><span class="folder-icon" aria-hidden="true"></span>2024-2025</a></li>
+                        <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--supports-de-formation--2025-2026" data-parent="COMPLEMENTS APSA › Supports de formation"><span class="folder-icon" aria-hidden="true"></span>2025-2026</a></li>
+                        <li><a class="sous-dossier" href="#dossier-formateurs-eps--complements-apsa--supports-de-formation--questionnaire-academique-egalite" data-parent="COMPLEMENTS APSA › Supports de formation"><span class="folder-icon" aria-hidden="true"></span>Questionnaire académique égalité</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-formateurs-eps--docs-administratifs"><span class="folder-icon" aria-hidden="true"></span>DOCS ADMINISTRATIFS</a></li>
-            <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements"><span class="folder-icon" aria-hidden="true"></span>FORM ETABLISSEMENTS</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements"><span class="folder-icon" aria-hidden="true"></span>FORM ETABLISSEMENTS</a>
+              <details class="niveau-suivant" name="dossier-formateurs-eps-branches">
+                <summary aria-label="Sous-dossiers de FORM ETABLISSEMENTS"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements--montage-stage" data-parent="FORM ETABLISSEMENTS"><span class="folder-icon" aria-hidden="true"></span>Montage stage</a></li>
+                  <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements--retours-d-experiences" data-parent="FORM ETABLISSEMENTS"><span class="folder-icon" aria-hidden="true"></span>Retours d’expériences</a></li>
+                  <li class="sous-branche">
+                    <a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements--support-formation" data-parent="FORM ETABLISSEMENTS"><span class="folder-icon" aria-hidden="true"></span>Support formation</a>
+                    <details class="niveau-suivant" name="dossier-formateurs-eps--form-etablissements-branches">
+                      <summary aria-label="Sous-dossiers de Support formation"><span aria-hidden="true">›</span></summary>
+                      <ul>
+                        <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements--support-formation--2024-2025" data-parent="FORM ETABLISSEMENTS › Support formation"><span class="folder-icon" aria-hidden="true"></span>2024-2025</a></li>
+                        <li><a class="sous-dossier" href="#dossier-formateurs-eps--form-etablissements--support-formation--2025-2026" data-parent="FORM ETABLISSEMENTS › Support formation"><span class="folder-icon" aria-hidden="true"></span>2025-2026</a></li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+              </details>
+            </li>
             <li><a class="sous-dossier" href="#dossier-formateurs-eps--jingle-web-radio"><span class="folder-icon" aria-hidden="true"></span>JINGLE WEB RADIO</a></li>
           </ul>
         </div>
@@ -135,11 +305,51 @@
             <li><a class="sous-dossier" href="#dossier-unss-ip--para-sport-et-partage"><span class="folder-icon" aria-hidden="true"></span>PARA SPORT ET PARTAGE</a></li>
             <li><a class="sous-dossier" href="#dossier-unss-ip--sport-etudes"><span class="folder-icon" aria-hidden="true"></span>SPORT ETUDES</a></li>
             <li><a class="sous-dossier" href="#dossier-unss-ip--sss"><span class="folder-icon" aria-hidden="true"></span>SSS</a></li>
-            <li><a class="sous-dossier" href="#dossier-unss-ip--unss-13"><span class="folder-icon" aria-hidden="true"></span>UNSS 13</a></li>
-            <li><a class="sous-dossier" href="#dossier-unss-ip--unss-acad"><span class="folder-icon" aria-hidden="true"></span>UNSS ACAD</a></li>
-            <li><a class="sous-dossier" href="#dossier-unss-ip--unss04"><span class="folder-icon" aria-hidden="true"></span>UNSS04</a></li>
-            <li><a class="sous-dossier" href="#dossier-unss-ip--unss05"><span class="folder-icon" aria-hidden="true"></span>UNSS05</a></li>
-            <li><a class="sous-dossier" href="#dossier-unss-ip--unss84"><span class="folder-icon" aria-hidden="true"></span>UNSS84</a></li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-unss-ip--unss-13"><span class="folder-icon" aria-hidden="true"></span>UNSS 13</a>
+              <details class="niveau-suivant" name="dossier-unss-ip-branches">
+                <summary aria-label="Sous-dossiers de UNSS 13"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-unss-ip--unss-13--unss-2026-2027" data-parent="UNSS 13"><span class="folder-icon" aria-hidden="true"></span>UNSS 2026 2027</a></li>
+                </ul>
+              </details>
+            </li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-unss-ip--unss-acad"><span class="folder-icon" aria-hidden="true"></span>UNSS ACAD</a>
+              <details class="niveau-suivant" name="dossier-unss-ip-branches">
+                <summary aria-label="Sous-dossiers de UNSS ACAD"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-unss-ip--unss-acad--unss-2026-2027" data-parent="UNSS ACAD"><span class="folder-icon" aria-hidden="true"></span>UNSS 2026 2027</a></li>
+                </ul>
+              </details>
+            </li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-unss-ip--unss04"><span class="folder-icon" aria-hidden="true"></span>UNSS04</a>
+              <details class="niveau-suivant" name="dossier-unss-ip-branches">
+                <summary aria-label="Sous-dossiers de UNSS04"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-unss-ip--unss04--unss-2026-2027" data-parent="UNSS04"><span class="folder-icon" aria-hidden="true"></span>UNSS 2026 2027</a></li>
+                </ul>
+              </details>
+            </li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-unss-ip--unss05"><span class="folder-icon" aria-hidden="true"></span>UNSS05</a>
+              <details class="niveau-suivant" name="dossier-unss-ip-branches">
+                <summary aria-label="Sous-dossiers de UNSS05"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-unss-ip--unss05--unss-2026-2027" data-parent="UNSS05"><span class="folder-icon" aria-hidden="true"></span>UNSS 2026 2027</a></li>
+                </ul>
+              </details>
+            </li>
+            <li class="sous-branche">
+              <a class="sous-dossier" href="#dossier-unss-ip--unss84"><span class="folder-icon" aria-hidden="true"></span>UNSS84</a>
+              <details class="niveau-suivant" name="dossier-unss-ip-branches">
+                <summary aria-label="Sous-dossiers de UNSS84"><span aria-hidden="true">›</span></summary>
+                <ul>
+                  <li><a class="sous-dossier" href="#dossier-unss-ip--unss84--unss-2026-2027" data-parent="UNSS84"><span class="folder-icon" aria-hidden="true"></span>UNSS 2026 2027</a></li>
+                </ul>
+              </details>
+            </li>
           </ul>
         </div>
         <a class="folder-entry tone-menthe" href="#dossier-gtep-evaluation"><span class="folder-icon" aria-hidden="true"></span><span class="folder-number" aria-hidden="true">06</span><span>GTEP Évaluation</span></a>
