@@ -339,12 +339,13 @@ def create_app():
         children = defaultdict(list)
         visible_files = []
         search = request.args.get("q", "").strip().casefold()
-        for entry in sorted(g.nodes.values(), key=lambda row: row["name"].casefold()):
+        for entry in sorted(g.nodes.values(), key=lambda row: row["id"]):
             if entry["kind"] == "folder" and entry["parent"] and rights(entry) & VIEW:
                 children[entry["parent"]].append(entry)
             elif (entry["kind"] == "file" and entry["parent"] == node_id
                   and rights(entry) & VIEW and search in entry["name"].casefold()):
                 visible_files.append(entry)
+        visible_files.sort(key=lambda row: row["name"].casefold())
         return render_template("folder.html", node=node, trail=lineage(node), children=children,
                                files=visible_files, rights=rights, search=search)
 
