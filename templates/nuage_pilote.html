@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Essai local Nuage · IA-IPR EPS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='hub.css') }}">
+</head>
+<body>
+<main class="main entry">
+  <section class="hero tone-bleu">
+    <div><p class="eyebrow">ESSAI LOCAL · DONNÉES FICTIVES</p><h1>IA-IPR EPS</h1><p>Tester un dépôt de PDF dans Nuage</p></div>
+  </section>
+  {% for message in get_flashed_messages() %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
+  {% if connected %}
+  <section class="card">
+    <h2>Déposer un PDF fictif</h2>
+    <p>Destination dans Nuage : IA IPR EPS → Pilote Hub.</p>
+    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Choisir un PDF <input type="file" name="file" accept=".pdf,application/pdf" required></label>
+      <button type="submit">Déposer dans Nuage</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>PDF de test dans Nuage</h2>
+    {% for file in files %}<p><a href="{{ url_for('download', name=file) }}">{{ file }}</a></p>
+    {% else %}<p>Aucun PDF de test à afficher.</p>{% endfor %}
+  </section>
+  <form action="{{ url_for('disconnect') }}" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Fermer la session</button>
+  </form>
+  {% elif authorization_url %}
+  <section class="card">
+    <h2>Autoriser le pilote dans Nuage</h2>
+    <p><a class="button" href="{{ authorization_url }}" target="_blank" rel="noopener noreferrer">Ouvrir la page officielle Nuage</a></p>
+    <p>Une fois l’autorisation accordée, revenez dans cet onglet.</p>
+    <form action="{{ url_for('verify') }}" method="post">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><button>J’ai autorisé le pilote</button>
+    </form>
+  </section>
+  {% else %}
+  <section class="card">
+    <h2>Connexion au compte académique</h2>
+    <p>Vous vous identifierez sur la page officielle de Nuage. Ce pilote travaille dans votre dossier IA IPR EPS.</p>
+    <form action="{{ url_for('connect') }}" method="post">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><button>Connecter mon compte Nuage</button>
+    </form>
+  </section>
+  {% endif %}
+</main>
+</body>
+</html>

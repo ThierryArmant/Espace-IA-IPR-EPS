@@ -120,3 +120,28 @@ Jalios native. Il doit être mis en œuvre ou adapté côté académique avant a
 Recette attendue : depuis l’interface GitHub, déposer un PDF fictif, vérifier sa
 présence dans le dossier Jalios choisi, puis tester la consultation et le dépôt
 avec un compte autorisé et un compte qui ne l’est pas.
+
+### Essai local avec Nuage sur Windows
+
+Téléchargez le ZIP du dépôt, extrayez-le puis double-cliquez sur
+`Lancer-test-Nuage.cmd` dans le dossier qui contient `nuage_pilote.py`.
+Python 3.12 est requis. Le lanceur ouvre un serveur uniquement sur
+`127.0.0.1:8088` et la page locale dans votre navigateur. Si le navigateur ne
+s’ouvre pas, utilisez l’adresse affichée dans la fenêtre du lanceur.
+
+Cliquez sur **Connecter mon compte Nuage**, ouvrez le lien proposé et autorisez
+le pilote sur le site officiel. Revenez dans l’onglet local et cliquez sur
+**J’ai autorisé le pilote**. Le sélecteur PDF devient alors disponible.
+
+Le pilote attend un dossier **IA IPR EPS** à la racine du compte
+`nuage01.apps.education.fr`. Au premier dépôt il crée le sous-dossier
+**Pilote Hub**, puis y enregistre uniquement des PDF de test de 10 Mio maximum,
+sous des noms générés sans écraser les fichiers existants. Vous pouvez vérifier
+leur présence puis les télécharger depuis l’interface locale.
+
+Le flux Nuage fournit un mot de passe d’application lié au compte. Le pilote
+le garde en mémoire locale et limite lui-même ses requêtes au sous-dossier de
+test. Le mot de passe d’application n’est pas limité à ce sous-dossier par
+Nuage. Après le test, fermez le pilote et révoquez son autorisation depuis les
+paramètres de sécurité de Nuage. Cette recette ne met aucun service en ligne et
+n’active pas le dépôt sur GitHub Pages.
