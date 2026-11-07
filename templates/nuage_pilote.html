@@ -9,10 +9,26 @@
 <body>
 <main class="main entry">
   <section class="hero tone-bleu">
-    <div><p class="eyebrow">ESSAI LOCAL · DONNÉES FICTIVES</p><h1>IA-IPR EPS</h1><p>Tester un dépôt de PDF dans Nuage</p></div>
+    <div><p class="eyebrow">ESSAI LOCAL · DONNÉES FICTIVES</p><h1>IA-IPR EPS</h1><p>Tester la création de documents dans Nuage</p></div>
   </section>
   {% for message in get_flashed_messages() %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
   {% if connected %}
+  <section class="card">
+    <h2>Créer dans Nuage</h2>
+    <p>Les fichiers de test sont créés dans IA IPR EPS → Pilote Hub et s’ouvrent dans Nuage.</p>
+    <div class="actions">
+      <form action="{{ url_for('create_office', kind='texte') }}" method="post" target="_blank">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><button>Créer un document texte</button>
+      </form>
+      <form action="{{ url_for('create_office', kind='tableur') }}" method="post" target="_blank">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><button>Créer un tableur</button>
+      </form>
+    </div>
+    <p class="subtle">Après la création, rechargez cette page pour retrouver le document ici.</p>
+    {% for name, link in office_files %}
+    <p>{% if link %}<a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %}</p>
+    {% endfor %}
+  </section>
   <section class="card">
     <h2>Déposer un PDF fictif</h2>
     <p>Destination dans Nuage : IA IPR EPS → Pilote Hub.</p>

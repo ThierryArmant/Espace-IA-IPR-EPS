@@ -7,9 +7,10 @@ import re
 import secrets
 import time
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import quote, unquote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from xml.etree import ElementTree
+from zipfile import ZIP_STORED, ZipFile
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_file, session, url_for
 
@@ -19,6 +20,44 @@ TEST_PATH = "/IA%20IPR%20EPS/Pilote%20Hub/"
 PDF_LIMIT = 10 * 1024 * 1024
 TEST_NAME = re.compile(r"hub-test-[0-9a-f]{24}\.pdf")
 DAV = "{DAV:}"
+OC = "{http://owncloud.org/ns}"
+OFFICE_TYPES = {
+    "texte": ("odt", "text", "<text:p/>"),
+    "tableur": ("ods", "spreadsheet", '<table:table table:name="Feuille1">'
+                "<table:table-row><table:table-cell/></table:table-row></table:table>"),
+}
+OFFICE_NAME = re.compile(r"hub-test-[0-9a-f]{24}\.(?:odt|ods)")
+FILE_ID_QUERY = (b'<d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">'
+                 b"<d:prop><oc:fileid/></d:prop></d:propfind>")
+FILE_ID_HEADERS = {"Content-Type": "application/xml; charset=utf-8"}
+
+
+def blank_office_document(kind):
+    extension, body, content = OFFICE_TYPES[kind]
+    mime = f"application/vnd.oasis.opendocument.{body}"
+    output = io.BytesIO()
+    with ZipFile(output, "w") as archive:
+        archive.writestr("mimetype", mime, compress_type=ZIP_STORED)
+        archive.writestr("content.xml",
+            '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+            ' xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"'
+            ' xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" office:version="1.2">'
+            f"<office:body><office:{body}>{content}</office:{body}></office:body>"
+            "</office:document-content>")
+        archive.writestr("META-INF/manifest.xml",
+            '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"'
+            ' manifest:version="1.2">'
+            f'<manifest:file-entry manifest:full-path="/" manifest:media-type="{mime}"/>'
+            '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>'
+            "</manifest:manifest>")
+    return extension, mime, output.getvalue()
+
+
+def office_link(response):
+    file_id = response.findtext(f"{DAV}propstat/{DAV}prop/{OC}fileid", "")
+    if re.fullmatch(r"[1-9][0-9]{0,19}", file_id):
+        return f"{NUAGE_STORAGE}/index.php/f/{file_id}"
+    return None
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -104,23 +143,28 @@ def create_app():
     def home():
         connected = key() in accounts
         files = []
+        office_files = {}
         if connected:
             try:
-                status, data = dav("PROPFIND", headers={"Depth": "1"}, limit=512 * 1024)
+                status, data = dav("PROPFIND", payload=FILE_ID_QUERY,
+                                   headers={**FILE_ID_HEADERS, "Depth": "1"}, limit=512 * 1024)
                 if status == 207:
                     root = ElementTree.fromstring(data)
-                    for node in root.findall(f"{DAV}response/{DAV}href"):
-                        name = (node.text or "").rsplit("/", 1)[-1]
+                    for node in root.findall(f"{DAV}response"):
+                        name = unquote(node.findtext(f"{DAV}href", "").rsplit("/", 1)[-1])
                         if TEST_NAME.fullmatch(name):
                             files.append(name)
+                        elif OFFICE_NAME.fullmatch(name):
+                            office_files[name] = office_link(node)
                 elif status == 404:
-                    flash("Le sous-dossier « Pilote Hub » sera créé lors du premier dépôt.")
+                    flash("Le sous-dossier « Pilote Hub » sera créé au premier essai.")
                 else:
-                    flash(f"La liste des PDF de test n’est pas disponible (Nuage {status}).")
+                    flash(f"La liste des documents de test n’est pas disponible (Nuage {status}).")
             except (ValueError, ElementTree.ParseError, URLError, OSError):
                 flash("Impossible de lire la liste dans Nuage.")
         flow = pending.get(key())
         return render_template("nuage_pilote.html", connected=connected, files=sorted(set(files)),
+                               office_files=sorted(office_files.items()),
                                authorization_url=flow[0] if flow else None, csrf=key())
 
     @app.post("/connecter")
@@ -167,7 +211,7 @@ def create_app():
                     raise ValueError("Identifiants d’application non reconnus.")
                 accounts[key()] = (login, password)
                 pending.pop(key(), None)
-                flash("Compte Nuage connecté. Vous pouvez choisir un PDF fictif.")
+                flash("Compte Nuage connecté. Vous pouvez créer un document de test.")
             else:
                 flash(f"Autorisation non confirmée par Nuage ({status}).")
         except (KeyError, TypeError, AttributeError, ValueError, URLError, OSError):
@@ -198,6 +242,37 @@ def create_app():
                 flash(f"Nuage n’a pas confirmé le dépôt ({status}).")
         except (ValueError, URLError, OSError):
             flash("La réponse de Nuage est indisponible. Vérifiez la liste avant de réessayer.")
+        return redirect(url_for("home"))
+
+    @app.post("/creer/<kind>")
+    def create_office(kind):
+        if key() not in accounts:
+            abort(403)
+        if kind not in OFFICE_TYPES:
+            abort(404)
+        extension, mime, data = blank_office_document(kind)
+        name = f"hub-test-{secrets.token_hex(12)}.{extension}"
+        try:
+            status, _ = dav("MKCOL")
+            if status not in {201, 405}:
+                flash(f"Le dossier de test n’a pas pu être créé (Nuage {status}).")
+                return redirect(url_for("home"))
+            status, _ = dav("PUT", name, payload=data, headers={
+                "Content-Type": mime, "If-None-Match": "*",
+            })
+            if status != 201:
+                flash(f"Nuage n’a pas confirmé la création ({status}).")
+                return redirect(url_for("home"))
+            status, xml = dav("PROPFIND", name, payload=FILE_ID_QUERY,
+                              headers={**FILE_ID_HEADERS, "Depth": "0"})
+            if status == 207:
+                item = ElementTree.fromstring(xml).find(f"{DAV}response")
+                link = office_link(item) if item is not None else None
+                if link:
+                    return redirect(link, code=303)
+            flash("Document créé dans Nuage. Vous pouvez le retrouver dans « Pilote Hub ».")
+        except (ValueError, ElementTree.ParseError, URLError, OSError):
+            flash("La réponse de Nuage est indisponible. Vérifiez « Pilote Hub » avant de réessayer.")
         return redirect(url_for("home"))
 
     @app.get("/fichier/<name>")
