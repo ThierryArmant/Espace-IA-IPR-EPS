@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Accès à l’espace IA-IPR EPS{% endblock %}
+{% block scripts %}{% if not use_code and not invitation %}<script src="{{ url_for('static', filename='mot-de-passe.js') }}" defer></script>{% endif %}{% endblock %}
 {% block content %}
 <section class="entry" aria-label="Accès à l’espace IA-IPR EPS">
   <img class="entry-art" src="{{ url_for('static',filename='affichette-ia-ipr-eps.svg') }}" alt="IA-IPR EPS · Espace de travail de l’inspection pédagogique régionale" width="760" height="290">
@@ -31,9 +32,13 @@
         <input type="hidden" name="csrf" value="{{ csrf }}">
         {% if use_code %}<input type="hidden" name="action" value="request-code">{% endif %}
         <label>Adresse électronique <input name="email" type="email" required maxlength="254" autocomplete="username"></label>
-        {% if not use_code %}<label>Mot de passe
-          <input name="password" type="password" required maxlength="256" autocomplete="current-password">
-        </label>{% endif %}
+        {% if not use_code %}
+        <label for="mot-de-passe">Mot de passe</label>
+        <div class="saisie-mot-de-passe">
+          <input id="mot-de-passe" name="password" type="password" required maxlength="256" autocomplete="current-password">
+          <button id="visibilite-mot-de-passe" class="secondary" type="button" aria-controls="mot-de-passe" hidden>Afficher</button>
+        </div>
+        {% endif %}
         <button>{{ 'Recevoir mon code' if use_code else 'Entrer dans l’espace' }}</button>
       </form>
     {% endif %}

@@ -176,3 +176,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .sidebar:has(.explorateur-prive) { max-height: none; overflow: visible; }
   .explorateur-panneau { margin: .25rem 0 .4rem .75rem; }
 }
+
+.saisie-mot-de-passe { display: flex; align-items: stretch; gap: .45rem; margin: .28rem 0 .6rem; }
+.saisie-mot-de-passe input { flex: 1; min-width: 0; margin: 0; }
+.saisie-mot-de-passe button[hidden] { display: none; }
