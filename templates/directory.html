@@ -12,6 +12,15 @@
 <section class="card"><h2>Inviter un collaborateur</h2><form method="post" action="{{ url_for('invite') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Adresse électronique <input name="email" type="email" required maxlength="254"></label><button>Préparer l’invitation</button>
 </form></section>
+<section class="card"><h2>Inviter en une fois</h2>
+<p class="subtle">Prépare un courriel par compte en attente d’activation (ajouté par exemple depuis Autorisations).</p>
+<form method="post" action="{{ url_for('invite_all') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Qui inviter <select name="group">
+<option value="">Tous les comptes en attente</option>
+{% for group in groups %}<option value="{{ group.id }}">Seulement le groupe « {{ group.name }} »</option>{% endfor %}
+</select></label>
+<button>Préparer les invitations</button></form></section>
 <section class="card"><h2>Créer un groupe</h2><form method="post" action="{{ url_for('add_group') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>

@@ -944,6 +944,39 @@ def create_app():
         return render_template("message.html", title="Invitation prête", link=link,
                                draft=mailto(email, "Invitation à l’espace IA-IPR EPS", body))
 
+    @app.post("/annuaire/inviter-tous")
+    def invite_all():
+        require_admin()
+        group = request.form.get("group", type=int)
+        query = "SELECT id,email,name FROM users WHERE password IS NULL"
+        values = ()
+        if group:
+            query += " AND id IN (SELECT user_id FROM memberships WHERE group_id=?)"
+            values = (group,)
+        pending = g.db.execute(query + " ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE",
+                               values).fetchall()
+        if not pending:
+            flash("Aucun compte en attente d’activation.")
+            return redirect(url_for("directory"))
+        expires = int(time.time()) + 48 * 3600
+        invitations = []
+        for person in pending:
+            token = secrets.token_urlsafe(32)
+            g.db.execute("DELETE FROM invites WHERE user_id=?", (person["id"],))
+            g.db.execute("INSERT INTO invites VALUES(?,?,?)",
+                         (hashlib.sha256(token.encode()).hexdigest(), person["id"], expires))
+            link = public_link("activate", token=token)
+            hello = f"Bonjour {person['name'].split()[-1]}," if person["name"] else "Bonjour,"
+            body = (f"{hello}\n\nVous êtes invité(e) à rejoindre l’espace de travail IA-IPR EPS, "
+                    "qui remplace Résana pour nos documents partagés.\n\n"
+                    "Pour activer votre accès, cliquez sur ce lien (valable 48 heures) "
+                    "et choisissez votre mot de passe :\n\n" + link +
+                    "\n\nEnsuite, connectez-vous avec votre adresse académique. "
+                    "Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
+            invitations.append((person, link, mailto(person["email"], "Invitation à l’espace IA-IPR EPS", body)))
+        g.db.commit()
+        return render_template("invitations.html", invitations=invitations)
+
     @app.route("/demandes", methods=["GET", "POST"])
     def messages():
         require_admin()
