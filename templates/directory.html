@@ -10,6 +10,20 @@
 </form>
 {% if groups %}<p class="subtle">{{ groups|map(attribute='name')|join(' · ') }}</p>{% endif %}</section>
 </div>
+<section class="card"><h2>Groupe des applications IPR</h2>
+<p><a href="{{ url_for('ipr.directory') }}">Voir l’annuaire des membres IPR</a></p>
+<p>Les membres actifs du groupe choisi partagent les événements, réunions, créneaux, questionnaires, marque-pages et publications.</p>
+{% if groups %}
+<form method="post" action="{{ url_for('ipr.configure') }}">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Groupe <select name="group" required>
+    <option value="">Choisir le groupe</option>
+    {% for group in groups %}<option value="{{ group.id }}" {% if group.id == ipr_group_id %}selected{% endif %}>{{ group.name }}</option>{% endfor %}
+  </select></label>
+  <button>Enregistrer le groupe</button>
+</form>
+{% else %}<p>Créez d’abord un groupe ci-dessus.</p>{% endif %}
+</section>
 <section class="card"><h2>Comptes</h2>
 {% for person in people %}
 <div class="member"><div><strong>{{ person.email }}</strong>

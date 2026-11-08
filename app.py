@@ -23,6 +23,7 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from ipr_modules import group_id as ipr_group_id, register_ipr_modules
 from login_code import CodeMailer, login_with_code, start_session
 from nuage_hub import register_nuage
 
@@ -74,6 +75,9 @@ def create_app():
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
         return db
+
+    with closing(connect()) as db:
+        db.executescript(Path(__file__).with_name("ipr_schema.sql").read_text(encoding="utf-8"))
 
     @app.template_test("readable")
     def readable(mask):
@@ -606,7 +610,8 @@ def create_app():
         members = defaultdict(set)
         for row in g.db.execute("SELECT * FROM memberships"):
             members[row["user_id"]].add(row["group_id"])
-        return render_template("directory.html", people=people(), groups=groups(), members=members)
+        return render_template("directory.html", people=people(), groups=groups(), members=members,
+                               ipr_group_id=ipr_group_id())
 
     @app.post("/annuaire/groupe")
     def add_group():
@@ -683,5 +688,6 @@ def create_app():
                                    draft=mailto(email, subject, body))
         return render_template("messages.html", people=[row for row in people() if row["active"]])
 
+    register_ipr_modules(app)
     nuage_documents = register_nuage(app, allowed, lineage, rights, VIEW, WRITE)
     return app

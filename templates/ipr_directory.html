@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Annuaire IPR · IA-IPR EPS{% endblock %}
+{% block content %}
+<div class="hero tone-menthe"><div><p class="eyebrow">GROUPE IPR</p><h1>Annuaire</h1><p>Comptes actifs du groupe.</p></div></div>
+<section class="card">
+  {% if g.user.admin %}<p><a class="button secondary" href="{{ url_for('directory') }}">Gérer les comptes et les groupes</a></p>{% endif %}
+  {% if members %}
+  <ul>{% for member in members %}<li><a href="mailto:{{ member.email }}">{{ member.email }}</a></li>{% endfor %}</ul>
+  {% else %}<p>Aucun compte actif dans le groupe sélectionné.</p>{% endif %}
+</section>
+{% endblock %}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='nuage-explorateur-v1') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='applications-ipr-v1') }}">
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -24,8 +24,13 @@
 {% if g.user %}
 <nav class="rail" aria-label="Modules">
   <a class="rail-doc" href="{{ url_for('folder') }}"><span aria-hidden="true">▤</span>Documents</a>
+  {% if ipr_visible %}
+  <a class="rail-team" href="{{ url_for('directory' if g.user.admin else 'ipr.directory') }}"><span aria-hidden="true">♙</span>Annuaire</a>
+  {% for key, (label, icon, description) in ipr_modules.items() %}
+  <a class="rail-ipr" href="{{ url_for('ipr.module_page', module=key) }}" {% if request.view_args and request.view_args.get('module') == key %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
+  {% endfor %}
+  {% endif %}
   {% if g.user.admin %}
-  <a class="rail-team" href="{{ url_for('directory') }}"><span aria-hidden="true">♙</span>Annuaire</a>
   <a class="rail-mail" href="{{ url_for('messages') }}"><span aria-hidden="true">✉</span>Demandes</a>
   {% endif %}
 </nav>

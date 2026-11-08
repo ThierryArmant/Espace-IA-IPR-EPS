@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% set label, icon, description = ipr_modules[module] %}
+{% set module_url = url_for('ipr.module_page', module=module) %}
+{% block title %}{{ label }} · IA-IPR EPS{% endblock %}
+{% block content %}
+<div class="hero tone-bleu"><div><p class="eyebrow">GROUPE IPR</p><h1>{{ label }}</h1><p>{{ description }}</p></div></div>
+{% if not configured %}
+<section class="card"><p>Choisissez le groupe des applications dans <a href="{{ url_for('directory') }}">l’annuaire d’administration</a>.</p></section>
+{% elif mode in ('create', 'edit') %}
+{% set editing = mode == 'edit' %}
+<section class="card">
+  <h2>{{ 'Modifier' if editing else 'Ajouter' }}</h2>
+  <form method="post" action="{{ module_url }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if editing %}<input type="hidden" name="entry" value="{{ selected.id }}">{% endif %}
+    <label>Titre <input name="title" value="{{ selected.title if editing else '' }}" maxlength="180" required></label>
+    <label>{{ 'Ordre du jour' if module == 'reunions' else 'Texte' if module == 'publications' else 'Description' }}
+      <textarea name="body" rows="5" maxlength="12000" {% if module == 'publications' %}required{% endif %}>{{ selected.body if editing else '' }}</textarea>
+    </label>
+    {% if module in ('evenements', 'reunions', 'creneaux') %}
+    <div class="split">
+      <label>Début (heure de Paris) <input type="datetime-local" name="starts" value="{{ selected.starts_at if editing else '' }}" required></label>
+      <label>Fin (heure de Paris) <input type="datetime-local" name="ends" value="{{ selected.ends_at if editing else '' }}" {% if module == 'creneaux' %}required{% endif %}></label>
+    </div>
+    {% endif %}
+    {% if module in ('evenements', 'reunions', 'marque-pages') %}
+    <label>{{ 'Lien de visioconférence' if module == 'reunions' else 'Lien' }}
+      <input type="url" name="link" value="{{ selected.link if editing else '' }}" maxlength="2048" {% if module == 'marque-pages' %}required{% endif %}>
+    </label>
+    {% endif %}
+    {% if module == 'creneaux' %}
+    <label>Nombre de places <input type="number" name="capacity" min="1" max="1000" value="{{ selected.capacity if editing else 1 }}" required></label>
+    {% endif %}
+    {% if module == 'questionnaires' %}
+    <label>Questions, une par ligne <textarea name="questions" rows="6" required>{{ questions|join('\n') if editing else '' }}</textarea></label>
+    {% endif %}
+    <div class="actions">
+      <button name="action" value="{{ mode }}">Enregistrer</button>
+      <a href="{{ url_for('ipr.module_page', module=module, entry=selected.id) if editing else module_url }}">Annuler</a>
+    </div>
+  </form>
+</section>
+{% elif selected %}
+<section class="card">
+  <p><a href="{{ module_url }}">← Retour à la liste</a></p>
+  <h2>{{ selected.title }}</h2>
+  {% if selected.starts_at %}<p><strong>Début</strong> {{ selected.starts_at|replace('T', ' à ') }}{% if selected.ends_at %} · <strong>Fin</strong> {{ selected.ends_at|replace('T', ' à ') }}{% endif %} (heure de Paris)</p>{% endif %}
+  {% if selected.body %}<p class="ipr-text">{{ selected.body }}</p>{% endif %}
+  {% if selected.link %}<p><a class="button secondary" href="{{ selected.link }}" target="_blank" rel="noopener noreferrer">{{ 'Ouvrir la visioconférence' if module == 'reunions' else 'Ouvrir le lien' }}</a></p>{% endif %}
+  {% if can_manage %}
+  <div class="actions">
+    <a href="{{ url_for('ipr.module_page', module=module, entry=selected.id, mode='edit') }}">Modifier</a>
+    <details>
+      <summary>Supprimer</summary>
+      <form method="post" action="{{ module_url }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="entry" value="{{ selected.id }}">
+        <p>La suppression retire aussi les réponses ou réservations associées.</p>
+        <button class="danger" name="action" value="delete">Confirmer la suppression</button>
+      </form>
+    </details>
+  </div>
+  {% endif %}
+</section>
+{% if module in ('evenements', 'reunions', 'creneaux', 'questionnaires') %}
+<section class="card">
+  {% if module in ('evenements', 'reunions') %}
+  <h2>Participation</h2>
+  <p>{{ yes_count }} présent(s) · {{ no_count }} absent(s)</p>
+  {% elif module == 'creneaux' %}
+  <h2>Réservations</h2>
+  <p>{{ response_count }} / {{ selected.capacity }} places réservées</p>
+  {% else %}
+  <h2>Répondre au questionnaire</h2>
+  <p>Vos réponses sont visibles par l’auteur et les animateurs.</p>
+  {% endif %}
+  <form method="post" action="{{ module_url }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="entry" value="{{ selected.id }}">
+    {% if module in ('evenements', 'reunions') %}
+    <input type="hidden" name="action" value="respond">
+    {% if own_response %}<p>Votre réponse : {{ 'Présent' if own_response == 'yes' else 'Absent' }}</p>{% endif %}
+    <div class="actions">
+      <button name="response" value="yes">Je participe</button>
+      <button class="secondary" name="response" value="no">Je ne participe pas</button>
+    </div>
+    {% elif module == 'creneaux' %}
+    {% if own_response %}
+    <p>Vous avez une réservation.</p><button class="secondary" name="action" value="withdraw">Annuler ma réservation</button>
+    {% elif response_count < selected.capacity %}
+    <button name="action" value="respond">Réserver une place</button>
+    {% else %}<p>Ce créneau est complet.</p>{% endif %}
+    {% else %}
+    {% for question in questions %}
+    <label>{{ question }}<textarea name="answer_{{ loop.index0 }}" rows="3" maxlength="2000" required>{{ answers[loop.index0] if answers else '' }}</textarea></label>
+    {% endfor %}
+    <button name="action" value="respond">Enregistrer mes réponses</button>
+    {% endif %}
+  </form>
+</section>
+{% endif %}
+{% if results or roster %}
+<section class="card">
+  <h2>{{ 'Réponses reçues' if module == 'questionnaires' else 'Participants et réponses' }}</h2>
+  {% for email, values in results %}
+  <details><summary>{{ email }}</summary>
+    <dl>{% for answer in values %}<dt>{{ questions[loop.index0] }}</dt><dd class="ipr-text">{{ answer }}</dd>{% endfor %}</dl>
+  </details>
+  {% endfor %}
+  {% if roster %}
+  <ul>{% for email, response in roster %}<li>{{ email }} · {{ 'Présent' if response == 'yes' else 'Absent' if response == 'no' else 'Réservé' }}</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endif %}
+{% else %}
+<section class="card">
+  <p><a class="button" href="{{ url_for('ipr.module_page', module=module, mode='create') }}">＋ Ajouter</a></p>
+  {% if entries %}
+  <ul class="ipr-list">
+    {% for entry in entries %}
+    <li><a href="{{ url_for('ipr.module_page', module=module, entry=entry.id) }}">{{ entry.title }}</a>{% if entry.starts_at %}<small> {{ entry.starts_at|replace('T', ' à ') }}</small>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}<p>Aucun élément pour le moment.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}
