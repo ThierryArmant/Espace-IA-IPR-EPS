@@ -280,5 +280,5 @@ if __name__ == "__main__":
     import sys
     try:
         sys.exit(main(sys.argv))
-    except StorageError as error:
+    except (StorageError, RuntimeError, OSError, ValueError, KeyError) as error:
         sys.exit(f"Erreur : {error}")
