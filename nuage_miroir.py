@@ -4,7 +4,9 @@ Chaque dossier du Hub correspond au dossier Nuage de même chemin sous la racine
 Les fichiers restent dans Nuage : le Hub les liste, les montre et les sert
 seulement aux personnes autorisées, avec le compte de service.
 """
+import re
 import subprocess
+import unicodedata
 from pathlib import Path
 from urllib.parse import quote
 
@@ -19,6 +21,12 @@ MAX_SYNC_FOLDERS = 5000
 def valid_name(name):
     return (bool(name) and name not in {".", ".."} and len(name) <= 180
             and not any(c in name for c in '/\\:') and not any(ord(c) < 32 for c in name))
+
+
+def name_key(name):
+    """Clé de comparaison tolérante : accents composés, apostrophes, espaces, casse."""
+    name = unicodedata.normalize("NFC", name).replace("\u2019", "'").replace("\u00a0", " ")
+    return re.sub(r"\s+", " ", name).strip().casefold()
 
 
 def folder_path(lineage_rows):
@@ -75,19 +83,25 @@ def synchronize(db, storage, start_id=1, echo=print):
     rows = {row[0]: row for row in db.execute("SELECT id,parent,name FROM nodes WHERE kind='folder'")}
     children = {}
     for node_id, parent, name in rows.values():
-        children.setdefault(parent, {})[name.casefold()] = node_id
-    ids, created = {(): start_id}, 0
+        children.setdefault(parent, {})[name_key(name)] = node_id
+    ids, created, renamed = {(): start_id}, 0, 0
     for relative in sorted(found, key=len):
         parent = ids.get(relative[:-1])
         if parent is None:
             continue
-        child = children.get(parent, {}).get(relative[-1].casefold())
+        child = children.get(parent, {}).get(name_key(relative[-1]))
         if child is None:
             child = insert_folder(db, parent, relative[-1])
-            children.setdefault(parent, {})[relative[-1].casefold()] = child
+            children.setdefault(parent, {})[name_key(relative[-1])] = child
             created += 1
+        elif rows[child][2] != relative[-1]:
+            # Même dossier, écriture différente : le Hub reprend le nom exact de Nuage.
+            db.execute("UPDATE nodes SET name=? WHERE id=?", (relative[-1], child))
+            renamed += 1
         ids[relative] = child
     db.commit()
+    if renamed:
+        echo(f"{renamed} dossier(s) renommé(s) dans le Hub pour reprendre l’écriture exacte de Nuage.")
     for name in skipped:
         echo(f"Dossier ignoré (nom non accepté par le Hub) : {name}")
     return created, skipped

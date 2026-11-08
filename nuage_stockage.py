@@ -292,7 +292,7 @@ def clean(database=None, ask=input):
     """Aligne le Hub sur Nuage : ajoute les dossiers Nuage manquants, puis retire
     (après confirmation) les dossiers du Hub absents de Nuage et sans fichier du Hub."""
     import sqlite3
-    from nuage_miroir import synchronize
+    from nuage_miroir import name_key, synchronize
     _load_settings()
     storage = NuageStorage.from_environment(os.environ.get("HUB_LOCAL_HTTP") == "1")
     if not storage:
@@ -335,8 +335,8 @@ def clean(database=None, ask=input):
             continue
         if path[:-1] not in listings:
             content = storage.listing(path[:-1])
-            listings[path[:-1]] = set(content[0]) if content else set()
-        if name not in listings[path[:-1]]:
+            listings[path[:-1]] = {name_key(item) for item in content[0]} if content else set()
+        if name_key(name) not in listings[path[:-1]]:
             orphans.append(node_id)
     removable, kept = [], []
     for node_id in orphans:
