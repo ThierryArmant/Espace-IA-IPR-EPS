@@ -211,3 +211,74 @@ def authorize_service_account(echo, wait=600):
                 raise StorageError("Serveur Nuage non reconnu.")
             return result["loginName"], result["appPassword"], f"https://{server.netloc}"
     raise StorageError("Autorisation non reçue dans le délai.")
+
+
+def _settings_file():
+    return Path(os.environ.get("HUB_ENV_FILE", Path.home() / ".ia-ipr-eps" / "hub.env"))
+
+
+def _write_settings(values):
+    path = _settings_file()
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    kept = [line for line in lines if line.partition("=")[0].strip() not in values]
+    kept += [f"{key}={value}" for key, value in values.items()]
+    descriptor = os.open(path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+        output.write("\n".join(kept) + "\n")
+    return path
+
+
+def _load_settings():
+    path = _settings_file()
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key, sep, value = line.strip().partition("=")
+            if sep and key.strip().startswith("HUB_"):
+                os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+def main(argv):
+    """python nuage_stockage.py autoriser | verifier  (sur le serveur, en SSH)."""
+    action = argv[1] if len(argv) > 1 else ""
+    if action == "autoriser":
+        login, password, server = authorize_service_account(print)
+        folder = _settings_file().parent
+        folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+        secret = folder / "nuage_password"
+        descriptor = os.open(secret, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+            output.write(password + "\n")
+        print()
+        print("Quel dossier Nuage contient vos dossiers principaux (CMI, Formateurs…) ?")
+        root = input("Chemin depuis la racine de Nuage [Dossiers IPR EPS] : ").strip() or "Dossiers IPR EPS"
+        path = _write_settings({"HUB_NUAGE_LOGIN": login, "HUB_NUAGE_URL": server,
+                                "HUB_NUAGE_APP_PASSWORD_FILE": str(secret), "HUB_NUAGE_ROOT": root})
+        print(f"Réglages enregistrés dans {path}")
+        action = "verifier"
+    if action == "verifier":
+        _load_settings()
+        storage = NuageStorage.from_environment()
+        if not storage:
+            print("Nuage n’est pas branché : lancez « autoriser ».")
+            return 1
+        content = storage.listing(())
+        if content is None:
+            print(f"Dossier de départ introuvable : « {'/'.join(storage.root)} ».")
+            print(f"Corrigez HUB_NUAGE_ROOT dans {_settings_file()} puis relancez « verifier ».")
+            return 1
+        print(f"Nuage lu dans « {'/'.join(storage.root)} » : {len(content[0])} dossier(s), "
+              f"{len(content[1])} fichier(s).")
+        for name in content[0][:20]:
+            print("  •", name)
+        return 0
+    print("Usage : python nuage_stockage.py autoriser | verifier")
+    return 1
+
+
+if __name__ == "__main__":
+    import sys
+    try:
+        sys.exit(main(sys.argv))
+    except StorageError as error:
+        sys.exit(f"Erreur : {error}")
