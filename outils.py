@@ -6,7 +6,7 @@ ce dossier. Les partages dans Grist ou Docs se règlent dans ces outils.
 """
 from urllib.parse import urlsplit
 
-from flask import Blueprint, abort, flash, g, redirect, request, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 TOOLS = {
     "grist": ("Grist", "https://grist.numerique.gouv.fr/", {"grist.numerique.gouv.fr"}),
@@ -80,5 +80,9 @@ def register_tools(app, allowed, rights, view, write):
         g.db.commit()
         flash("Lien retiré du dossier. Le tableur ou le document existe toujours dans son outil.")
         return redirect(url_for("folder", node_id=node_id))
+
+    @bp.get("/aide")
+    def guide():
+        return render_template("aide.html")
 
     app.register_blueprint(bp)

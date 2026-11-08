@@ -1,7 +1,11 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% block title %}Annuaire IPR · IA-IPR EPS{% endblock %}
 {% block content %}
-<div class="hero tone-menthe"><div><p class="eyebrow">GROUPE IPR</p><h1>Annuaire</h1><p>Comptes actifs du groupe.</p></div></div>
+<div class="hero tone-menthe"><div><p class="eyebrow">GROUPE IPR</p><h1>Annuaire</h1><p>Comptes actifs du groupe.</p></div>
+<div class="actions">{% call help_menu('aide-annuaire-ipr', 'Aide sur l’annuaire', 'Contacter un collègue') %}
+<p>Cliquez sur une adresse pour écrire au collègue depuis votre messagerie.</p>
+{% endcall %}</div></div>
 <section class="card">
   {% if g.user.admin %}<p><a class="button secondary" href="{{ url_for('directory') }}">Gérer les comptes et les groupes</a></p>{% endif %}
   {% if members %}

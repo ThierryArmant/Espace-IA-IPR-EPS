@@ -4,7 +4,19 @@
 {% set module_url = url_for('ipr.module_page', module=module) %}
 {% block title %}{{ label }} · IA-IPR EPS{% endblock %}
 {% block content %}
-<div class="hero tone-bleu"><div><p class="eyebrow">GROUPE IPR</p><h1>{{ label }}</h1><p>{{ description }}</p></div></div>
+{% set module_help = {
+  'evenements': ['Annoncez un événement (formation, journée, colloque) avec sa date et, si besoin, un lien.', 'Chacun indique s’il participe ; l’auteur voit la liste des réponses.'],
+  'reunions': ['Fixez une réunion avec sa date, son ordre du jour et le lien de visioconférence.', 'Chacun indique sa présence ; le lien est accessible depuis la fiche de la réunion.'],
+  'creneaux': ['Proposez des créneaux avec un nombre de places (entretiens, visites, permanences).', 'Chacun réserve une place ; un créneau complet n’est plus proposé.'],
+  'questionnaires': ['Posez une ou plusieurs questions au groupe, une par ligne.', 'Chacun répond une fois ; l’auteur consulte toutes les réponses.'],
+  'marque-pages': ['Rangez les liens utiles du groupe : sites institutionnels, textes officiels, outils.', 'Chaque marque-page a un titre, un lien et une description.'],
+  'publications': ['Publiez une annonce ou une information, avec jusqu’à cinq pièces jointes.', 'Les membres du groupe la lisent et téléchargent les pièces jointes.'],
+} %}
+<div class="hero tone-bleu"><div><p class="eyebrow">GROUPE IPR</p><h1>{{ label }}</h1><p>{{ description }}</p></div>
+<div class="actions">{% call help_menu('aide-module', 'Aide sur ' ~ label, 'Utiliser ' ~ label) %}
+{% for line in module_help[module] %}<p>{{ line }}</p>{% endfor %}
+<p>Le bouton <strong>Ajouter</strong> crée une nouvelle entrée ; l’auteur et l’animateur peuvent la modifier ou la supprimer.</p>
+{% endcall %}</div></div>
 {% if not configured %}
 <section class="card"><p>Choisissez le groupe des applications dans <a href="{{ url_for('directory') }}">l’annuaire d’administration</a>.</p></section>
 {% elif mode in ('create', 'edit') %}

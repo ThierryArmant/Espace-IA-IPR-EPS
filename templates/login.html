@@ -1,11 +1,18 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% block title %}Accès à l’espace IA-IPR EPS{% endblock %}
 {% block scripts %}{% if not use_code and not invitation %}<script src="{{ url_for('static', filename='mot-de-passe.js') }}" defer></script>{% endif %}{% endblock %}
 {% block content %}
 <section class="entry" aria-label="Accès à l’espace IA-IPR EPS">
   <img class="entry-art" src="{{ url_for('static',filename='affichette-ia-ipr-eps.svg') }}" alt="IA-IPR EPS · Espace de travail de l’inspection pédagogique régionale" width="760" height="290">
   <section class="card login entry-form">
-    <p class="eyebrow">ESPACE RÉSERVÉ AUX MEMBRES AUTORISÉS</p>
+    <div class="actions"><p class="eyebrow">ESPACE RÉSERVÉ AUX MEMBRES AUTORISÉS</p>
+    {% call help_menu('aide-connexion', 'Aide sur la connexion', 'Se connecter') %}
+    {% if use_code %}<p>Saisissez votre adresse académique : un code à huit chiffres vous est envoyé par courriel. Il est valable 10 minutes et une seule fois.</p>
+    <p>Pas de courriel ? Vérifiez vos indésirables, puis demandez un nouveau code.</p>
+    {% else %}<p>Saisissez l’adresse et le mot de passe choisis lors de l’activation de votre compte.</p>{% endif %}
+    <p>Première connexion : utilisez le lien d’invitation reçu par courriel. Sans invitation, contactez l’animateur de l’espace.</p>
+    {% endcall %}</div>
     {% if invitation %}
       <h1>Activer mon accès</h1>
       <p class="subtle">{{ invitation.email }}</p>

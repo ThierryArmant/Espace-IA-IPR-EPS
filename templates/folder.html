@@ -65,7 +65,12 @@
 {% block sidebar %}
 {% set active=trail|map(attribute='id')|list %}
 <aside class="sidebar" aria-label="Arborescence">
-<p class="eyebrow">EXPLORATEUR</p><h2>Dossiers</h2>
+<p class="eyebrow">EXPLORATEUR</p><div class="actions"><h2>Dossiers</h2>
+{% call help_menu('aide-explorateur', 'Aide sur l’explorateur', 'Se déplacer dans les dossiers') %}
+<p><strong>Ouvrir un dossier</strong> : cliquez sur son nom. Arrêtez la souris sur un dossier principal pour voir ses sous-dossiers ; cliquez sur la flèche › pour garder la liste ouverte.</p>
+<p><strong>Cadenas vert</strong> : vous avez accès au contenu (le survol précise « consultation » ou « accès complet »). <strong>Cadenas rouge</strong> : dossier visible, contenu fermé.</p>
+<p>Vous ne voyez que les dossiers qui vous ont été ouverts.</p>
+{% endcall %}</div>
 <a class="root" href="{{ url_for('folder') }}">Tous mes dossiers</a>
 <nav class="explorateur-prive" aria-label="Dossiers de l’espace IA-IPR EPS">
 {{ branch(children[1], active, true) }}
@@ -79,6 +84,13 @@
   <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}{% if node.id != 1 %} {{ lock(node) }}{% endif %}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
   <div class="actions">
   {% if mask is writable %}{{ folder_actions(node) }}{% endif %}
+  {% call help_menu('aide-dossier', 'Aide sur ce dossier', 'Ce que vous pouvez faire ici') %}
+  <p>Le <strong>cadenas</strong> à côté du titre indique votre accès : vert = autorisé, rouge = contenu fermé.</p>
+  {% if mask is writable %}<p>Le bouton <strong>⋯</strong> regroupe les actions sur le dossier : ajouter un sous-dossier, renommer, supprimer (dossier vide){% if g.user.admin %}, monter ou descendre dans la liste, déplacer à l’intérieur du même dossier principal{% endif %}.</p>{% endif %}
+  {% if g.user.admin %}<p><strong>Droits d’accès</strong> règle finement un dossier ou un sous-dossier. Pour les dossiers principaux, le tableau <strong>Autorisations</strong> est plus simple.</p>
+  <p><strong>Reprendre les dossiers Nuage</strong> ajoute au Hub les dossiers créés directement dans Nuage.</p>{% endif %}
+  <p>Plus bas : les outils pour créer ou déposer des documents, puis la liste des documents. Chaque zone a sa bulle <strong>?</strong>.</p>
+  {% endcall %}
   {% if g.user.admin and node.id!=1 %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}
   {% if mask is downloadable and not nuage_storage %}<a class="button secondary" href="{{ url_for('export_zip',node_id=node.id) }}">Exporter le ZIP</a>{% endif %}
   {% if nuage_storage and g.user.admin %}<form method="post" action="{{ url_for('miroir.sync', node_id=node.id) }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Reprendre les dossiers Nuage</button></form>{% endif %}
@@ -95,14 +107,17 @@
   <form method="post" action="{{ url_for('miroir.create_office', node_id=node.id, kind='texte') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button title="Texte façon Word, rangé dans ce dossier Nuage">＋ Texte (Collabora)</button></form>
   <a class="button secondary" href="{{ tools.grist[1] }}" target="_blank" rel="noopener noreferrer">＋ Tableur (Grist)</a>
   <a class="button secondary" href="{{ tools.docs[1] }}" target="_blank" rel="noopener noreferrer">＋ Document (Docs)</a>
-  {% call help_menu('aide-outils', 'Aide sur les outils', 'Collabora, Grist ou Docs ?') %}
-  <p><strong>Collabora</strong> : tableur et texte façon Excel et Word. Le fichier est créé dans ce dossier ; « Modifier à plusieurs » l’ouvre dans un autre onglet. Pour modifier, il faut un accès au dossier dans Nuage.</p>
-  <p><strong>Grist</strong> (listes partagées, droits fins) et <strong>Docs</strong> (textes à plusieurs) s’ouvrent dans un autre onglet avec votre compte académique. Créez-y le tableur ou le document.</p>
-  <p>Copiez ensuite son adresse, puis utilisez « Ranger un lien Grist ou Docs » pour l’ajouter à ce dossier. Seules les personnes autorisées sur ce dossier verront le lien.</p>
+  {% call help_menu('aide-outils', 'Aide sur les outils', 'Quel outil choisir ?') %}
+  <p><strong>Tableur (Collabora)</strong> — comme Excel. Pour un planning, une répartition, un budget. Le fichier est créé tout de suite dans ce dossier ; « Modifier à plusieurs » l’ouvre dans un autre onglet (il faut un accès au dossier dans Nuage pour modifier).</p>
+  <p><strong>Texte (Collabora)</strong> — comme Word. Pour un courrier, une note, un document mis en page. Même fonctionnement.</p>
+  <p><strong>Tableur (Grist)</strong> — pour une liste que chacun complète : inscriptions, remontées des établissements, suivi. Grist peut ne montrer à chacun que ses lignes.</p>
+  <p><strong>Document (Docs)</strong> — pour écrire à plusieurs en même temps, simplement : compte rendu de réunion, prise de notes.</p>
+  <p>Grist et Docs s’ouvrent dans un autre onglet avec votre compte académique. Une fois le tableur ou le document créé, copiez son adresse, puis utilisez « Ranger un lien Grist ou Docs » pour l’ajouter à ce dossier. Seules les personnes autorisées sur ce dossier verront le lien.</p>
   <p>Pensez à partager aussi le tableur ou le document avec vos collègues dans Grist ou Docs.</p>
   {% endcall %}
 </div>
 <details><summary>🔗 Ranger un lien Grist ou Docs</summary>
+<p class="subtle">Dans Grist ou Docs, copiez l’adresse du tableur ou du document (barre d’adresse du navigateur), puis collez-la ici avec un titre. Pensez à le partager aussi avec vos collègues dans l’outil (bouton « Partager »).</p>
 <form method="post" action="{{ url_for('outils.add', node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Titre <input name="title" required maxlength="180" placeholder="Suivi des inspections 2026-2027"></label>
@@ -148,9 +163,16 @@
 {% endif %}
 <section class="panel">
 <div class="panel-head"><div class="actions"><h2>Documents</h2>
-{% call help_menu('aide-documents', 'Aide sur la liste des documents', 'Hub et Nuage dans ce dossier') %}
+{% call help_menu('aide-documents', 'Aide sur la liste des documents', 'Les documents de ce dossier') %}
+{% if nuage_storage %}
+<p><strong>Nom du fichier</strong> : ouvre sa fiche (aperçu des PDF et des textes). <strong>Télécharger</strong> : enregistre le fichier sur votre ordinateur.</p>
+<p><strong>Modifier à plusieurs</strong> : ouvre un tableur ou un texte dans Collabora, dans un autre onglet. Fermez l’onglet pour revenir ici.</p>
+<p>Étiquettes : <span class="badge granted">Nuage</span> fichier du dossier, <span class="badge outil-grist">Grist</span> tableur Grist, <span class="badge outil-docs">Docs</span> document Docs (ouverts dans un autre onglet).</p>
+<p><strong>Notifier</strong> : prévient les collègues autorisés qu’un document a été mis à jour.</p>
+{% else %}
 <p>Les lignes marquées « Nuage » ouvrent le fichier partagé dans un autre onglet. Les modifications dans Collabora sont enregistrées dans Nuage.</p>
 <p>Les fichiers importés directement dans le Hub ont une fiche de consultation. Les droits du Hub s’appliquent à cette fiche. Pour un fichier Nuage, vos droits dans Nuage s’appliquent aussi.</p>
+{% endif %}
 {% endcall %}
 </div>{% if not nuage_storage %}<a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a>{% endif %}<form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
 {% if nuage_files %}<p class="empty subtle">Les fichiers Nuage s’ouvrent dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour revenir à votre dossier.</p>{% endif %}

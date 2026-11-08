@@ -20,7 +20,9 @@
 <nav class="crumb"><a href="{{ url_for('folder',node_id=node.parent) }}">Retour au dossier parent</a></nav>
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><div class="actions"><h1>Droits d’accès</h1>
 {% call help_menu('aide-droits', 'Aide sur les droits d’accès', 'Quels droits sont réglés ici ?') %}
-<p>Ces réglages définissent les droits dans IA‑IPR EPS.</p>
+<p>Ces réglages définissent les droits dans IA‑IPR EPS pour ce dossier et tout ce qu’il contient, sauf réglage plus précis sur un sous-dossier.</p>
+<p><strong>Consulter</strong> : voir et lire. <strong>Télécharger</strong> : enregistrer les fichiers. <strong>Ajouter</strong> : déposer des documents et créer des sous-dossiers.</p>
+<p>Pour les dossiers principaux, le tableau <strong>Autorisations</strong> est plus rapide. Pour retirer un accès hérité, appliquez une règle sans case cochée.</p>
 {% if node.kind == 'file' %}
 <p>Ce fichier est stocké sur le Hub. Si un fichier du même nom existe dans Nuage, ouvrez la ligne marquée « Nuage » depuis le dossier pour accéder à cette autre copie.</p>
 {% else %}

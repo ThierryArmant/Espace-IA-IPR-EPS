@@ -40,6 +40,7 @@
   {% if can_manage_access %}
   <a class="rail-team" href="{{ url_for('autorisations.grid') }}" {% if request.endpoint == 'autorisations.grid' %}aria-current="page"{% endif %}><span aria-hidden="true">☑</span>Autorisations</a>
   {% endif %}
+  <a class="rail-doc" href="{{ url_for('outils.guide') }}" {% if request.endpoint == 'outils.guide' %}aria-current="page"{% endif %}><span aria-hidden="true">?</span>Aide</a>
   {% if g.user.admin %}
   <a class="rail-mail" href="{{ url_for('messages') }}"><span aria-hidden="true">✉</span>Demandes</a>
   {% endif %}

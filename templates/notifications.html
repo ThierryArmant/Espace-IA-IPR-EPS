@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% block title %}Notifications · IA-IPR EPS{% endblock %}
 {% block content %}
-<div class="hero tone-rose"><div><p class="eyebrow">GROUPE IPR</p><h1>Notifications</h1><p>Mises à jour de documents signalées par vos collègues.</p></div></div>
+<div class="hero tone-rose"><div><p class="eyebrow">GROUPE IPR</p><h1>Notifications</h1><p>Mises à jour de documents signalées par vos collègues.</p></div>
+<div class="actions">{% call help_menu('aide-notifications', 'Aide sur les notifications', 'Être prévenu des mises à jour') %}
+<p>Quand un collègue modifie un document, il peut cliquer sur <strong>Notifier</strong> dans la liste du dossier : vous recevez alors une notification ici.</p>
+<p>Le nombre entre parenthèses dans la barre de droite indique les notifications non lues. <strong>Marquer comme lue</strong> les retire de ce compteur.</p>
+{% endcall %}</div></div>
 <section class="card">
   {% for entry, node in entries %}
   <article class="member">
