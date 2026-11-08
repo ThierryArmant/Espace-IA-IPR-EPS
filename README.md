@@ -222,3 +222,12 @@ test. Le mot de passe d’application n’est pas limité à ce sous-dossier par
 Nuage. Après le test, fermez le pilote et révoquez son autorisation depuis les
 paramètres de sécurité de Nuage. Cette recette ne met aucun service en ligne et
 n’active pas le dépôt sur GitHub Pages.
+
+### Connexion avec le compte académique
+
+La page de connexion propose « Se connecter avec mon compte académique ». La personne
+s'identifie sur la page officielle d'apps.education, autorise l'accès, puis revient sur
+l'onglet du Hub. Le Hub lit son adresse, révoque aussitôt l'accès accordé, et ouvre la
+session si l'adresse figure parmi les membres (un compte en attente est alors activé ; un
+compte suspendu est refusé). Aucun mot de passe à créer : un seul courriel groupé, envoyé en
+copie cachée, suffit pour ouvrir l'espace à tous (page « Inviter en une fois »).

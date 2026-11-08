@@ -23,6 +23,7 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from connexion_academique import register_academic_login
 from autorisations import SETTINGS_SCHEMA, register_authorizations, upgrade_users
 from document_notifications import register_document_notifications
 from outils import SCHEMA as TOOLS_SCHEMA, register_tools
@@ -274,7 +275,8 @@ def create_app():
             expected = session.get("csrf", "")
             if not expected or not secrets.compare_digest(expected, request.form.get("csrf", "")):
                 abort(400, "Le formulaire a expiré. Rechargez la page.")
-        if request.endpoint not in {"login", "activate", None} and g.user is None:
+        if (request.endpoint not in {"login", "activate", None} and not request.endpoint.startswith("academique.")
+                and g.user is None):
             return redirect(url_for("login"))
 
     @app.teardown_request
@@ -1063,7 +1065,13 @@ def create_app():
                     "Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
             invitations.append((person, link, mailto(person["email"], "Invitation à l’espace IA-IPR EPS", body), body))
         g.db.commit()
-        return render_template("invitations.html", invitations=invitations,
+        group_body = ("Bonjour,\n\nL’espace de travail IA-IPR EPS, qui remplace Résana pour nos documents partagés, "
+                      "est ouvert.\n\n1. Rendez-vous sur " + public_url.rstrip("/") + url_for("login") +
+                      "\n2. Cliquez sur « Se connecter avec mon compte académique ».\n"
+                      "3. Connectez-vous avec vos identifiants académiques habituels, puis autorisez l’accès.\n\n"
+                      "Aucun mot de passe à créer. Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
+        return render_template("invitations.html", invitations=invitations, group_body=group_body,
+                               group_emails="; ".join(person["email"] for person in pending),
                                sender=os.environ.get("HUB_EXPEDITEUR", "eps.academie@ac-aix-marseille.fr"))
 
     @app.route("/demandes", methods=["GET", "POST"])
@@ -1082,6 +1090,7 @@ def create_app():
 
     register_ipr_modules(app)
     register_authorizations(app, VIEW, DOWNLOAD, WRITE, rights=rights, find_node=find_node)
+    register_academic_login(app, os.environ.get("HUB_NUAGE_LOGIN_URL", "https://nuage.apps.education.fr"))
     register_tools(app, allowed, rights, VIEW, WRITE)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,

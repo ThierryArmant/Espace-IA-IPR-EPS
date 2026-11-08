@@ -293,7 +293,14 @@ main .quiet:hover { background: #e3edf7; }
 .invitation-ligne .actions { flex-wrap: wrap; gap: .35rem; }
 .invitation-traitee { background: #f1f8f3; }
 
+/* Connexion académique */
+.bouton-academique { width: 100%; padding: .7rem; font-size: .95rem; background: #1d6b3c; }
+.separateur { display: flex; align-items: center; gap: .6rem; margin: .9rem 0; color: #5b6f82; font-size: .82rem; }
+.separateur::before, .separateur::after { content: ""; flex: 1; border-top: 1px solid #d3dde8; }
+.notice.erreur { background: #fdecec; border-color: #e3a5a5; color: #7a1f1f; }
 
+.copie-groupe { flex-wrap: wrap; gap: .4rem; margin-block: .6rem; }
+.apercu-message { white-space: pre-wrap; background: #f4f8fc; padding: .7rem; border-radius: .4rem; font: .85rem/1.45 system-ui, sans-serif; }
 
 .mode-emploi { background: #eef5ec; border: 1px solid #c7dfc2; border-radius: .5rem; padding: .6rem .9rem; margin-block: .6rem; }
 .mode-emploi p { margin: 0 0 .3rem; }

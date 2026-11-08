@@ -12,16 +12,31 @@
 <p>Ne fermez pas cette page avant d’avoir tout envoyé : les liens ne sont affichés qu’une fois. Sinon, refaites simplement « Préparer les invitations ».</p>
 {% endcall %}</div></div>
 {% if sender %}<p class="notice">📮 À envoyer depuis la boîte <strong>{{ sender }}</strong> : ouvrez-la dans un autre onglet, puis copiez-collez l’adresse, l’objet et le message de chaque personne. Si vous utilisez « Ouvrir le courriel », choisissez <strong>{{ sender }}</strong> dans le champ « De ».</p>{% endif %}
+<section class="card"><div class="actions"><h2>Recommandé : un seul courriel pour tout le monde</h2>
+{% call help_menu('aide-groupe-courriel', 'Aide sur le courriel groupé', 'Envoyer un courriel groupé') %}
+<p>Ce message ne contient aucun lien personnel : chacun se connecte avec ses identifiants académiques (« Se connecter avec mon compte académique »). Seules les adresses de la liste des membres sont acceptées.</p>
+<p>Dans la boîte {{ sender }} : nouveau message, collez les adresses dans <strong>Cci</strong> (copie cachée, pour que personne ne voie les autres adresses), puis l’objet et le message.</p>
+{% endcall %}</div>
 <div class="mode-emploi">
-<p><strong>Rien n’est envoyé par l’espace :</strong> cette page prépare les courriels, vous les envoyez depuis votre messagerie. Pour annuler, fermez simplement la page : les liens non envoyés expirent seuls au bout de 48 heures.</p>
+<p><strong>Rien n’est envoyé par l’espace :</strong> cette page prépare le courriel, vous l’envoyez depuis votre messagerie. Pour annuler, fermez simplement la page.</p>
 <ol class="etapes">
-<li>Gardez cette page ouverte. Dans un <strong>autre onglet</strong>, ouvrez la messagerie de <strong>{{ sender }}</strong>.</li>
-<li>Pour chaque personne ci-dessous : « Nouveau message », puis cliquez sur <strong>Copier l’adresse</strong> et collez (Ctrl+V) dans « À ».</li>
-<li><strong>Copier l’objet</strong> → collez dans « Objet » ; <strong>Copier le message</strong> → collez dans le corps du message.</li>
-<li>Envoyez. La ligne de la personne devient verte pour vous aider à suivre.</li>
+<li><strong>Avant le premier envoi</strong>, faites un essai : dans une fenêtre de navigation privée (Ctrl+Maj+N), ouvrez la page de connexion et cliquez sur « Se connecter avec mon compte académique ».</li>
+<li>Gardez cette page ouverte. Dans un <strong>autre onglet</strong>, ouvrez la messagerie de <strong>{{ sender }}</strong> et cliquez sur « Nouveau message ».</li>
+<li>Faites apparaître le champ <strong>Cci</strong> (copie cachée) : en général, un clic sur « Cci » à droite du champ « À ».</li>
+<li>Ici, cliquez sur <strong>1</strong>, puis collez (Ctrl+V) dans <strong>Cci</strong>.</li>
+<li>Cliquez sur <strong>2</strong>, puis collez dans <strong>Objet</strong>.</li>
+<li>Cliquez sur <strong>3</strong>, puis collez dans le <strong>corps du message</strong>.</li>
+<li>Relisez, puis <strong>Envoyer</strong>. Si la messagerie exige un destinataire, mettez {{ sender }} dans « À ».</li>
 </ol>
-<p class="subtle">Chaque message contient un lien personnel : ne l’envoyez qu’à la personne concernée.</p>
 </div>
+<div class="actions copie-groupe">
+<button type="button" class="copier" data-texte="{{ group_emails }}">1. Copier les {{ invitations|length }} adresses (à coller en Cci)</button>
+<button type="button" class="copier" data-texte="L’espace de travail IA-IPR EPS est ouvert">2. Copier l’objet</button>
+<button type="button" class="copier" data-texte="{{ group_body }}">3. Copier le message</button>
+</div>
+<details><summary>Voir le message</summary><pre class="apercu-message">{{ group_body }}</pre></details>
+</section>
+<h2>Ou bien : une invitation par personne (lien personnel, sans compte académique)</h2>
 <section class="card">
 {% for person, link, draft, body in invitations %}
 <div class="member invitation-ligne"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</div>
