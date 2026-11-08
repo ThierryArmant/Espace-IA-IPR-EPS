@@ -249,3 +249,10 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 /* Boutons de retour */
 .bouton-accueil { margin-inline-start: auto; margin-inline-end: 1rem; white-space: nowrap; }
 .retour { margin: 0 0 .5rem; }
+
+/* Menus flottants en couleurs pastel (plus doux que le blanc) */
+:root { --flottant-aide: #eeeafa; --flottant-menu: #e7f0fa; --flottant-bord: #c9d6e8; }
+.help-popover { background: var(--flottant-aide); border-color: #d3cbef; }
+.help-popover .badge { background: #fff8; }
+.explorateur-panneau, .folder-actions-panel { background: var(--flottant-menu); border-color: var(--flottant-bord); }
+.explorateur-panneau .explorateur-ligne:hover, .folder-actions-panel summary:hover { background: #d9e7f7; border-radius: .4rem; }
