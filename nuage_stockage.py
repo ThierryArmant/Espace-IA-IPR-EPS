@@ -238,6 +238,56 @@ def _load_settings():
                 os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
+def report(database=None):
+    """Compare le Hub et Nuage sans rien modifier."""
+    import sqlite3
+    _load_settings()
+    storage = NuageStorage.from_environment(os.environ.get("HUB_LOCAL_HTTP") == "1")
+    if not storage:
+        print("Nuage n’est pas branché : lancez « autoriser ».")
+        return 1
+    database = database or os.environ.get("HUB_DATABASE") or str(Path.home() / ".ia-ipr-eps" / "hub.sqlite3")
+    db = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+    rows = {r[0]: r for r in db.execute("SELECT id,parent,name,kind FROM nodes")}
+    hub_files = {}
+    for node_id, parent, name, kind in rows.values():
+        if kind == "file":
+            hub_files.setdefault(parent, []).append(name)
+
+    def path_of(node_id):
+        names = []
+        while rows[node_id][1] is not None:
+            names.append(rows[node_id][2])
+            node_id = rows[node_id][1]
+        return tuple(reversed(names))
+
+    listings = {}
+
+    def folders_in(path):
+        if path not in listings:
+            content = storage.listing(path)
+            listings[path] = set(content[0]) if content else None
+        return listings[path]
+
+    missing = []
+    for node_id, parent, name, kind in sorted(rows.values()):
+        if kind != "folder" or parent is None:
+            continue
+        path = path_of(node_id)
+        existing = folders_in(path[:-1])
+        if existing is None or name not in existing:
+            missing.append(path)
+    print(f"Dossiers du Hub absents de Nuage : {len(missing)}")
+    for path in missing[:60]:
+        print("  •", " / ".join(path))
+    total = sum(len(v) for v in hub_files.values())
+    print(f"Fichiers enregistrés dans la base du Hub (pas dans Nuage) : {total}")
+    for parent, names in sorted(hub_files.items()):
+        where = " / ".join(path_of(parent)) or "(accueil)"
+        print(f"  • {where} : {', '.join(sorted(names)[:8])}{' …' if len(names) > 8 else ''}")
+    return 0
+
+
 def main(argv):
     """python nuage_stockage.py autoriser | verifier  (sur le serveur, en SSH)."""
     action = argv[1] if len(argv) > 1 else ""
@@ -258,7 +308,7 @@ def main(argv):
         action = "verifier"
     if action == "verifier":
         _load_settings()
-        storage = NuageStorage.from_environment()
+        storage = NuageStorage.from_environment(os.environ.get("HUB_LOCAL_HTTP") == "1")
         if not storage:
             print("Nuage n’est pas branché : lancez « autoriser ».")
             return 1
@@ -272,7 +322,9 @@ def main(argv):
         for name in content[0][:20]:
             print("  •", name)
         return 0
-    print("Usage : python nuage_stockage.py autoriser | verifier")
+    if action == "etat":
+        return report(argv[2] if len(argv) > 2 else None)
+    print("Usage : python nuage_stockage.py autoriser | verifier | etat")
     return 1
 
 
