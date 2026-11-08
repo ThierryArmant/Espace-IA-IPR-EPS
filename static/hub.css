@@ -301,3 +301,6 @@ main .quiet:hover { background: #e3edf7; }
 
 .copie-groupe { flex-wrap: wrap; gap: .4rem; margin-block: .6rem; }
 .apercu-message { white-space: pre-wrap; background: #f4f8fc; padding: .7rem; border-radius: .4rem; font: .85rem/1.45 system-ui, sans-serif; }
+
+.mode-emploi { background: #eef5ec; border: 1px solid #c7dfc2; border-radius: .5rem; padding: .6rem .9rem; margin-block: .6rem; }
+.mode-emploi p { margin: 0 0 .3rem; }
