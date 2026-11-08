@@ -23,7 +23,7 @@
 <button class="secondary" name="sens" value="monter" title="Afficher ce dossier plus haut">↑ Monter</button>
 <button class="secondary" name="sens" value="descendre" title="Afficher ce dossier plus bas">↓ Descendre</button>
 </form>
-<p><a href="{{ url_for('move_folder',node_id=item.id) }}">Déplacer vers…</a></p>
+{% if item.parent not in (none, 1) %}<p><a href="{{ url_for('move_folder',node_id=item.id) }}">Déplacer vers…</a></p>{% endif %}
 {% endif %}
 <details><summary class="delete-action">Supprimer</summary>
 <form method="post" action="{{ url_for('delete_folder',node_id=item.id) }}">

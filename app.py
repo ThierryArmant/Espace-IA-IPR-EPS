@@ -580,8 +580,10 @@ def create_app():
     def move_folder(node_id):
         require_admin()
         node = allowed(node_id, VIEW, "folder")
-        if node["parent"] is None:
-            abort(400)
+        if node["parent"] in (None, 1):
+            abort(400, "Les dossiers principaux ne se déplacent pas : utilisez Monter / Descendre.")
+        # Le déplacement reste dans le même dossier principal : les autorisations ne changent pas.
+        branch = lineage(node)[1]["id"]
         subtree, pending = {node_id}, [node_id]
         while pending:
             current = pending.pop()
@@ -594,8 +596,9 @@ def create_app():
             ((" › ".join(part["name"] for part in lineage(item)[1:]) or "Accueil (dossier principal)", item["id"])
              for item in g.nodes.values()
              if item["kind"] == "folder" and item["id"] not in subtree and item["id"] != node["parent"]
+             and item["parent"] is not None and lineage(item)[1]["id"] == branch
              and len(lineage(item)) + height <= 64),
-            key=lambda entry: (entry[1] != 1, entry[0].casefold()),
+            key=lambda entry: entry[0].casefold(),
         )
         if request.method == "GET":
             return render_template("deplacer_dossier.html", node=node, destinations=destinations)
@@ -610,7 +613,7 @@ def create_app():
                 mirror.folder_moved(node, get_node(destination))
             g.db.execute("UPDATE nodes SET parent=?, position=NULL WHERE id=?", (destination, node_id))
             g.db.commit()
-            flash(f"« {node['name']} » a été déplacé. Vérifiez ses droits d’accès dans son nouvel emplacement.")
+            flash(f"« {node['name']} » a été déplacé.")
         except (ValueError, StorageError, sqlite3.IntegrityError) as error:
             g.db.rollback()
             flash("Un élément porte déjà ce nom dans le dossier de destination."

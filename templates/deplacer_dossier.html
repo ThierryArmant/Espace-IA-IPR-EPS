@@ -4,7 +4,8 @@
 <a href="{{ url_for('folder', node_id=node.id) }}">← Revenir au dossier {{ node.name }}</a>
 <section class="card">
   <h1>Déplacer « {{ node.name }} »</h1>
-  <p class="subtle">Le dossier, ses sous-dossiers et ses documents sont déplacés dans le Hub et dans Nuage. Ses règles d’accès le suivent, mais il hérite ensuite des droits de son nouveau dossier parent : vérifiez-les après le déplacement.</p>
+  <p class="subtle">Le dossier, ses sous-dossiers et ses documents sont déplacés dans le Hub et dans Nuage, à l’intérieur du même dossier principal : les autorisations ne changent pas.</p>
+  {% if not destinations %}<p>Aucun autre emplacement possible dans ce dossier principal.</p>{% endif %}
   <form method="post">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label>Dossier de destination
