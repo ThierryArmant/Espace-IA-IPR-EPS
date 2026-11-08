@@ -36,6 +36,7 @@
 </div>
 </details>
 {% endmacro %}
+{% macro lock(item) %}{% set access = rights(item, structure=False) %}{% if not access is readable %}<span class="acces-icone" title="Accès restreint : vous ne voyez pas le contenu de ce dossier" aria-label="Accès restreint">🔒</span>{% elif not access is writable %}<span class="acces-icone" title="Consultation seule : lire et télécharger" aria-label="Consultation seule">👁</span>{% endif %}{% endmacro %}
 {% macro branch(items, active, principal=false) %}
 {% set palette = ['bleu','menthe','lavande','rose','sable','menthe'] %}
 <ul class="explorateur-liste{{ ' explorateur-racines' if principal else '' }}">
@@ -45,7 +46,7 @@
 <div class="explorateur-ligne{% if principal %} tone-{{ tone }}{% endif %}">
 <a class="explorateur-lien" href="{{ url_for('folder', node_id=item.id) }}" {% if item.id==node.id %}aria-current="page"{% endif %}>
 <span class="folder-icon" aria-hidden="true"></span>{% if principal %}<span class="explorateur-numero" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span>{% endif %}
-<span>{{ item.name }}</span></a>
+<span>{{ item.name }}</span>{{ lock(item) }}</a>
 {% if children[item.id] %}
 <button class="explorateur-fleche" type="button" aria-expanded="{{ 'true' if not principal and item.id in active else 'false' }}" aria-controls="branche-{{ item.id }}" aria-label="Sous-dossiers de {{ item.name }}"><span aria-hidden="true">›</span></button>
 {% endif %}
@@ -75,7 +76,7 @@
 {% set mask=rights(node) %}
 <nav class="crumb" aria-label="Chemin">{% for item in trail %}{% if not loop.last %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}{% endfor %}</nav>
 <div class="hero hero-dossier-prive tone-{{ node.color }}">
-  <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
+  <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}{% if node.id != 1 %} {{ lock(node) }}{% endif %}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
   <div class="actions">
   {% if mask is writable %}{{ folder_actions(node) }}{% endif %}
   {% if g.user.admin and node.id!=1 %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}
