@@ -11,11 +11,17 @@
     {% if use_code %}<p>Saisissez votre adresse académique : un code à huit chiffres vous est envoyé par courriel. Il est valable 10 minutes et une seule fois.</p>
     <p>Pas de courriel ? Vérifiez vos indésirables, puis demandez un nouveau code.</p>
     {% else %}<p>Saisissez l’adresse et le mot de passe choisis lors de l’activation de votre compte.</p>{% endif %}
-    <p>Première connexion : utilisez le lien d’invitation reçu par courriel. Sans invitation, contactez l’animateur de l’espace.</p>
+    <p><strong>Le plus simple :</strong> « Se connecter avec mon compte académique » ouvre la page de connexion officielle ; utilisez vos identifiants habituels, autorisez l’accès, puis revenez sur l’onglet de l’espace.</p>
+    <p>Votre adresse doit figurer parmi les membres de l’espace. Sinon, contactez l’animateur.</p>
     {% endcall %}</div>
     {% if invitation %}
       <h1>Activer mon accès</h1>
       <p class="subtle">{{ invitation.email }}</p>
+      <form method="post" action="{{ url_for('academique.start') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="bouton-academique">🎓 Activer avec mon compte académique</button>
+      </form>
+      <div class="separateur"><span>ou choisir un mot de passe</span></div>
       <form method="post">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         {% if not use_code %}<label>Choisir un mot de passe
@@ -48,6 +54,12 @@
         {% endif %}
         <button>{{ 'Recevoir mon code' if use_code else 'Entrer dans l’espace' }}</button>
       </form>
+      <div class="separateur"><span>ou</span></div>
+      <form method="post" action="{{ url_for('academique.start') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="bouton-academique">🎓 Se connecter avec mon compte académique</button>
+      </form>
+      <p class="subtle">Recommandé : vos identifiants académiques habituels, sans mot de passe à créer. Votre adresse doit figurer parmi les membres de l’espace.</p>
     {% endif %}
   </section>
 </section>

@@ -12,6 +12,19 @@
 <p>Ne fermez pas cette page avant d’avoir tout envoyé : les liens ne sont affichés qu’une fois. Sinon, refaites simplement « Préparer les invitations ».</p>
 {% endcall %}</div></div>
 {% if sender %}<p class="notice">📮 À envoyer depuis la boîte <strong>{{ sender }}</strong> : ouvrez-la dans un autre onglet, puis copiez-collez l’adresse, l’objet et le message de chaque personne. Si vous utilisez « Ouvrir le courriel », choisissez <strong>{{ sender }}</strong> dans le champ « De ».</p>{% endif %}
+<section class="card"><div class="actions"><h2>Recommandé : un seul courriel pour tout le monde</h2>
+{% call help_menu('aide-groupe-courriel', 'Aide sur le courriel groupé', 'Envoyer un courriel groupé') %}
+<p>Ce message ne contient aucun lien personnel : chacun se connecte avec ses identifiants académiques (« Se connecter avec mon compte académique »). Seules les adresses de la liste des membres sont acceptées.</p>
+<p>Dans la boîte {{ sender }} : nouveau message, collez les adresses dans <strong>Cci</strong> (copie cachée, pour que personne ne voie les autres adresses), puis l’objet et le message.</p>
+{% endcall %}</div>
+<div class="actions copie-groupe">
+<button type="button" class="copier" data-texte="{{ group_emails }}">1. Copier les {{ invitations|length }} adresses (à coller en Cci)</button>
+<button type="button" class="copier" data-texte="L’espace de travail IA-IPR EPS est ouvert">2. Copier l’objet</button>
+<button type="button" class="copier" data-texte="{{ group_body }}">3. Copier le message</button>
+</div>
+<details><summary>Voir le message</summary><pre class="apercu-message">{{ group_body }}</pre></details>
+</section>
+<h2>Ou bien : une invitation par personne (lien personnel, sans compte académique)</h2>
 <section class="card">
 {% for person, link, draft, body in invitations %}
 <div class="member invitation-ligne"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</div>

@@ -18,6 +18,7 @@ for (const button of document.querySelectorAll(".copier")) {
       button.textContent = "Copie impossible";
     }
     setTimeout(() => { button.textContent = label; }, 1800);
-    button.closest(".invitation-ligne")?.classList.add("invitation-traitee");
+    const ligne = button.closest(".invitation-ligne");
+    if (ligne) ligne.classList.add("invitation-traitee");
   });
 }
