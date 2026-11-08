@@ -111,8 +111,9 @@ le compte Nuage : ne le placez jamais dans le dépôt et révoquez-le en cas de 
 
 Avec Nuage branché, les outils de travail à plusieurs sont **Grist** (tableurs,
 grist.numerique.gouv.fr) et **Docs** (textes, docs.numerique.gouv.fr), accessibles avec le
-compte académique. Dans un dossier, « Nouveau tableur (Grist) » et « Nouveau document (Docs) »
-ouvrent l’outil ; « Ranger un lien Grist ou Docs » ajoute ensuite le lien au dossier. Le lien
+compte académique, à côté de **Collabora** (« Tableur (Collabora) », « Texte (Collabora) »),
+qui crée le fichier directement dans le dossier Nuage avec le compte de service. Dans un
+dossier, « Tableur (Grist) » et « Document (Docs) » ouvrent l’outil ; « Ranger un lien Grist ou Docs » ajoute ensuite le lien au dossier. Le lien
 n’est visible que des personnes autorisées sur le dossier, et seuls ceux qui peuvent y
 contribuer l’ajoutent ou le retirent. Les partages du tableur ou du document se règlent dans
 Grist ou Docs. Deux raccourcis figurent dans la barre de droite.

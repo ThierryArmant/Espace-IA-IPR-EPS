@@ -91,10 +91,13 @@
 <div class="tools">
 {% if nuage_storage and content_mask is writable %}
 <div class="creation-outils actions" aria-label="Créer avec Grist ou Docs">
-  <a class="button" href="{{ tools.grist[1] }}" target="_blank" rel="noopener noreferrer">＋ Nouveau tableur (Grist)</a>
-  <a class="button" href="{{ tools.docs[1] }}" target="_blank" rel="noopener noreferrer">＋ Nouveau document (Docs)</a>
-  {% call help_menu('aide-outils', 'Aide sur Grist et Docs', 'Travailler à plusieurs avec Grist et Docs') %}
-  <p>Les boutons ouvrent Grist (tableurs) ou Docs (textes) dans un autre onglet. Connectez-vous avec votre compte académique et créez le tableur ou le document.</p>
+  <form method="post" action="{{ url_for('miroir.create_office', node_id=node.id, kind='tableur') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button title="Tableur façon Excel, rangé dans ce dossier Nuage">＋ Tableur (Collabora)</button></form>
+  <form method="post" action="{{ url_for('miroir.create_office', node_id=node.id, kind='texte') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button title="Texte façon Word, rangé dans ce dossier Nuage">＋ Texte (Collabora)</button></form>
+  <a class="button secondary" href="{{ tools.grist[1] }}" target="_blank" rel="noopener noreferrer">＋ Tableur (Grist)</a>
+  <a class="button secondary" href="{{ tools.docs[1] }}" target="_blank" rel="noopener noreferrer">＋ Document (Docs)</a>
+  {% call help_menu('aide-outils', 'Aide sur les outils', 'Collabora, Grist ou Docs ?') %}
+  <p><strong>Collabora</strong> : tableur et texte façon Excel et Word. Le fichier est créé dans ce dossier ; « Modifier à plusieurs » l’ouvre dans un autre onglet. Pour modifier, il faut un accès au dossier dans Nuage.</p>
+  <p><strong>Grist</strong> (listes partagées, droits fins) et <strong>Docs</strong> (textes à plusieurs) s’ouvrent dans un autre onglet avec votre compte académique. Créez-y le tableur ou le document.</p>
   <p>Copiez ensuite son adresse, puis utilisez « Ranger un lien Grist ou Docs » pour l’ajouter à ce dossier. Seules les personnes autorisées sur ce dossier verront le lien.</p>
   <p>Pensez à partager aussi le tableur ou le document avec vos collègues dans Grist ou Docs.</p>
   {% endcall %}

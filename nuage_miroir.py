@@ -12,6 +12,7 @@ from urllib.parse import quote
 
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
+from nuage_pilote import OFFICE_TYPES, blank_office_document
 from nuage_stockage import StorageError
 
 PREVIEW_LIMIT = 32 * 1024 * 1024
@@ -294,6 +295,34 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
             unavailable()
         return render_template("text.html", data=data[:100000].decode("utf-8", "replace"),
                                truncated=len(data) > 100000)
+
+    @mirror.post("/dossier/<int:node_id>/creer/<kind>")
+    def create_office(node_id, kind):
+        if kind not in OFFICE_TYPES:
+            abort(404)
+        _, path = folder_and_path(node_id, write)
+        extension, _, data = blank_office_document(kind)
+        label = request.form.get("titre", "").strip() or ("Tableur" if kind == "tableur" else "Document")
+        if not valid_name(f"{label}.{extension}"):
+            flash("Titre invalide : évitez / \\ et :.")
+            return redirect(url_for("folder", node_id=node_id))
+        g.db.rollback()
+        name, number = f"{label}.{extension}", 1
+        try:
+            while True:
+                try:
+                    storage.put((*path, name), data)
+                    break
+                except FileExistsError:
+                    number += 1
+                    name = f"{label} ({number}).{extension}"
+                    if number > 50:
+                        raise StorageError("Trop de fichiers portent ce nom.")
+        except StorageError as error:
+            flash(str(error))
+            return redirect(url_for("folder", node_id=node_id))
+        flash(f"« {name} » a été créé. Cliquez sur « Modifier à plusieurs » pour l’ouvrir dans Collabora.")
+        return redirect(url_for("folder", node_id=node_id))
 
     @mirror.post("/dossier/<int:node_id>/synchroniser")
     def sync(node_id):
