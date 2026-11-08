@@ -345,23 +345,48 @@ def clean(database=None, ask=input):
     for node_id, nodes in kept:
         print(f"   Conservé (contient des fichiers du Hub) : {' / '.join(path_of(node_id))}")
     if not removable:
-        print("   Aucun dossier à retirer. Le Hub est aligné sur Nuage.")
+        print("   Aucun dossier à traiter. Le Hub est aligné sur Nuage.")
         return 0
-    print(f"   {len(removable)} dossier(s) à retirer du Hub (rien n’est supprimé dans Nuage) :")
-    for node_id, nodes in removable:
+    print(f"   {len(removable)} dossier(s) du Hub absents de Nuage (souvent des dossiers vides,")
+    print("   que Nuage ignore lors d’un envoi par le navigateur) :")
+    for number, (node_id, nodes) in enumerate(removable, 1):
         extra = f" (+ {len(nodes) - 1} sous-dossier(s))" if len(nodes) > 1 else ""
-        print(f"   • {' / '.join(path_of(node_id))}{extra}")
-    if ask("Retirer ces dossiers du Hub ? Tapez oui pour confirmer : ").strip().lower() != "oui":
-        print("Rien n’a été retiré.")
+        print(f"   {number:>3}. {' / '.join(path_of(node_id))}{extra}")
+    print()
+    print("Que faire de ces dossiers ?")
+    print("   creer   : les créer dans Nuage (ils restent dans le Hub)")
+    print("   retirer : les retirer du Hub (rien n’est supprimé dans Nuage)")
+    print("   Entrée  : ne rien faire")
+    action = ask("Action pour tous : ").strip().lower()
+    if action not in {"creer", "créer", "retirer"}:
+        print("Rien n’a été modifié.")
         return 0
+    action = "retirer" if action == "retirer" else "creer"
+    other = "retirer" if action == "creer" else "creer"
+    answer = ask(f"Numéros à {other} plutôt (séparés par des espaces, Entrée si aucun) : ")
+    exceptions = {int(item) for item in re.findall(r"\d+", answer) if 1 <= int(item) <= len(removable)}
+    to_create, to_remove = [], []
+    for number, entry in enumerate(removable, 1):
+        ((to_remove if action == "creer" else to_create) if number in exceptions
+         else (to_create if action == "creer" else to_remove)).append(entry)
+    print(f"Résumé : {len(to_create)} à créer dans Nuage, {len(to_remove)} à retirer du Hub.")
+    if ask("Confirmer ? Tapez oui : ").strip().lower() != "oui":
+        print("Rien n’a été modifié.")
+        return 0
+    created_folders = 0
+    for _, nodes in to_create:
+        for node_id in sorted(nodes, key=lambda n: len(path_of(n))):
+            if rows[node_id][3] == "folder":
+                storage.make_folders(path_of(node_id))
+                created_folders += 1
     with db:
-        for _, nodes in removable:
+        for _, nodes in to_remove:
             for node_id in sorted(nodes, key=lambda n: -len(path_of(n))):
                 db.execute("UPDATE node_id_watermark SET last_deleted_id=MAX(last_deleted_id, ?) WHERE singleton=1",
                            (node_id,))
                 db.execute("DELETE FROM rules WHERE node=?", (node_id,))
                 db.execute("DELETE FROM nodes WHERE id=?", (node_id,))
-    print("Dossiers retirés. Le Hub est aligné sur Nuage.")
+    print(f"Terminé : {created_folders} dossier(s) créé(s) dans Nuage, {len(to_remove)} retiré(s) du Hub.")
     return 0
 
 
