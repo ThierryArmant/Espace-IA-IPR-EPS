@@ -43,7 +43,7 @@ def guess_email(full_name):
     return f"{local}@{EMAIL_DOMAIN}"
 
 
-def register_authorizations(app, view, download, write):
+def register_authorizations(app, view, download, write, *, rights=None, find_node=None):
     bp = Blueprint("autorisations", __name__)
     levels = {"": 0, "consulter": view | download, "contribuer": view | download | write}
 
@@ -71,35 +71,48 @@ def register_authorizations(app, view, download, write):
             return "consulter"
         return ""
 
+    def cell_value(mask, top):
+        """Valeur affichée : "" = pas de règle (hérite du dossier au-dessus), "aucun" = accès retiré."""
+        if mask is None:
+            return ""
+        return level(mask) or ("" if top else "aucun")
+
     @bp.route("/autorisations", methods=["GET", "POST"])
     def grid():
         if not can_manage():
             abort(403, "Ce tableau est réservé au groupe « Gestion des autorisations ».")
+        parent_id = request.values.get("dossier", 1, type=int)
+        parent = find_node(parent_id) if find_node else None
+        if parent_id != 1 and (parent is None or parent["kind"] != "folder"):
+            abort(404)
+        top = parent_id == 1
         folders = g.db.execute(
-            "SELECT id,name FROM nodes WHERE parent=1 AND kind='folder' ORDER BY id").fetchall()
+            "SELECT id,name FROM nodes WHERE parent=? AND kind='folder' "
+            "ORDER BY position IS NULL, position, id", (parent_id,)).fetchall()
         people = g.db.execute(
-            "SELECT id,email,name,active,password IS NOT NULL AS activated FROM users "
+            "SELECT id,email,name,admin,active,password IS NOT NULL AS activated FROM users "
             "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
         folder_ids = {row["id"] for row in folders}
         person_ids = {row["id"] for row in people}
         rules = {(row["node"], row["subject"]): row["mask"] for row in g.db.execute(
             "SELECT node,subject,mask FROM rules WHERE subject_kind='user'")}
+        allowed_values = set(levels) | ({"aucun"} if not top else set())
         if request.method == "POST":
             changed = 0
             for key, value in request.form.items():
                 match = re.fullmatch(r"acces-(\d+)-(\d+)", key)
-                if not match or value not in levels:
+                if not match or value not in allowed_values:
                     continue
                 folder, person = int(match[1]), int(match[2])
                 if folder not in folder_ids or person not in person_ids:
                     abort(400)
                 current = rules.get((folder, person))
-                if level(current or 0) == value and (current is not None or value):
+                if cell_value(current, top) == value:
                     continue
                 if value:
                     g.db.execute("""INSERT INTO rules VALUES(?, 'user', ?, ?)
                                     ON CONFLICT(node,subject_kind,subject) DO UPDATE SET mask=excluded.mask""",
-                                 (folder, person, levels[value]))
+                                 (folder, person, levels.get(value, 0)))
                 elif current is not None:
                     g.db.execute("DELETE FROM rules WHERE node=? AND subject_kind='user' AND subject=?",
                                  (folder, person))
@@ -108,15 +121,30 @@ def register_authorizations(app, view, download, write):
                 changed += 1
             g.db.commit()
             flash(f"{changed} autorisation(s) mise(s) à jour." if changed else "Aucun changement.")
-            return redirect(url_for("autorisations.grid"))
+            return redirect(url_for("autorisations.grid", dossier=parent_id) if not top
+                            else url_for("autorisations.grid"))
         via_group = {(row["node"], row["user_id"]) for row in g.db.execute(
             """SELECT r.node, m.user_id FROM rules r JOIN memberships m
                ON r.subject_kind='group' AND r.subject=m.group_id WHERE r.mask & ? <> 0""", (view,))}
-        cells = {(folder["id"], person["id"]): level(rules.get((folder["id"], person["id"]), 0))
+        cells = {(folder["id"], person["id"]): cell_value(rules.get((folder["id"], person["id"])), top)
                  for folder in folders for person in people}
+        no_parent_access = set()
+        trail = []
+        if not top:
+            no_parent_access = {person["id"] for person in people
+                                if not rights(parent, person, structure=False) & view}
+            node = parent
+            while node is not None and node["parent"] is not None:
+                trail.append(node)
+                node = find_node(node["parent"])
+            trail.reverse()
+        has_children = {row[0] for row in g.db.execute(
+            "SELECT DISTINCT parent FROM nodes WHERE kind='folder' AND parent IN (%s)"
+            % ",".join("?" * len(folder_ids)), tuple(folder_ids))} if folder_ids else set()
         return render_template("autorisations.html", folders=folders, people=people, cells=cells,
                                via_group=via_group, managers_group=MANAGERS_GROUP,
-                               has_group=managers_group() is not None)
+                               has_group=managers_group() is not None, top=top, parent=parent,
+                               trail=trail, no_parent_access=no_parent_access, has_children=has_children)
 
     @bp.post("/autorisations/personnes")
     def add_people():

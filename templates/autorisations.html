@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
+{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='1') }}" defer></script>{% endblock %}
 {% block content %}
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Autorisations</h1>
 <p>Choisissez, pour chaque personne, son accès aux dossiers principaux.</p></div>
@@ -7,25 +8,35 @@
 {% call help_menu('aide-autorisations', 'Aide sur le tableau des autorisations', 'Régler les accès') %}
 <p><strong>Consulter</strong> : lire et télécharger les documents du dossier et de ses sous-dossiers.</p>
 <p><strong>Contribuer</strong> : consulter, déposer des documents et créer des sous-dossiers.</p>
-<p><strong>—</strong> : aucun accès individuel. La mention « par groupe » signale un accès accordé par un groupe.</p>
-<p>Un réglage plus fin sur un sous-dossier se fait dans « Droits d’accès » de ce sous-dossier.</p>
+<p><strong>—</strong> (dossiers principaux) : pas d’accès. <strong>Comme au-dessus</strong> (sous-dossiers) : même accès que le dossier parent. <strong>Aucun accès</strong> : sous-dossier fermé à cette personne.</p>
+<p><strong>Tout d’un coup</strong> : « Tout le tableau », « Toute la colonne » (tout le monde sur un dossier) et « Toute la ligne » (une personne sur tous les dossiers) remplissent les cases, entourées en orange. Vérifiez, puis cliquez sur <strong>Enregistrer</strong>.</p>
+<p><strong>Sous-dossiers ›</strong> sous le nom d’un dossier ouvre le même tableau pour ses sous-dossiers. La mention « par groupe » signale un accès accordé par un groupe.</p>
 {% endcall %}
 </div></div>
 {% if not has_group and g.user.admin %}<p class="notice">Créez dans l’annuaire le groupe « {{ managers_group }} » et placez-y les personnes autorisées à modifier ce tableau.</p>{% endif %}
-{% if not folders %}<p class="empty">Aucun dossier principal. Créez ou reprenez d’abord les dossiers dans « Documents ».</p>
+{% macro options(value, top) %}<option value="" {% if not value %}selected{% endif %}>{{ '—' if top else 'Comme au-dessus' }}</option>
+{% if not top %}<option value="aucun" {% if value=='aucun' %}selected{% endif %}>Aucun accès</option>{% endif %}
+<option value="consulter" {% if value=='consulter' %}selected{% endif %}>Consulter</option>
+<option value="contribuer" {% if value=='contribuer' %}selected{% endif %}>Contribuer</option>{% endmacro %}
+{% macro bulk(label, target) %}<select class="remplir" data-cible="{{ target }}" aria-label="{{ label }}">
+<option value="-">{{ label }}…</option>{{ options('§', top) }}</select>{% endmacro %}
+{% if not top %}<nav class="crumb" aria-label="Chemin"><a href="{{ url_for('autorisations.grid') }}">Dossiers principaux</a>{% for item in trail %}<span aria-hidden="true">/</span>{% if not loop.last %}<a href="{{ url_for('autorisations.grid', dossier=item.id) }}">{{ item.name }}</a>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}{% endfor %}</nav>
+<p class="subtle">Sous-dossiers de « {{ parent.name }} ». « Comme au-dessus » : la personne garde l’accès qu’elle a sur « {{ parent.name }} ». « Aucun accès » : le sous-dossier lui est fermé.</p>{% endif %}
+{% if not folders %}<p class="empty">{{ 'Aucun dossier principal. Créez ou reprenez d’abord les dossiers dans « Documents ».' if top else 'Ce dossier n’a pas de sous-dossier.' }}</p>
 {% else %}
 <form method="post" class="panel">
 <input type="hidden" name="csrf" value="{{ csrf }}">
-<div class="panel-head"><h2>{{ people|length }} personne(s) · {{ folders|length }} dossier(s)</h2><button>Enregistrer les autorisations</button></div>
-<div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}</th>{% endfor %}</tr></thead><tbody>
+{% if not top %}<input type="hidden" name="dossier" value="{{ parent.id }}">{% endif %}
+<div class="panel-head"><h2>{{ people|length }} personne(s) · {{ folders|length }} dossier(s)</h2>
+<div class="actions">{{ bulk('Tout le tableau', 'tout') }}<button>Enregistrer les autorisations</button></div></div>
+<p class="subtle">Les menus « Toute la colonne » et « Toute la ligne » remplissent les cases d’un coup : vérifiez, puis enregistrez. Rien n’est modifié avant « Enregistrer ».</p>
+<div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}{% if folder.id in has_children %}<br><a class="subtle" href="{{ url_for('autorisations.grid', dossier=folder.id) }}">sous-dossiers ›</a>{% endif %}<br>{{ bulk('Toute la colonne', 'col-' ~ folder.id) }}</th>{% endfor %}</tr></thead><tbody>
 {% for person in people %}
-<tr><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span></th>
+<tr><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span>
+{% if person.id in no_parent_access %}<br><span class="badge denied" title="Sans accès à « {{ parent.name }} », les réglages de cette ligne restent sans effet.">Pas d’accès à « {{ parent.name }} »</span>{% endif %}
+<br>{{ bulk('Toute la ligne', 'row-' ~ person.id) }}</th>
 {% for folder in folders %}{% set value = cells[(folder.id, person.id)] %}
-<td><select name="acces-{{ folder.id }}-{{ person.id }}" aria-label="{{ person.name or person.email }} — {{ folder.name }}">
-<option value="" {% if not value %}selected{% endif %}>—</option>
-<option value="consulter" {% if value=='consulter' %}selected{% endif %}>Consulter</option>
-<option value="contribuer" {% if value=='contribuer' %}selected{% endif %}>Contribuer</option>
-</select>{% if (folder.id, person.id) in via_group %}<br><span class="subtle">par groupe</span>{% endif %}</td>
+<td><select name="acces-{{ folder.id }}-{{ person.id }}" data-col="{{ folder.id }}" data-row="{{ person.id }}" aria-label="{{ person.name or person.email }} — {{ folder.name }}">{{ options(value, top) }}</select>{% if (folder.id, person.id) in via_group %}<br><span class="subtle">par groupe</span>{% endif %}</td>
 {% endfor %}</tr>
 {% endfor %}
 </tbody></table></div>

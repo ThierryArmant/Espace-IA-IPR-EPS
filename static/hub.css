@@ -242,3 +242,6 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 /* Étiquettes Grist et Docs */
 .badge.outil-grist { background: #e3f4ea; color: #1d6b3c; }
 .badge.outil-docs { background: #e6eefb; color: #1f4e9c; }
+
+.grille-acces select.remplir { margin-top: .3rem; font-size: .8rem; min-width: 8rem; }
+.grille-acces select.modifie { outline: 2px solid #e0a100; }

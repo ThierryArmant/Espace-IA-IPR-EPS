@@ -91,6 +91,7 @@
   <p><strong>Reprendre les dossiers Nuage</strong> ajoute au Hub les dossiers créés directement dans Nuage.</p>{% endif %}
   <p>Plus bas : les outils pour créer ou déposer des documents, puis la liste des documents. Chaque zone a sa bulle <strong>?</strong>.</p>
   {% endcall %}
+  {% if can_manage_access and children[node.id] %}<a class="button secondary" href="{{ url_for('autorisations.grid', dossier=node.id) if node.id != 1 else url_for('autorisations.grid') }}" title="Régler d’un coup l’accès de chacun aux sous-dossiers">Autorisations des sous-dossiers</a>{% endif %}
   {% if g.user.admin and node.id!=1 %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}
   {% if mask is downloadable and not nuage_storage %}<a class="button secondary" href="{{ url_for('export_zip',node_id=node.id) }}">Exporter le ZIP</a>{% endif %}
   {% if nuage_storage and g.user.admin %}<form method="post" action="{{ url_for('miroir.sync', node_id=node.id) }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Reprendre les dossiers Nuage</button></form>{% endif %}

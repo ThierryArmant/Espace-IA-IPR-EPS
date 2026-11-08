@@ -940,7 +940,7 @@ def create_app():
         return render_template("messages.html", people=[row for row in people() if row["active"]])
 
     register_ipr_modules(app)
-    register_authorizations(app, VIEW, DOWNLOAD, WRITE)
+    register_authorizations(app, VIEW, DOWNLOAD, WRITE, rights=rights, find_node=find_node)
     register_tools(app, allowed, rights, VIEW, WRITE)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
