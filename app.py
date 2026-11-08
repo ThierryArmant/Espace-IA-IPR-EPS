@@ -877,13 +877,32 @@ def create_app():
     @app.post("/annuaire/compte/<int:user_id>")
     def manage_user(user_id):
         require_admin()
+        action = request.form.get("action")
+        if action in {"promote", "demote"}:
+            user = g.db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+            if not user:
+                abort(404)
+            if action == "promote":
+                if not user["active"]:
+                    abort(400, "Le compte doit d’abord être activé.")
+                g.db.execute("UPDATE users SET admin=1 WHERE id=?", (user_id,))
+                flash(f"{user['email']} est maintenant animateur.")
+            else:
+                others = g.db.execute("SELECT COUNT(*) FROM users WHERE admin=1 AND active=1 AND id<>?",
+                                      (user_id,)).fetchone()[0]
+                if not others:
+                    abort(400, "Il faut garder au moins un animateur actif.")
+                g.db.execute("UPDATE users SET admin=0, session_version=session_version+1 WHERE id=?", (user_id,))
+                flash(f"{user['email']} n’est plus animateur.")
+            g.db.commit()
+            return redirect(url_for("directory"))
         user = g.db.execute("SELECT * FROM users WHERE id=? AND admin=0", (user_id,)).fetchone()
         if not user:
             abort(404)
-        if request.form.get("action") == "suspend":
+        if action == "suspend":
             g.db.execute("UPDATE users SET active=0, session_version=session_version+1 WHERE id=?", (user_id,))
             g.db.execute("DELETE FROM invites WHERE user_id=?", (user_id,))
-        elif request.form.get("action") == "resume":
+        elif action == "resume":
             if not user["password"]:
                 abort(400, "Ce compte doit d’abord activer son invitation.")
             g.db.execute("UPDATE users SET active=1 WHERE id=?", (user_id,))
