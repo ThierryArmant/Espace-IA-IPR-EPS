@@ -137,10 +137,11 @@ def create_app():
     def nuage_authorize(fichier):
         """Relie le compte Nuage fonctionnel qui stockera les fichiers du Hub."""
         try:
-            login, password = authorize_service_account(click.echo)
+            login, password, server = authorize_service_account(click.echo)
         except (StorageError, OSError, ValueError, KeyError) as error:
             raise click.ClickException(str(error)) from error
         click.echo(f"HUB_NUAGE_LOGIN={login}")
+        click.echo(f"HUB_NUAGE_URL={server}")
         if fichier:
             descriptor = os.open(fichier, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             with os.fdopen(descriptor, "w", encoding="utf-8") as output:

@@ -30,6 +30,8 @@ def register_nuage(app, allowed, lineage, rights, view, write):
     secret = app.secret_key.encode() if isinstance(app.secret_key, str) else app.secret_key
     cipher = Fernet(base64.urlsafe_b64encode(hmac.digest(secret, b"ia-ipr-nuage-v1", "sha256")))
     root = os.environ.get("HUB_NUAGE_ROOT", "IA IPR EPS").strip()
+    # The root may be a sub-folder, e.g. "Dossiers IPR EPS/IA IPR EPS".
+    root_parts = tuple(part.strip() for part in root.split("/") if part.strip())
 
     def seal(values):
         return cipher.encrypt(json.dumps(values).encode()).decode("ascii")
@@ -44,7 +46,7 @@ def register_nuage(app, allowed, lineage, rights, view, write):
         node = allowed(node_id, view, "folder")
         if permission == write:
             allowed(node_id, write, "folder")
-        parts = (root, *(part["name"] for part in lineage(node)[1:]))
+        parts = (*root_parts, *(part["name"] for part in lineage(node)[1:]))
         # DAV writes and polling can be slow; release SQLite's request lock first.
         g.db.rollback()
         return node, parts
@@ -85,7 +87,7 @@ def register_nuage(app, allowed, lineage, rights, view, write):
 
     def ensure_descendants(account, path):
         # The shared root must already exist.
-        for depth in range(2, len(path) + 1):
+        for depth in range(len(root_parts) + 1, len(path) + 1):
             status, _ = dav(account, path[:depth], "MKCOL")
             if status not in {201, 405}:
                 return status
@@ -261,7 +263,7 @@ def register_nuage(app, allowed, lineage, rights, view, write):
         status = None
         try:
             status, _ = dav(account, (*path, name), "PUT", payload=data, headers=headers)
-            if status in {404, 409} and len(path) > 1:
+            if status in {404, 409} and len(path) > len(root_parts):
                 status = ensure_descendants(account, path)
                 if status is None:
                     status, _ = dav(account, (*path, name), "PUT", payload=data, headers=headers)

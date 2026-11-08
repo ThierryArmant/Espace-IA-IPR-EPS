@@ -94,7 +94,7 @@ pour consulter ou télécharger un fichier, et seul le Hub décide qui y a accè
 3. Ajoutez à la configuration privée du serveur (variables d’environnement du site
    chez l’hébergeur, ou fichier `.env` avec Compose) :
    `HUB_NUAGE_LOGIN`, puis `HUB_NUAGE_APP_PASSWORD_FILE` (chemin du fichier) ou
-   `HUB_NUAGE_APP_PASSWORD`. `HUB_NUAGE_ROOT` est facultatif (par défaut `IA IPR EPS`).
+   `HUB_NUAGE_APP_PASSWORD`. `HUB_NUAGE_ROOT` indique le dossier de départ dans Nuage, sous-dossiers compris, par exemple `Dossiers IPR EPS/IA IPR EPS` (par défaut `IA IPR EPS`). Il vaut aussi pour les documents créés en coédition.
 4. Redémarrez, puis vérifiez avec `flask --app app nuage-verifier`.
 5. Pour déplacer dans Nuage les fichiers déjà déposés dans la base du Hub :
    faites une sauvegarde, puis lancez `flask --app app nuage-transferer`.

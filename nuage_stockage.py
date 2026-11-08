@@ -15,6 +15,7 @@ Configuration (variables d'environnement du serveur, jamais dans le dépôt) :
 import base64
 import json
 import os
+import re
 import secrets
 import time
 from pathlib import Path
@@ -34,7 +35,7 @@ class StorageError(RuntimeError):
 class NuageStorage:
     def __init__(self, login, password, root, base_url=NUAGE_STORAGE):
         self.login, self.password = login, password
-        self.path = (root, STORAGE_FOLDER)
+        self.path = (*(part.strip() for part in root.split("/") if part.strip()), STORAGE_FOLDER)
         self.base_url = base_url.rstrip("/")
         credential = base64.b64encode(f"{login}:{password}".encode()).decode("ascii")
         self.auth = {"Authorization": f"Basic {credential}"}
@@ -73,7 +74,7 @@ class NuageStorage:
     def _prepare(self):
         if self.ready:
             return
-        for depth in (1, 2):
+        for depth in range(1, len(self.path) + 1):
             folder = self.base_url + "/remote.php/dav/files/" + "/".join(
                 quote(p, safe="") for p in (self.login, *self.path[:depth]))
             try:
@@ -124,7 +125,7 @@ def authorize_service_account(echo, wait=600):
     login_url = check_flow_url(data["login"], "flow")
     poll_url = check_flow_url(data["poll"]["endpoint"], "poll")
     token = data["poll"]["token"]
-    echo("1. Ouvrez ce lien en étant connecté au compte Nuage FONCTIONNEL :")
+    echo("1. Ouvrez ce lien en étant connecté au compte Nuage qui stockera les fichiers :")
     echo("   " + login_url)
     echo("2. Autorisez l’accès. Cette fenêtre attend la confirmation…")
     deadline = time.monotonic() + wait
@@ -134,5 +135,8 @@ def authorize_service_account(echo, wait=600):
                                      headers={"Content-Type": "application/x-www-form-urlencoded"})
         if status == 200:
             result = json.loads(body)
-            return result["loginName"], result["appPassword"]
+            server = urlsplit(result["server"])
+            if server.scheme != "https" or not re.fullmatch(r"nuage[0-9]*\.apps\.education\.fr", server.netloc):
+                raise StorageError("Serveur Nuage non reconnu.")
+            return result["loginName"], result["appPassword"], f"https://{server.netloc}"
     raise StorageError("Autorisation non reçue dans le délai.")
