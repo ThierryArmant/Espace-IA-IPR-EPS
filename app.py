@@ -25,6 +25,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from autorisations import register_authorizations, upgrade_users
 from document_notifications import register_document_notifications
+from outils import SCHEMA as TOOLS_SCHEMA, register_tools
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
 from login_code import CodeMailer, login_with_code, start_session
 from nuage_hub import register_nuage
@@ -102,6 +103,7 @@ def create_app():
         db.executescript(Path(__file__).with_name("ipr_schema.sql").read_text(encoding="utf-8"))
     with closing(connect()) as db, db:
         upgrade_users(db)
+        db.executescript(TOOLS_SCHEMA)
 
     @app.template_test("readable")
     def readable(mask):
@@ -939,6 +941,7 @@ def create_app():
 
     register_ipr_modules(app)
     register_authorizations(app, VIEW, DOWNLOAD, WRITE)
+    register_tools(app, allowed, rights, VIEW, WRITE)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
                                  require_admin=require_admin, view=VIEW, download=DOWNLOAD, write=WRITE)

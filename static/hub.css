@@ -238,3 +238,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .cadenas svg { width: .95em; height: .95em; }
 .cadenas-rouge { color: #c62828; }
 .cadenas-vert { color: #2e7d32; }
+
+/* Étiquettes Grist et Docs */
+.badge.outil-grist { background: #e3f4ea; color: #1d6b3c; }
+.badge.outil-docs { background: #e6eefb; color: #1f4e9c; }

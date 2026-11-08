@@ -107,6 +107,16 @@ d’un dossier est désactivé dans ce mode. « Modifier à plusieurs » ouvre l
 il faut alors un compte Nuage ayant accès au dossier. Le mot de passe d’application ouvre tout
 le compte Nuage : ne le placez jamais dans le dépôt et révoquez-le en cas de doute.
 
+### Grist et Docs
+
+Avec Nuage branché, les outils de travail à plusieurs sont **Grist** (tableurs,
+grist.numerique.gouv.fr) et **Docs** (textes, docs.numerique.gouv.fr), accessibles avec le
+compte académique. Dans un dossier, « Nouveau tableur (Grist) » et « Nouveau document (Docs) »
+ouvrent l’outil ; « Ranger un lien Grist ou Docs » ajoute ensuite le lien au dossier. Le lien
+n’est visible que des personnes autorisées sur le dossier, et seuls ceux qui peuvent y
+contribuer l’ajoutent ou le retirent. Les partages du tableur ou du document se règlent dans
+Grist ou Docs. Deux raccourcis figurent dans la barre de droite.
+
 ### Tableau des autorisations
 
 Le module **Autorisations** présente un tableau : une ligne par personne, une colonne par

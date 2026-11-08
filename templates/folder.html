@@ -89,7 +89,24 @@
 {% if nuage_storage and g.user.admin and not (content_mask is readable) and node.id != 1 %}<p class="notice">Vous gérez ce dossier sans voir son contenu. Ajoutez-vous une règle dans « Droits d’accès » si vous devez y accéder.</p>{% endif %}
 {% if mask is writable %}
 <div class="tools">
-{% if not nuage_storage or content_mask is writable %}
+{% if nuage_storage and content_mask is writable %}
+<div class="creation-outils actions" aria-label="Créer avec Grist ou Docs">
+  <a class="button" href="{{ tools.grist[1] }}" target="_blank" rel="noopener noreferrer">＋ Nouveau tableur (Grist)</a>
+  <a class="button" href="{{ tools.docs[1] }}" target="_blank" rel="noopener noreferrer">＋ Nouveau document (Docs)</a>
+  {% call help_menu('aide-outils', 'Aide sur Grist et Docs', 'Travailler à plusieurs avec Grist et Docs') %}
+  <p>Les boutons ouvrent Grist (tableurs) ou Docs (textes) dans un autre onglet. Connectez-vous avec votre compte académique et créez le tableur ou le document.</p>
+  <p>Copiez ensuite son adresse, puis utilisez « Ranger un lien Grist ou Docs » pour l’ajouter à ce dossier. Seules les personnes autorisées sur ce dossier verront le lien.</p>
+  <p>Pensez à partager aussi le tableur ou le document avec vos collègues dans Grist ou Docs.</p>
+  {% endcall %}
+</div>
+<details><summary>🔗 Ranger un lien Grist ou Docs</summary>
+<form method="post" action="{{ url_for('outils.add', node_id=node.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Titre <input name="title" required maxlength="180" placeholder="Suivi des inspections 2026-2027"></label>
+<label>Adresse <input name="url" type="url" required maxlength="2048" placeholder="https://grist.numerique.gouv.fr/…"></label>
+<button>Ajouter au dossier</button></form></details>
+{% endif %}
+{% if not nuage_storage %}
 <div class="creation-nuage actions" aria-label="Créer dans Nuage">
   <form method="post" {% if nuage_connected %}data-nuage-create{% endif %} action="{{ url_for('nuage.create', node_id=node.id, kind='tableur') }}">
     <input type="hidden" name="csrf" value="{{ csrf }}"><button>＋ Créer un tableur</button>
@@ -132,16 +149,23 @@
 <p>Les lignes marquées « Nuage » ouvrent le fichier partagé dans un autre onglet. Les modifications dans Collabora sont enregistrées dans Nuage.</p>
 <p>Les fichiers importés directement dans le Hub ont une fiche de consultation. Les droits du Hub s’appliquent à cette fiche. Pour un fichier Nuage, vos droits dans Nuage s’appliquent aussi.</p>
 {% endcall %}
-</div><a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a><form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
+</div>{% if not nuage_storage %}<a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a>{% endif %}<form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
 {% if nuage_files %}<p class="empty subtle">Les fichiers Nuage s’ouvrent dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour revenir à votre dossier.</p>{% endif %}
 {% if nuage_error %}<p class="notice">{{ nuage_error }}</p>{% endif %}
-{% if files or nuage_files or mirror_files %}
+{% set links = folder_links(node) %}
+{% if files or nuage_files or mirror_files or links %}
 <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Modifié le (UTC)</th><th>Actions</th></tr></thead><tbody>
 {% for file in files %}
 <tr><td><a class="filename" href="{{ url_for('document',node_id=file.id) }}">{{ file.name }}</a> <span class="badge">Hub</span></td><td>{{ file.updated }}</td><td><div class="actions">
 {% if rights(file) is downloadable %}<a href="{{ url_for('download',node_id=file.id) }}">Télécharger</a>{% endif %}
 {% if can_notify_documents and mask is writable %}<a href="{{ url_for('notifications.compose',node_id=file.id) }}">Notifier</a>{% endif %}
 {% if g.user.admin %}<a href="{{ url_for('permissions',node_id=file.id) }}">Droits</a>{% endif %}
+</div></td></tr>
+{% endfor %}
+{% for link in links %}
+<tr><td><a class="filename" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.title }}</a> <span class="badge outil-{{ link.kind }}">{{ tools[link.kind][0] }}</span></td><td>{{ link.created_at }}</td><td><div class="actions">
+<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">Ouvrir</a>
+{% if content_mask is writable %}<form method="post" action="{{ url_for('outils.remove', node_id=node.id, link_id=link.id) }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="quiet">Retirer</button></form>{% endif %}
 </div></td></tr>
 {% endfor %}
 {% for item in mirror_files %}

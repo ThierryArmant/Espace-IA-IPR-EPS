@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='cadenas-v1') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='outils-v1') }}">
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -32,6 +32,10 @@
   {% for key, (label, icon, description) in ipr_modules.items() %}
   <a class="rail-ipr" href="{{ url_for('ipr.module_page', module=key) }}" {% if request.view_args and request.view_args.get('module') == key %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
   {% endfor %}
+  {% endif %}
+  {% if nuage_storage %}
+  <a class="rail-doc" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▦</span>Grist</a>
+  <a class="rail-doc" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✎</span>Docs</a>
   {% endif %}
   {% if can_manage_access %}
   <a class="rail-team" href="{{ url_for('autorisations.grid') }}" {% if request.endpoint == 'autorisations.grid' %}aria-current="page"{% endif %}><span aria-hidden="true">☑</span>Autorisations</a>
