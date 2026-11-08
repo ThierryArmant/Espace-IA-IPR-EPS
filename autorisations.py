@@ -17,6 +17,14 @@ EMAIL_DOMAIN = "ac-aix-marseille.fr"
 EMAIL = re.compile(r"[^\s@,;?&#]+@[^\s@,;?&#]+\.[^\s@,;?&#]+")
 
 
+SETTINGS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS access_settings (
+    id INTEGER PRIMARY KEY CHECK(id=1),
+    group_id INTEGER REFERENCES groups(id) ON DELETE SET NULL
+);
+"""
+
+
 def upgrade_users(db):
     columns = {row[1] for row in db.execute("PRAGMA table_info(users)")}
     if columns and "name" not in columns:
@@ -48,7 +56,9 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
     levels = {"": 0, "consulter": view | download, "contribuer": view | download | write}
 
     def managers_group():
-        row = g.db.execute("SELECT id FROM groups WHERE name=?", (MANAGERS_GROUP,)).fetchone()
+        row = g.db.execute("SELECT group_id FROM access_settings WHERE id=1 AND group_id IS NOT NULL").fetchone()
+        if row is None:
+            row = g.db.execute("SELECT id FROM groups WHERE name=?", (MANAGERS_GROUP,)).fetchone()
         return row[0] if row else None
 
     def can_manage():
@@ -62,7 +72,22 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
 
     @bp.app_context_processor
     def controls():
-        return {"can_manage_access": can_manage() if g.get("db") is not None else False}
+        if g.get("db") is None:
+            return {"can_manage_access": False}
+        return {"can_manage_access": can_manage(), "managers_group_id": managers_group()}
+
+    @bp.post("/autorisations/groupe-gestion")
+    def choose_managers():
+        if not g.user["admin"]:
+            abort(403, "Ce réglage est réservé à l’animateur.")
+        group = request.form.get("group", type=int)
+        if group is not None and not g.db.execute("SELECT 1 FROM groups WHERE id=?", (group,)).fetchone():
+            abort(400, "Groupe inconnu.")
+        g.db.execute("INSERT INTO access_settings(id,group_id) VALUES(1,?) "
+                     "ON CONFLICT(id) DO UPDATE SET group_id=excluded.group_id", (group,))
+        g.db.commit()
+        flash("Groupe qui gère les autorisations enregistré." if group else "Plus aucun groupe ne gère les autorisations (seuls les animateurs).")
+        return redirect(url_for("directory"))
 
     def level(mask):
         if mask & write:

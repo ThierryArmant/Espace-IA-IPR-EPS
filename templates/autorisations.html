@@ -13,7 +13,7 @@
 <p><strong>Sous-dossiers ›</strong> sous le nom d’un dossier ouvre le même tableau pour ses sous-dossiers. La mention « par groupe » signale un accès accordé par un groupe.</p>
 {% endcall %}
 </div></div>
-{% if not has_group and g.user.admin %}<p class="notice">Créez dans l’annuaire le groupe « {{ managers_group }} » et placez-y les personnes autorisées à modifier ce tableau.</p>{% endif %}
+{% if not has_group and g.user.admin %}<p class="notice">Pour que d’autres personnes règlent ces accès avec vous, choisissez leur groupe dans l’Annuaire, cadre « Groupe qui gère les autorisations ».</p>{% endif %}
 {% macro options(value, top) %}<option value="" {% if not value %}selected{% endif %}>{{ '—' if top else 'Comme au-dessus' }}</option>
 {% if not top %}<option value="aucun" {% if value=='aucun' %}selected{% endif %}>Aucun accès</option>{% endif %}
 <option value="consulter" {% if value=='consulter' %}selected{% endif %}>Consulter</option>

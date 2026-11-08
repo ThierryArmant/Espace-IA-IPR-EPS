@@ -23,7 +23,7 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from autorisations import register_authorizations, upgrade_users
+from autorisations import SETTINGS_SCHEMA, register_authorizations, upgrade_users
 from document_notifications import register_document_notifications
 from outils import SCHEMA as TOOLS_SCHEMA, register_tools
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
@@ -104,6 +104,7 @@ def create_app():
     with closing(connect()) as db, db:
         upgrade_users(db)
         db.executescript(TOOLS_SCHEMA)
+        db.executescript(SETTINGS_SCHEMA)
 
     @app.template_test("readable")
     def readable(mask):

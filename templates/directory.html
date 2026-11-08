@@ -35,7 +35,7 @@
 {% call help_menu('aide-groupes', 'Aide sur les groupes', 'À quoi servent les groupes ?') %}
 <p>Un <strong>groupe</strong> rassemble des personnes pour leur donner quelque chose <strong>en une seule fois</strong>, au lieu de le faire personne par personne.</p>
 <p><strong>Deux groupes utiles ici :</strong></p>
-<p>• <strong>Gestion des autorisations</strong> (nom exact) : ses membres peuvent modifier le tableau Autorisations.</p>
+<p>• le groupe choisi dans « Groupe qui gère les autorisations » : ses membres peuvent modifier le tableau Autorisations ;</p>
 <p>• <strong>IPR</strong> (ou le nom de votre choix) : à choisir ci-dessous comme « groupe des applications » ; ses membres partagent Événements, Réunions, Créneaux, Questionnaires, Marque-pages et Publications.</p>
 <p><strong>Comment faire :</strong> tapez le nom, cliquez sur « Créer », puis cliquez sur « Choisir les membres » à côté du groupe : cochez toutes les personnes et enregistrez une seule fois.</p>
 <p>Un groupe peut aussi recevoir des droits sur un dossier, dans « Droits d’accès ».</p>
@@ -45,9 +45,24 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>
 {% if groups %}<h3>Groupes existants</h3><ul class="liste-groupes">
-{% for group in groups %}<li><strong>{{ group.name }}</strong> <span class="badge granted">{{ counts[group.id] }} membre{{ 's' if counts[group.id] > 1 else '' }}</span>{% if group.id == ipr_group_id %} <span class="badge">applications</span>{% endif %} · <a href="{{ url_for('group_members', group_id=group.id) }}">{{ 'Voir ou modifier les membres' if counts[group.id] else 'Choisir les membres' }}</a></li>{% endfor %}
+{% for group in groups %}<li><strong>{{ group.name }}</strong> <span class="badge granted">{{ counts[group.id] }} membre{{ 's' if counts[group.id] > 1 else '' }}</span>{% if group.id == ipr_group_id %} <span class="badge">applications</span>{% endif %}{% if group.id == managers_group_id %} <span class="badge">autorisations</span>{% endif %} · <a href="{{ url_for('group_members', group_id=group.id) }}">{{ 'Voir ou modifier les membres' if counts[group.id] else 'Choisir les membres' }}</a></li>{% endfor %}
 </ul>{% endif %}</section>
 </div>
+<section class="card"><div class="actions"><h2>Groupe qui gère les autorisations</h2>
+{% call help_menu('aide-groupe-gestion', 'Aide sur le groupe qui gère les autorisations', 'Qui règle les accès ?') %}
+<p>Les membres du groupe choisi ici peuvent ouvrir la page <strong>Autorisations</strong> et régler qui a accès à quels dossiers, comme l’animateur.</p>
+<p>Choisissez par exemple le groupe des IPR, puis « Enregistrer ». Ils verront « Autorisations » dans leur menu de droite dès leur connexion.</p>
+{% endcall %}</div>
+{% if groups %}
+<form method="post" action="{{ url_for('autorisations.choose_managers') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Groupe <select name="group">
+<option value="">Aucun (seuls les animateurs)</option>
+{% for group in groups %}<option value="{{ group.id }}" {% if group.id == managers_group_id %}selected{% endif %}>{{ group.name }}</option>{% endfor %}
+</select></label>
+<button>Enregistrer</button></form>
+{% else %}<p class="notice">Créez d’abord un groupe dans le cadre « Créer un groupe ».</p>{% endif %}
+</section>
 <section class="card"><div class="actions"><h2>Groupe des applications IPR</h2>
 {% call help_menu('aide-groupe-applications', 'Aide sur le groupe des applications', 'Qui utilise Événements, Réunions… ?') %}
 <p>Les applications de la barre de droite (Événements, Réunions, Créneaux, Questionnaires, Marque-pages, Publications) sont partagées entre les membres d’<strong>un</strong> groupe.</p>
