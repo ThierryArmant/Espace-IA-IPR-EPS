@@ -896,6 +896,38 @@ def create_app():
         members = {row[0] for row in g.db.execute("SELECT user_id FROM memberships WHERE group_id=?", (group_id,))}
         return render_template("groupe_membres.html", group=group, everyone=everyone, members=members)
 
+    @app.post("/annuaire/compte/<int:user_id>/supprimer")
+    def delete_user(user_id):
+        require_admin()
+        user = g.db.execute("SELECT * FROM users WHERE id=? AND admin=0", (user_id,)).fetchone()
+        if not user:
+            abort(404)
+        if user["active"]:
+            abort(400, "Suspendez d’abord le compte avant de le supprimer.")
+        if request.form.get("confirm") != "yes":
+            flash("Cochez la case de confirmation pour supprimer ce compte.")
+            return redirect(url_for("directory"))
+        authored = sum(g.db.execute(query, (user_id,)).fetchone()[0] for query in (
+            "SELECT COUNT(*) FROM ipr_entries WHERE author_id=?",
+            "SELECT COUNT(*) FROM document_notifications WHERE sender_id=?",
+            "SELECT COUNT(*) FROM folder_links WHERE author_id=?",
+        ))
+        if authored:
+            flash(f"{user['name'] or user['email']} a publié des contenus dans l’espace : le compte reste suspendu "
+                  "pour ne pas les effacer. Il n’a plus aucun accès.")
+            return redirect(url_for("directory"))
+        for query in ("DELETE FROM ipr_responses WHERE user_id=?",
+                      "DELETE FROM document_notification_recipients WHERE user_id=?",
+                      "DELETE FROM login_codes WHERE user_id=?",
+                      "DELETE FROM invites WHERE user_id=?",
+                      "DELETE FROM memberships WHERE user_id=?",
+                      "DELETE FROM rules WHERE subject_kind='user' AND subject=?",
+                      "DELETE FROM users WHERE id=?"):
+            g.db.execute(query, (user_id,))
+        g.db.commit()
+        flash(f"{user['name'] or user['email']} a été supprimé(e) de l’espace.")
+        return redirect(url_for("directory"))
+
     @app.post("/annuaire/compte/<int:user_id>")
     def manage_user(user_id):
         require_admin()

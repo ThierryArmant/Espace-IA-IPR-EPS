@@ -73,6 +73,7 @@
 <p><strong>Groupes</strong> : pour une seule personne, cochez ses groupes puis « Enregistrer les groupes ». Pour remplir un groupe d’un coup, utilisez plutôt « Choisir les membres » dans le cadre « Créer un groupe ».</p>
 <p><strong>Nommer animateur</strong> (compte actif) : la personne gère comme vous les comptes, les accès et les dossiers.</p>
 <p><strong>Suspendre</strong> : coupe tout de suite ses accès ; « Réactiver » les rétablit.</p>
+<p><strong>Supprimer de l’espace</strong> (compte suspendu ou jamais activé) : retire la personne de toutes les listes. Pour quelqu’un qui part, suspendez d’abord, puis supprimez.</p>
 {% endcall %}</div>
 {% for person in people %}
 <div class="member"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}
@@ -93,6 +94,15 @@
 {% if person.active or not person.activated %}<button class="danger" name="action" value="suspend">{{ 'Suspendre le compte' if person.active else 'Révoquer l’invitation' }}</button>
 {% else %}<button name="action" value="resume">Réactiver</button>{% endif %}
 </div></form>
+{% if not person.active %}
+<details class="suppression"><summary class="delete-action">Supprimer de l’espace…</summary>
+<form method="post" action="{{ url_for('delete_user', user_id=person.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<p class="subtle">La personne disparaît des listes, des groupes et du tableau des autorisations. Les documents restent dans leurs dossiers. Si elle a publié des événements, réunions ou autres contenus, son compte reste simplement suspendu.</p>
+<label class="check"><input type="checkbox" name="confirm" value="yes" required> Je confirme la suppression</label>
+<button class="danger">Supprimer définitivement</button>
+</form></details>
+{% endif %}
 {% endif %}</div>
 {% endfor %}
 </section>
