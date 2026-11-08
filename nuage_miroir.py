@@ -97,6 +97,9 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
     mirror = Blueprint("miroir", __name__)
 
     def content_mask(node):
+        # La page d’accueil est ouverte à tous : ses fichiers Nuage ne sont montrés à personne.
+        if node["parent"] is None:
+            return 0
         return rights(node, structure=False)
 
     def folder_and_path(node_id, permission):

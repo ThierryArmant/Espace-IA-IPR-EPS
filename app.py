@@ -483,7 +483,7 @@ def create_app():
         else:
             connected, nuage_files, nuage_error = nuage_documents(node_id)
             mirror_files, missing = [], []
-        content_mask = rights(node, structure=False)
+        content_mask = 0 if node["parent"] is None and storage else rights(node, structure=False)
         if not content_mask & VIEW:
             visible_files = []
         return render_template("folder.html", node=node, trail=lineage(node), children=children,
