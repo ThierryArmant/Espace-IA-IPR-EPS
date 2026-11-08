@@ -11,6 +11,11 @@ const desktop = window.matchMedia("(min-width: 841px)");
 let openMain = null;
 let pinned = false;
 let rootCloseTimer;
+let rootOpenTimer;
+// Délais généreux : la souris doit pouvoir traverser d’autres dossiers sans tout refermer.
+const OPEN_DELAY = 250;     // s’arrêter sur un dossier avant qu’il s’ouvre
+const SWITCH_DELAY = 450;   // passer d’un dossier principal ouvert à un autre
+const CLOSE_DELAY = 800;    // garder le panneau après la sortie de la souris
 
 function setOpen(entry, open) {
   entry.button.setAttribute("aria-expanded", String(open));
@@ -41,21 +46,29 @@ for (const entry of mainEntries) {
   });
   entry.branch.addEventListener("pointerenter", (event) => {
     if (!desktop.matches || event.pointerType !== "mouse") return;
-    clearTimeout(rootCloseTimer);
-    if (openMain !== entry) openRoot(entry);
+    clearTimeout(rootOpenTimer);
+    if (openMain === entry) {
+      clearTimeout(rootCloseTimer);
+      return;
+    }
+    if (pinned && openMain) return;
+    rootOpenTimer = setTimeout(() => openRoot(entry), openMain ? SWITCH_DELAY : OPEN_DELAY);
   });
   entry.branch.addEventListener("pointerleave", (event) => {
-    if (!desktop.matches || event.pointerType !== "mouse" || openMain !== entry || pinned) return;
+    if (!desktop.matches || event.pointerType !== "mouse") return;
+    clearTimeout(rootOpenTimer);
+    if (openMain !== entry || pinned) return;
     rootCloseTimer = setTimeout(() => {
       if (!entry.panel.contains(document.activeElement)
           && !entry.branch.querySelector(".folder-actions[open]")) openRoot(null);
-    }, 180);
+    }, CLOSE_DELAY);
   });
 }
 
 for (const entry of entries.filter(({branch}) => !branch.classList.contains("explorateur-racine"))) {
   let hoverOpened = false;
   let closeTimer;
+  let openTimer;
   entry.button.addEventListener("click", () => {
     clearTimeout(closeTimer);
     setOpen(entry, entry.panel.hidden || hoverOpened);
@@ -63,21 +76,26 @@ for (const entry of entries.filter(({branch}) => !branch.classList.contains("exp
     fitPanel();
   });
   entry.branch.addEventListener("pointerenter", () => clearTimeout(closeTimer));
-  entry.branch.querySelector(".explorateur-lien").addEventListener("pointerenter", (event) => {
+  const link = entry.branch.querySelector(".explorateur-lien");
+  link.addEventListener("pointerenter", (event) => {
     if (desktop.matches && event.pointerType === "mouse" && entry.panel.hidden) {
-      hoverOpened = true;
-      setOpen(entry, true);
-      fitPanel();
+      openTimer = setTimeout(() => {
+        hoverOpened = true;
+        setOpen(entry, true);
+        fitPanel();
+      }, OPEN_DELAY);
     }
   });
+  link.addEventListener("pointerleave", () => clearTimeout(openTimer));
   entry.branch.addEventListener("pointerleave", (event) => {
+    clearTimeout(openTimer);
     if (!hoverOpened || event.pointerType !== "mouse") return;
     closeTimer = setTimeout(() => {
       if (entry.panel.contains(document.activeElement) || entry.branch.querySelector(".folder-actions[open]")) return;
       setOpen(entry, false);
       hoverOpened = false;
       fitPanel();
-    }, 180);
+    }, CLOSE_DELAY);
   });
 }
 

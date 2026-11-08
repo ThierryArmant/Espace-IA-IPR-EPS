@@ -52,7 +52,7 @@
 {% endfor %}
 </ul>
 {% endmacro %}
-{% block scripts %}<script src="{{ url_for('static', filename='explorateur-prive.js', v='2') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='explorateur-prive.js', v='3') }}" defer></script>{% endblock %}
 {% block sidebar %}
 {% set active=trail|map(attribute='id')|list %}
 <aside class="sidebar" aria-label="Arborescence">
