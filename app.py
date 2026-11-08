@@ -176,10 +176,9 @@ def create_app():
             response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
-        form_targets = "'self' https://nuage01.apps.education.fr" if request.endpoint == "folder" else "'self'"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; object-src 'none'; frame-ancestors 'none'; "
-            f"base-uri 'none'; form-action {form_targets}"
+            "base-uri 'none'; form-action 'self'"
         )
         return response
 
@@ -348,8 +347,11 @@ def create_app():
                   and rights(entry) & VIEW and search in entry["name"].casefold()):
                 visible_files.append(entry)
         visible_files.sort(key=lambda row: row["name"].casefold())
+        connected, nuage_files, nuage_error = nuage_documents(node_id)
         return render_template("folder.html", node=node, trail=lineage(node), children=children,
-                               files=visible_files, rights=rights, search=search)
+                               files=visible_files, rights=rights, search=search,
+                               nuage_connected=connected, nuage_error=nuage_error,
+                               nuage_files=[(name, link) for name, link in nuage_files if search in name.casefold()])
 
     @app.post("/dossier/<int:node_id>/ajouter")
     def add_folder(node_id):
@@ -681,5 +683,5 @@ def create_app():
                                    draft=mailto(email, subject, body))
         return render_template("messages.html", people=[row for row in people() if row["active"]])
 
-    register_nuage(app, allowed, lineage, VIEW, WRITE)
+    nuage_documents = register_nuage(app, allowed, lineage, rights, VIEW, WRITE)
     return app

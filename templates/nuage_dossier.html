@@ -7,7 +7,7 @@
   <p class="subtle">{{ path|join(' › ') }}</p>
   {% if connected %}
   {% for name, link in files %}
-  <p>{% if link %}<a href="{{ link }}">{{ name }}</a>{% else %}{{ name }}{% endif %}</p>
+  <p>{% if link %}<a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %}</p>
   {% else %}<p>Aucun document texte ou tableur à afficher.</p>{% endfor %}
   <form method="post" action="{{ url_for('nuage.disconnect', node_id=node.id) }}">
     <input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Déconnecter Nuage</button>

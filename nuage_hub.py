@@ -11,7 +11,7 @@ from urllib.parse import quote, unquote, urlencode, urlsplit
 from xml.etree import ElementTree
 
 from cryptography.fernet import Fernet, InvalidToken
-from flask import Blueprint, abort, flash, g, redirect, render_template, session, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from nuage_pilote import (
     DAV, FILE_ID_HEADERS, FILE_ID_QUERY, NUAGE_LOGIN, NUAGE_STORAGE, OFFICE_TYPES,
@@ -20,9 +20,10 @@ from nuage_pilote import (
 
 CONNECTION_ERRORS = (ValueError, KeyError, TypeError, AttributeError, OSError, URLError, ElementTree.ParseError)
 LABELS = {"texte": "Document texte", "tableur": "Tableur"}
+OFFICE_LIST_QUERY = FILE_ID_QUERY.replace(b"<oc:fileid/>", b"<oc:fileid/><d:resourcetype/>")
 
 
-def register_nuage(app, allowed, lineage, view, write):
+def register_nuage(app, allowed, lineage, rights, view, write):
     nuage = Blueprint("nuage", __name__)
     secret = app.secret_key.encode() if isinstance(app.secret_key, str) else app.secret_key
     cipher = Fernet(base64.urlsafe_b64encode(hmac.digest(secret, b"ia-ipr-nuage-v1", "sha256")))
@@ -46,41 +47,111 @@ def register_nuage(app, allowed, lineage, view, write):
         g.db.rollback()
         return node, parts
 
+    def dav_url(login, path):
+        return NUAGE_STORAGE + "/remote.php/dav/files/" + "/".join(quote(p, safe="") for p in (login, *path))
+
     def dav(account, path, method, *, payload=None, headers=None, limit=128 * 1024):
         login, password = account
         credential = base64.b64encode(f"{login}:{password}".encode()).decode("ascii")
-        url = NUAGE_STORAGE + "/remote.php/dav/files/" + "/".join(quote(p, safe="") for p in (login, *path))
-        return nuage_request(url, method, payload=payload, limit=limit,
+        return nuage_request(dav_url(login, path), method, payload=payload, limit=limit,
                              headers={"Authorization": f"Basic {credential}", **(headers or {})})
 
     def listing(account, path):
-        status, body = dav(account, path, "PROPFIND", payload=FILE_ID_QUERY,
+        status, body = dav(account, path, "PROPFIND", payload=OFFICE_LIST_QUERY,
                            headers={**FILE_ID_HEADERS, "Depth": "1"}, limit=512 * 1024)
         if status != 207:
             return status, {}
         files = {}
         for entry in ElementTree.fromstring(body).findall(f"{DAV}response"):
-            name = unquote(entry.findtext(f"{DAV}href", "").rstrip("/").rsplit("/", 1)[-1])
-            if name.lower().endswith((".odt", ".ods")):
+            href = entry.findtext(f"{DAV}href", "")
+            name = unquote(href.rsplit("/", 1)[-1])
+            collection = entry.find(f"{DAV}propstat/{DAV}prop/{DAV}resourcetype/{DAV}collection")
+            if collection is None and name.lower().endswith((".odt", ".ods")) and "/" not in name:
                 files[name] = office_link(entry)
         return status, files
+
+    def read_folder(account, path):
+        if account:
+            try:
+                status, files = listing(account, path)
+                if status in {207, 404}:
+                    return sorted(files.items(), key=lambda item: item[0].casefold()), None
+                return [], f"Impossible de lire ce dossier dans Nuage ({status})."
+            except CONNECTION_ERRORS:
+                return [], "La liste Nuage est temporairement indisponible."
+        return [], None
+
+    def ensure_descendants(account, path):
+        # The shared root must already exist.
+        for depth in range(2, len(path) + 1):
+            status, _ = dav(account, path[:depth], "MKCOL")
+            if status not in {201, 405}:
+                return status
+        return None
+
+    def folder_documents(node_id):
+        account = unseal("nuage_account", 3600)
+        if not account:
+            return False, [], None
+        _, path = folder_path(node_id)
+        files, error = read_folder(account, path)
+        return True, files, error
 
     @nuage.get("/dossier/<int:node_id>/nuage")
     def documents(node_id):
         node, path = folder_path(node_id)
         account = unseal("nuage_account", 3600)
-        files = {}
-        if account:
-            try:
-                status, files = listing(account, path)
-                if status == 404:
-                    flash("Ce dossier Nuage sera créé lors du premier enregistrement si vous avez les droits.")
-                elif status != 207:
-                    flash(f"Impossible de lire ce dossier dans Nuage ({status}).")
-            except CONNECTION_ERRORS:
-                flash("La liste Nuage est temporairement indisponible.")
-        return render_template("nuage_dossier.html", node=node, path=path, files=sorted(files.items()),
+        files, error = read_folder(account, path)
+        if error:
+            flash(error)
+        return render_template("nuage_dossier.html", node=node, path=path, files=files,
                                connected=bool(account), authorization=unseal("nuage_flow", 900))
+
+    @nuage.route("/dossier/<int:node_id>/nuage/deplacer", methods=["GET", "POST"])
+    def move(node_id):
+        node, path = folder_path(node_id, write)
+        account = unseal("nuage_account", 3600)
+        if not account:
+            return redirect(url_for("nuage.documents", node_id=node_id), code=303)
+        name = (request.form if request.method == "POST" else request.args).get("name", "")
+        if (not name.lower().endswith((".odt", ".ods")) or "/" in name or "\\" in name
+                or any(ord(char) < 32 for char in name)):
+            abort(400)
+        if request.method != "POST":
+            destinations = sorted(
+                ((" › ".join(part["name"] for part in lineage(item)), item["id"])
+                 for item in g.nodes.values()
+                 if item["kind"] == "folder" and item["id"] != node_id
+                 and rights(item) & view and rights(item) & write),
+                key=lambda item: item[0].casefold(),
+            )
+            return render_template("nuage_deplacer.html", node=node, name=name, destinations=destinations)
+
+        destination_id = request.form.get("destination", type=int)
+        if destination_id is None or destination_id == node_id:
+            abort(400)
+        _, destination = folder_path(destination_id, write)
+        headers = {"Destination": dav_url(account[0], (*destination, name)), "Overwrite": "F"}
+        try:
+            status, files = listing(account, path)
+            if status == 207 and name in files:
+                status, _ = dav(account, (*path, name), "MOVE", headers=headers)
+                if status == 409:
+                    status = ensure_descendants(account, destination)
+                    if status is None:
+                        status, _ = dav(account, (*path, name), "MOVE", headers=headers)
+        except CONNECTION_ERRORS:
+            status = None
+        if status in {201, 204}:
+            flash(f"« {name} » a été déplacé dans ce dossier.")
+            return redirect(url_for("folder", node_id=destination_id), code=303)
+        if status == 412:
+            flash("Un document porte déjà ce nom dans le dossier de destination.")
+        elif status in {401, 403}:
+            flash("Nuage a refusé le déplacement. Vérifiez les droits des deux dossiers.")
+        else:
+            flash("Déplacement non confirmé. Vérifiez les deux dossiers avant de réessayer.")
+        return redirect(url_for("folder", node_id=node_id), code=303)
 
     @nuage.post("/dossier/<int:node_id>/nuage/connecter")
     def connect(node_id):
@@ -157,13 +228,8 @@ def register_nuage(app, allowed, lineage, view, write):
         try:
             status, _ = dav(account, (*path, name), "PUT", payload=data, headers=headers)
             if status in {404, 409} and len(path) > 1:
-                # Create descendants only; the shared Nuage root must already exist.
-                for depth in range(2, len(path) + 1):
-                    status, _ = dav(account, path[:depth], "MKCOL")
-                    if status not in {201, 405}:
-                        break
-                else:
-                    status = None
+                status = ensure_descendants(account, path)
+                if status is None:
                     status, _ = dav(account, (*path, name), "PUT", payload=data, headers=headers)
         except CONNECTION_ERRORS:
             status = None
@@ -174,7 +240,7 @@ def register_nuage(app, allowed, lineage, view, write):
                 flash("Nuage a refusé la création. Vérifiez le droit de modification du dossier.")
             else:
                 flash(f"Nuage n’a pas créé le document ({status}). Vérifiez le dossier partagé « {root} ».")
-            return redirect(url_for("nuage.documents", node_id=node_id), code=303)
+            return redirect(url_for("folder", node_id=node_id), code=303)
 
         try:
             _, files = listing(account, path)
@@ -182,11 +248,12 @@ def register_nuage(app, allowed, lineage, view, write):
             files = {}
         if status == 201 or name in files:
             session.pop("nuage_pending", None)
-            if files.get(name):
-                return redirect(files[name], code=303)
-            flash("Document créé. Retrouvez-le dans la liste Nuage.")
+            flash("Document créé dans ce dossier.")
+            if request.accept_mimetypes.best == "application/json":
+                return {"editor": files.get(name)}
         else:
             flash("Création non confirmée. Un nouvel essai reprendra le même fichier.")
-        return redirect(url_for("nuage.documents", node_id=node_id), code=303)
+        return redirect(url_for("folder", node_id=node_id), code=303)
 
     app.register_blueprint(nuage)
+    return folder_documents
