@@ -279,3 +279,13 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .membres-groupe li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .4rem; padding: .2rem .3rem; border-bottom: 1px solid #e3eaf2; }
 .membres-groupe form { gap: .3rem; }
 .membres-groupe select { width: auto; font-size: .82rem; }
+
+/* Boutons discrets lisibles dans les pages (texte foncé sur fond clair) */
+main .quiet { color: #2b557d; background: #f4f8fc; border-color: #9cb6cd; }
+main .quiet:hover { background: #e3edf7; }
+/* Membres d’un groupe : actions bien visibles */
+.membres-groupe li > span { font-weight: 600; }
+.membres-groupe .bouton-retirer { color: #9b2c2c; background: #fdecec; border-color: #e3a5a5; padding: .3rem .6rem; }
+.membres-groupe .bouton-retirer:hover { background: #f9d6d6; }
+.membres-groupe .bouton-deplacer { color: #1f4e79; background: #e6f0fa; border-color: #a9c4de; padding: .3rem .6rem; }
+.membres-groupe select { padding: .25rem .3rem; border: 1px solid #a9c4de; border-radius: .35rem; background: #fff; color: #1d3247; }

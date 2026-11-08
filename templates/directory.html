@@ -52,9 +52,9 @@
 <li><span>{{ person.name or person.email }}</span>
 <form method="post" action="{{ url_for('group_member_action', group_id=group.id, user_id=person.id) }}" class="actions">
 <input type="hidden" name="csrf" value="{{ csrf }}">
-<button class="quiet" name="action" value="retirer" title="Retirer {{ person.name or person.email }} de ce groupe">Retirer</button>
+<button class="bouton-retirer" name="action" value="retirer" title="Retirer {{ person.name or person.email }} de ce groupe">✕ Retirer</button>
 {% if groups|length > 1 %}<select name="vers" aria-label="Groupe d’arrivée"><option value="">Déplacer vers…</option>{% for other in groups if other.id != group.id %}<option value="{{ other.id }}">{{ other.name }}</option>{% endfor %}</select>
-<button class="quiet" name="action" value="deplacer">OK</button>{% endif %}
+<button class="bouton-deplacer" name="action" value="deplacer">→ Déplacer</button>{% endif %}
 </form></li>
 {% else %}<li class="subtle">Aucun membre pour l’instant.</li>
 {% endfor %}
