@@ -23,3 +23,18 @@ CREATE TABLE IF NOT EXISTS ipr_responses (
     value TEXT NOT NULL,
     PRIMARY KEY (entry_id,user_id)
 );
+
+CREATE TABLE IF NOT EXISTS document_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL REFERENCES groups(id),
+    sender_id INTEGER NOT NULL REFERENCES users(id),
+    node_id INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    nuage_file TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M','now'))
+);
+CREATE TABLE IF NOT EXISTS document_notification_recipients (
+    notification_id INTEGER NOT NULL REFERENCES document_notifications(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    is_read INTEGER NOT NULL DEFAULT 0 CHECK(is_read IN (0,1)),
+    PRIMARY KEY (user_id,notification_id)
+);

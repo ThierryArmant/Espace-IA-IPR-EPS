@@ -23,6 +23,7 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from document_notifications import register_document_notifications
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
 from login_code import CodeMailer, login_with_code, start_session
 from nuage_hub import register_nuage
@@ -196,12 +197,15 @@ def create_app():
         if not g.user["admin"]:
             abort(403, "Cette action est réservée à l’animateur.")
 
-    def get_node(node_id):
+    def find_node(node_id):
         if "nodes" not in g:
             g.nodes = {r["id"]: r for r in g.db.execute(
                 "SELECT id,parent,name,kind,color,updated FROM nodes"
             )}
-        node = g.nodes.get(node_id)
+        return g.nodes.get(node_id)
+
+    def get_node(node_id):
+        node = find_node(node_id)
         if node is None:
             abort(404)
         return node
@@ -212,34 +216,38 @@ def create_app():
             path.append(get_node(path[-1]["parent"]))
         return path[::-1]
 
-    def rights(node):
-        if g.user["admin"]:
+    def rights(node, user=None):
+        user = g.user if user is None else user
+        if user["admin"]:
             return ALL
-        if "rights_cache" not in g:
-            g.rights_cache = {}
-            g.rules = defaultdict(dict)
+        if "rights_by_user" not in g:
+            g.rights_by_user = {}
+        if user["id"] not in g.rights_by_user:
+            rules = defaultdict(dict)
             rows = g.db.execute(
                 """SELECT node, subject_kind, mask FROM rules
                    WHERE (subject_kind='user' AND subject=?)
                       OR (subject_kind='group' AND subject IN
                           (SELECT group_id FROM memberships WHERE user_id=?))""",
-                (g.user["id"], g.user["id"]),
+                (user["id"], user["id"]),
             )
             for row in rows:
                 key = row["subject_kind"]
-                g.rules[row["node"]][key] = g.rules[row["node"]].get(key, 0) | row["mask"]
+                rules[row["node"]][key] = rules[row["node"]].get(key, 0) | row["mask"]
+            g.rights_by_user[user["id"]] = (rules, {})
+        rules, cache = g.rights_by_user[user["id"]]
         effective = VIEW
         for part in lineage(node):
             node_id = part["id"]
-            if node_id not in g.rights_cache:
-                rule = g.rules.get(node_id, {})
+            if node_id not in cache:
+                rule = rules.get(node_id, {})
                 # The root is a navigation shell. Each top-level branch is private by default.
                 inherited = 0 if part["parent"] == 1 else effective
                 if part["parent"] is not None and not effective & VIEW:
-                    g.rights_cache[node_id] = 0
+                    cache[node_id] = 0
                 else:
-                    g.rights_cache[node_id] = rule.get("user", rule.get("group", inherited))
-            effective = g.rights_cache[node_id]
+                    cache[node_id] = rule.get("user", rule.get("group", inherited))
+            effective = cache[node_id]
         return effective
 
     def allowed(node_id, permission, kind=None):
@@ -526,7 +534,8 @@ def create_app():
         preview = suffix in {".pdf", ".txt", ".csv"}
         page = max(1, min(1000, request.args.get("page", 1, type=int)))
         return render_template("document.html", node=node, trail=lineage(node),
-                               mask=rights(node), preview=preview, suffix=suffix, page=page)
+                               mask=rights(node), preview=preview, suffix=suffix, page=page,
+                               can_update_folder=bool(rights(get_node(node["parent"])) & WRITE))
 
     @app.get("/document/<int:node_id>/telecharger")
     def download(node_id):
@@ -690,4 +699,5 @@ def create_app():
 
     register_ipr_modules(app)
     nuage_documents = register_nuage(app, allowed, lineage, rights, VIEW, WRITE)
+    register_document_notifications(app, allowed, find_node, rights, VIEW, WRITE, nuage_documents)
     return app

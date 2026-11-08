@@ -3,6 +3,7 @@
 <nav class="crumb" aria-label="Chemin">{% for item in trail[:-1] %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% endfor %}<span aria-current="page">{{ node.name }}</span></nav>
 <div class="hero tone-bleu"><div><p class="eyebrow">DOCUMENT</p><h1>{{ node.name }}</h1></div>
 <div class="actions">{% if mask is downloadable %}<a class="button" href="{{ url_for('download',node_id=node.id) }}">Télécharger</a>{% endif %}
+{% if can_notify_documents and can_update_folder %}<a class="button secondary" href="{{ url_for('notifications.compose', node_id=node.id) }}">Notifier la mise à jour</a>{% endif %}
 {% if g.user.admin %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}</div>
 </div>
 <section class="card">

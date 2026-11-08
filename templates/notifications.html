@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Notifications · IA-IPR EPS{% endblock %}
+{% block content %}
+<div class="hero tone-rose"><div><p class="eyebrow">GROUPE IPR</p><h1>Notifications</h1><p>Mises à jour de documents signalées par vos collègues.</p></div></div>
+<section class="card">
+  {% for entry, node in entries %}
+  <article class="member">
+    <div>
+      {% if not entry.is_read %}<span class="badge granted">Nouveau</span>{% endif %}
+      {% if node.kind == 'folder' %}
+      <p>Un document Nuage a été mis à jour dans {{ node.name }}.
+      <a href="{{ url_for('notifications.locate', notification_id=entry.id) }}">Retrouver le document</a>.</p>
+      {% else %}
+      <p>Document mis à jour : <a href="{{ url_for('document', node_id=node.id) }}">{{ node.name }}</a>.</p>
+      {% endif %}
+      <p class="subtle">{{ entry.sender }} · {{ entry.created_at }} UTC</p>
+    </div>
+    {% if not entry.is_read %}
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="secondary" name="notification" value="{{ entry.id }}">Marquer comme lue</button>
+    </form>
+    {% endif %}
+  </article>
+  {% else %}<p>Aucune notification à afficher.</p>{% endfor %}
+</section>
+{% endblock %}

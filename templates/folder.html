@@ -105,12 +105,15 @@
 {% for file in files %}
 <tr><td><a class="filename" href="{{ url_for('document',node_id=file.id) }}">{{ file.name }}</a></td><td>{{ file.updated }}</td><td><div class="actions">
 {% if rights(file) is downloadable %}<a href="{{ url_for('download',node_id=file.id) }}">Télécharger</a>{% endif %}
+{% if can_notify_documents and mask is writable %}<a href="{{ url_for('notifications.compose',node_id=file.id) }}">Notifier</a>{% endif %}
 {% if g.user.admin %}<a href="{{ url_for('permissions',node_id=file.id) }}">Droits</a>{% endif %}
 </div></td></tr>
 {% endfor %}
 {% for name, link in nuage_files %}
 <tr><td>{% if link %}<a class="filename" href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %}</td><td>Nuage</td><td>
-{% if mask is writable %}<a href="{{ url_for('nuage.move', node_id=node.id, name=name) }}">Déplacer</a>{% endif %}
+{% if mask is writable %}<a href="{{ url_for('nuage.move', node_id=node.id, name=name) }}">Déplacer</a>
+{% if can_notify_documents and link %}<a href="{{ url_for('notifications.compose',node_id=node.id,nuage=nuage_notification_reference(node,name,link)) }}">Notifier</a>{% endif %}
+{% endif %}
 </td></tr>
 {% endfor %}
 </tbody></table></div>

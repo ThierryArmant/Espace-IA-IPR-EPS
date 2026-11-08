@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Notifier une mise à jour · IA-IPR EPS{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('folder' if nuage else 'document', node_id=node.id) }}">← Revenir {{ 'au dossier' if nuage else 'au document' }}</a></p>
+<section class="card">
+  <h1>Notifier une mise à jour</h1>
+  <p><strong>{{ name }}</strong></p>
+  <p>L’alerte apparaîtra dans la rubrique Notifications des collègues choisis.</p>
+  {% if nuage %}<p>L’alerte indique le dossier. Les droits Nuage s’appliquent à l’ouverture du fichier.</p>{% endif %}
+  {% if people %}
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <fieldset>
+      <legend>Choisir des collègues autorisés</legend>
+      {% for person in people %}
+      <label class="check"><input type="checkbox" name="recipients" value="{{ person.id }}"> {{ person.email }}</label>
+      {% endfor %}
+    </fieldset>
+    <div class="actions">
+      <button name="audience" value="selected">Notifier la sélection</button>
+      <button class="secondary" name="audience" value="all">Notifier tous les collègues autorisés</button>
+    </div>
+  </form>
+  {% else %}<p>Aucun autre membre actif du groupe IPR n’a accès à ce contenu.</p>{% endif %}
+</section>
+{% endblock %}
