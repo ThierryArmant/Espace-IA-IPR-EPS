@@ -1055,7 +1055,8 @@ def create_app():
                     "Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
             invitations.append((person, link, mailto(person["email"], "Invitation à l’espace IA-IPR EPS", body), body))
         g.db.commit()
-        return render_template("invitations.html", invitations=invitations)
+        return render_template("invitations.html", invitations=invitations,
+                               sender=os.environ.get("HUB_EXPEDITEUR", "eps.academie@ac-aix-marseille.fr"))
 
     @app.route("/demandes", methods=["GET", "POST"])
     def messages():

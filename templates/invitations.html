@@ -11,6 +11,7 @@
 <p>Pour un publipostage, copiez le tableau en bas de page (adresse ; nom ; lien).</p>
 <p>Ne fermez pas cette page avant d’avoir tout envoyé : les liens ne sont affichés qu’une fois. Sinon, refaites simplement « Préparer les invitations ».</p>
 {% endcall %}</div></div>
+{% if sender %}<p class="notice">📮 À envoyer depuis la boîte <strong>{{ sender }}</strong> : ouvrez-la dans un autre onglet, puis copiez-collez l’adresse, l’objet et le message de chaque personne. Si vous utilisez « Ouvrir le courriel », choisissez <strong>{{ sender }}</strong> dans le champ « De ».</p>{% endif %}
 <section class="card">
 {% for person, link, draft, body in invitations %}
 <div class="member invitation-ligne"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</div>
