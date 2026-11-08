@@ -21,12 +21,27 @@
 {% for group in groups %}<option value="{{ group.id }}">Seulement le groupe « {{ group.name }} »</option>{% endfor %}
 </select></label>
 <button>Préparer les invitations</button></form></section>
-<section class="card"><h2>Créer un groupe</h2><form method="post" action="{{ url_for('add_group') }}">
+<section class="card"><div class="actions"><h2>Créer un groupe</h2>
+{% call help_menu('aide-groupes', 'Aide sur les groupes', 'À quoi servent les groupes ?') %}
+<p>Un <strong>groupe</strong> rassemble des personnes pour leur donner quelque chose <strong>en une seule fois</strong>, au lieu de le faire personne par personne.</p>
+<p><strong>Deux groupes utiles ici :</strong></p>
+<p>• <strong>Gestion des autorisations</strong> (nom exact) : ses membres peuvent modifier le tableau Autorisations.</p>
+<p>• <strong>IPR</strong> (ou le nom de votre choix) : à choisir ci-dessous comme « groupe des applications » ; ses membres partagent Événements, Réunions, Créneaux, Questionnaires, Marque-pages et Publications.</p>
+<p><strong>Comment faire :</strong> tapez le nom, cliquez sur « Créer », puis, dans « Comptes » plus bas, cochez le groupe sous le nom de chaque personne et cliquez sur « Enregistrer les groupes ».</p>
+<p>Un groupe peut aussi recevoir des droits sur un dossier, dans « Droits d’accès ».</p>
+{% endcall %}</div>
+<p class="subtle">Par exemple « IPR » ou « Gestion des autorisations ».</p>
+<form method="post" action="{{ url_for('add_group') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>
 {% if groups %}<p class="subtle">{{ groups|map(attribute='name')|join(' · ') }}</p>{% endif %}</section>
 </div>
-<section class="card"><h2>Groupe des applications IPR</h2>
+<section class="card"><div class="actions"><h2>Groupe des applications IPR</h2>
+{% call help_menu('aide-groupe-applications', 'Aide sur le groupe des applications', 'Qui utilise Événements, Réunions… ?') %}
+<p>Les applications de la barre de droite (Événements, Réunions, Créneaux, Questionnaires, Marque-pages, Publications) sont partagées entre les membres d’<strong>un</strong> groupe.</p>
+<p><strong>Comment faire :</strong> 1. créez le groupe (par exemple « IPR ») dans « Créer un groupe » ; 2. choisissez-le ici et cliquez sur « Enregistrer le groupe » ; 3. dans « Comptes », cochez ce groupe pour chaque personne concernée.</p>
+<p>Tant qu’aucun groupe n’est choisi, ces applications restent vides.</p>
+{% endcall %}</div>
 <p><a href="{{ url_for('ipr.directory') }}">Voir l’annuaire des membres IPR</a></p>
 <p>Les membres actifs du groupe choisi partagent les événements, réunions, créneaux, questionnaires, marque-pages et publications.</p>
 {% if groups %}
@@ -38,9 +53,15 @@
   </select></label>
   <button>Enregistrer le groupe</button>
 </form>
-{% else %}<p>Créez d’abord un groupe ci-dessus.</p>{% endif %}
+{% else %}<p class="notice">Aucun groupe pour l’instant : créez-en un dans le cadre « Créer un groupe » (en haut à droite de cette page), par exemple « IPR », puis revenez le choisir ici.</p>{% endif %}
 </section>
-<section class="card"><h2>Comptes</h2>
+<section class="card"><div class="actions"><h2>Comptes</h2>
+{% call help_menu('aide-comptes', 'Aide sur les comptes', 'Gérer une personne') %}
+<p><strong>En attente d’activation</strong> : la personne n’a pas encore utilisé son invitation. Envoyez-la avec « Inviter en une fois » (en haut) ; « Révoquer l’invitation » annule le lien envoyé.</p>
+<p><strong>Groupes</strong> : cochez les groupes de la personne, puis « Enregistrer les groupes ».</p>
+<p><strong>Nommer animateur</strong> (compte actif) : la personne gère comme vous les comptes, les accès et les dossiers.</p>
+<p><strong>Suspendre</strong> : coupe tout de suite ses accès ; « Réactiver » les rétablit.</p>
+{% endcall %}</div>
 {% for person in people %}
 <div class="member"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}
 <p class="subtle">{{ 'Animateur' if person.admin else ('Actif' if person.active else ('Suspendu' if person.activated else 'En attente d’activation')) }}</p></div>
