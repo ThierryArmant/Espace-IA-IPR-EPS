@@ -186,3 +186,44 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .ipr-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .ipr-list { padding-inline-start: 1.4rem; }
 .ipr-list li { margin-block: .45rem; }
+
+.help-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  flex: none;
+  border-radius: 50%;
+  font: 700 .92rem/1 system-ui, sans-serif;
+}
+.help-popover {
+  position: fixed;
+  inset: 0;
+  width: min(23rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: .9rem 1rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: .7rem;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 .5rem 1.6rem #18365340;
+}
+.help-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: .55rem;
+  margin-bottom: .6rem;
+}
+.help-heading h3 { margin: 0; }
+@supports (position-area: block-end span-inline-end) {
+  .help-popover {
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+    inset: auto;
+    margin: .35rem;
+  }
+}

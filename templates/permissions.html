@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% macro rule_form(kind, subjects, label) %}
 <section class="card"><h2>{{ label }}</h2>
 <form method="post">
@@ -17,7 +18,16 @@
 {% endmacro %}
 {% block content %}
 <nav class="crumb"><a href="{{ url_for('folder',node_id=node.parent) }}">Retour au dossier parent</a></nav>
-<div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Droits d’accès</h1><p>{{ node.name }}</p></div></div>
+<div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><div class="actions"><h1>Droits d’accès</h1>
+{% call help_menu('aide-droits', 'Aide sur les droits d’accès', 'Quels droits sont réglés ici ?') %}
+<p>Ces réglages définissent les droits dans IA‑IPR EPS.</p>
+{% if node.kind == 'file' %}
+<p>Ce fichier est stocké sur le Hub. Si un fichier du même nom existe dans Nuage, ouvrez la ligne marquée « Nuage » depuis le dossier pour accéder à cette autre copie.</p>
+{% else %}
+<p>Pour qu’un collègue puisse modifier un document dans Collabora, accordez-lui aussi le droit de modification dans Nuage.</p>
+{% endif %}
+{% endcall %}
+</div><p>{{ node.name }}</p></div></div>
 <section class="card"><h2>Règles de ce niveau</h2>
 <p>Une règle individuelle prime sur les groupes au même niveau. Sans règle locale, le contenu hérite de son dossier parent. Les dossiers de premier niveau commencent sans accès collaborateur.</p>
 {% for rule in rules %}

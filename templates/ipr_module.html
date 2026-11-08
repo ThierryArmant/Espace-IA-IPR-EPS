@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% set label, icon, description = ipr_modules[module] %}
 {% set module_url = url_for('ipr.module_page', module=module) %}
 {% block title %}{{ label }} · IA-IPR EPS{% endblock %}
@@ -19,7 +20,13 @@
     </label>
     {% if module == 'publications' %}
     <label>Joindre des documents <input type="file" name="attachments" multiple></label>
-    <p class="subtle">Jusqu’à cinq fichiers par publication, 16 Mio au total.</p>
+    <div class="actions">
+      <p class="subtle">Jusqu’à cinq fichiers par publication, 16 Mio au total.</p>
+      {% call help_menu('aide-publication', 'Aide sur les pièces jointes', 'Diffuser un document au groupe IPR') %}
+      <p>Les pièces jointes sont stockées sur le Hub. Les membres qui ont accès aux Publications peuvent les télécharger.</p>
+      <p>Pour que plusieurs collègues modifient une même copie dans Collabora, utilisez un fichier partagé dans Nuage.</p>
+      {% endcall %}
+    </div>
     {% if editing and attachments %}
     <fieldset><legend>Pièces jointes actuelles</legend>
     {% for attachment in attachments %}

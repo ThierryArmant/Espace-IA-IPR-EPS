@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% macro folder_actions(item) %}
 <details class="folder-actions">
 <summary aria-label="Actions pour {{ item.name }}" title="Actions pour {{ item.name }}">⋯</summary>
@@ -82,11 +83,23 @@
   <form method="post" {% if nuage_connected %}data-nuage-create{% endif %} action="{{ url_for('nuage.create', node_id=node.id, kind='texte') }}">
     <input type="hidden" name="csrf" value="{{ csrf }}"><button>＋ Créer un document texte</button>
   </form>
+  {% call help_menu('aide-creation', 'Aide sur la création de documents', 'Créer et modifier à plusieurs') %}
+  <p>Les boutons « Créer » enregistrent le nouveau fichier dans le dossier correspondant de Nuage.</p>
+  <p>Connectez votre compte Nuage si le Hub le demande. Le fichier s’ouvre dans Collabora, dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour retrouver votre dossier dans le Hub.</p>
+  {% endcall %}
 </div>
 <details><summary>＋ Ajouter un dossier</summary><form method="post" action="{{ url_for('add_folder',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom <input name="name" required maxlength="180"></label>
 <label>Couleur <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label><button>Créer</button></form></details>
-<details><summary>↑ Importer des documents</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('upload',node_id=node.id) }}">
+<details><summary>↑ Importer des documents</summary>
+<div class="actions">
+  <span class="subtle">Dépôt sur le Hub</span>
+  {% call help_menu('aide-import', 'Aide sur l’importation de documents', 'Importer un document dans le Hub') %}
+  <p>Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.</p>
+  <p>Pour modifier ensemble un tableur déjà existant, déposez sa version .ods dans le dossier correspondant sur Nuage et accordez aux collègues le droit de modification.</p>
+  {% endcall %}
+</div>
+<form method="post" enctype="multipart/form-data" action="{{ url_for('upload',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers (32 Mio au total) <input type="file" name="files" multiple required></label><button>Importer</button></form></details>
 <details><summary>↑ Importer une arborescence</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('import_zip',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Archive ZIP <input type="file" name="archive" accept=".zip" required></label><button>Importer</button></form></details>
@@ -97,20 +110,25 @@
 </div>
 {% endif %}
 <section class="panel">
-<div class="panel-head"><h2>Documents</h2><a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a><form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
+<div class="panel-head"><div class="actions"><h2>Documents</h2>
+{% call help_menu('aide-documents', 'Aide sur la liste des documents', 'Hub et Nuage dans ce dossier') %}
+<p>Les lignes marquées « Nuage » ouvrent le fichier partagé dans un autre onglet. Les modifications dans Collabora sont enregistrées dans Nuage.</p>
+<p>Les fichiers importés directement dans le Hub ont une fiche de consultation. Les droits du Hub s’appliquent à cette fiche. Pour un fichier Nuage, vos droits dans Nuage s’appliquent aussi.</p>
+{% endcall %}
+</div><a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a><form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
 {% if nuage_files %}<p class="empty subtle">Les fichiers Nuage s’ouvrent dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour revenir à votre dossier.</p>{% endif %}
 {% if nuage_error %}<p class="notice">{{ nuage_error }}</p>{% endif %}
 {% if files or nuage_files %}
 <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Modifié le (UTC)</th><th>Actions</th></tr></thead><tbody>
 {% for file in files %}
-<tr><td><a class="filename" href="{{ url_for('document',node_id=file.id) }}">{{ file.name }}</a></td><td>{{ file.updated }}</td><td><div class="actions">
+<tr><td><a class="filename" href="{{ url_for('document',node_id=file.id) }}">{{ file.name }}</a> <span class="badge">Hub</span></td><td>{{ file.updated }}</td><td><div class="actions">
 {% if rights(file) is downloadable %}<a href="{{ url_for('download',node_id=file.id) }}">Télécharger</a>{% endif %}
 {% if can_notify_documents and mask is writable %}<a href="{{ url_for('notifications.compose',node_id=file.id) }}">Notifier</a>{% endif %}
 {% if g.user.admin %}<a href="{{ url_for('permissions',node_id=file.id) }}">Droits</a>{% endif %}
 </div></td></tr>
 {% endfor %}
 {% for name, link in nuage_files %}
-<tr><td>{% if link %}<a class="filename" href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %}</td><td>Nuage</td><td>
+<tr><td>{% if link %}<a class="filename" href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ name }}</a>{% else %}{{ name }}{% endif %} <span class="badge granted">Nuage</span></td><td>—</td><td>
 {% if mask is writable %}<a href="{{ url_for('nuage.move', node_id=node.id, name=name) }}">Déplacer</a>
 {% if can_notify_documents and link %}<a href="{{ url_for('notifications.compose',node_id=node.id,nuage=nuage_notification_reference(node,name,link)) }}">Notifier</a>{% endif %}
 {% endif %}

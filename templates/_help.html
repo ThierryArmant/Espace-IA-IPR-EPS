@@ -1,0 +1,12 @@
+{% macro help_menu(id, label, title) %}
+<button type="button" class="secondary help-trigger" popovertarget="{{ id }}" aria-label="{{ label }}" title="{{ label }}">
+  <span aria-hidden="true">?</span>
+</button>
+<div class="help-popover" id="{{ id }}" popover="auto" role="region" aria-labelledby="{{ id }}-title">
+  <div class="help-heading">
+    <h3 id="{{ id }}-title">{{ title }}</h3>
+    <button type="button" class="secondary help-trigger" popovertarget="{{ id }}" popovertargetaction="hide" aria-label="Fermer l’aide">×</button>
+  </div>
+  {{ caller() }}
+</div>
+{% endmacro %}
