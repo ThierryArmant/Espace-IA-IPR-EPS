@@ -874,6 +874,27 @@ def create_app():
             flash("Nom de groupe invalide ou déjà utilisé.")
         return redirect(url_for("directory"))
 
+    @app.route("/annuaire/groupe/<int:group_id>", methods=["GET", "POST"])
+    def group_members(group_id):
+        require_admin()
+        group = g.db.execute("SELECT * FROM groups WHERE id=?", (group_id,)).fetchone()
+        if not group:
+            abort(404)
+        everyone = g.db.execute(
+            "SELECT id,email,name,active,password IS NOT NULL AS activated FROM users "
+            "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
+        if request.method == "POST":
+            selection = set(request.form.getlist("members", type=int))
+            if not selection <= {row["id"] for row in everyone}:
+                abort(400, "Personne inconnue.")
+            g.db.execute("DELETE FROM memberships WHERE group_id=?", (group_id,))
+            g.db.executemany("INSERT INTO memberships VALUES(?,?)", [(user, group_id) for user in selection])
+            g.db.commit()
+            flash(f"Groupe « {group['name']} » : {len(selection)} membre(s) enregistré(s).")
+            return redirect(url_for("directory"))
+        members = {row[0] for row in g.db.execute("SELECT user_id FROM memberships WHERE group_id=?", (group_id,))}
+        return render_template("groupe_membres.html", group=group, everyone=everyone, members=members)
+
     @app.post("/annuaire/compte/<int:user_id>")
     def manage_user(user_id):
         require_admin()

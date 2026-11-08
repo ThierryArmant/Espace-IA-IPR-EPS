@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_help.html" import help_menu %}
+{% block title %}Membres du groupe · IA-IPR EPS{% endblock %}
+{% block content %}
+<p class="retour"><a class="button secondary" href="{{ url_for('directory') }}">← Annuaire</a></p>
+<div class="hero tone-menthe"><div><p class="eyebrow">GROUPE</p><h1>{{ group.name }}</h1><p>Cochez toutes les personnes du groupe, puis enregistrez une seule fois.</p></div>
+<div class="actions">{% call help_menu('aide-membres', 'Aide sur les membres du groupe', 'Choisir les membres') %}
+<p>Cochez les personnes qui doivent faire partie du groupe et décochez celles qui n’en font plus partie.</p>
+<p>Un seul clic sur « Enregistrer les membres » suffit pour tout le monde.</p>
+<p>Le champ « Filtrer » aide à retrouver un nom dans une longue liste.</p>
+{% endcall %}</div></div>
+<form method="post" class="panel">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="panel-head"><h2><span id="compte-membres">{{ members|length }}</span> membre(s) coché(s)</h2><button>Enregistrer les membres</button></div>
+<label>Filtrer <input id="filtre-membres" type="search" placeholder="Tapez un nom pour filtrer la liste"></label>
+<div class="liste-membres">
+{% for person in everyone %}
+<label class="check membre-ligne"><input type="checkbox" name="members" value="{{ person.id }}" {% if person.id in members %}checked{% endif %}>
+<span><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}{% if not person.activated %} <span class="subtle">· invitation à envoyer</span>{% endif %}</span></label>
+{% endfor %}
+</div>
+<div class="actions"><button>Enregistrer les membres</button></div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupe-membres.js') }}" defer></script>{% endblock %}

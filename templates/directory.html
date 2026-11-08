@@ -37,14 +37,16 @@
 <p><strong>Deux groupes utiles ici :</strong></p>
 <p>• <strong>Gestion des autorisations</strong> (nom exact) : ses membres peuvent modifier le tableau Autorisations.</p>
 <p>• <strong>IPR</strong> (ou le nom de votre choix) : à choisir ci-dessous comme « groupe des applications » ; ses membres partagent Événements, Réunions, Créneaux, Questionnaires, Marque-pages et Publications.</p>
-<p><strong>Comment faire :</strong> tapez le nom, cliquez sur « Créer », puis, dans « Comptes » plus bas, cochez le groupe sous le nom de chaque personne et cliquez sur « Enregistrer les groupes ».</p>
+<p><strong>Comment faire :</strong> tapez le nom, cliquez sur « Créer », puis cliquez sur « Choisir les membres » à côté du groupe : cochez toutes les personnes et enregistrez une seule fois.</p>
 <p>Un groupe peut aussi recevoir des droits sur un dossier, dans « Droits d’accès ».</p>
 {% endcall %}</div>
 <p class="subtle">Par exemple « IPR » ou « Gestion des autorisations ».</p>
 <form method="post" action="{{ url_for('add_group') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>
-{% if groups %}<p class="subtle">{{ groups|map(attribute='name')|join(' · ') }}</p>{% endif %}</section>
+{% if groups %}<h3>Groupes existants</h3><ul class="liste-groupes">
+{% for group in groups %}<li><strong>{{ group.name }}</strong> · <a href="{{ url_for('group_members', group_id=group.id) }}">Choisir les membres</a></li>{% endfor %}
+</ul>{% endif %}</section>
 </div>
 <section class="card"><div class="actions"><h2>Groupe des applications IPR</h2>
 {% call help_menu('aide-groupe-applications', 'Aide sur le groupe des applications', 'Qui utilise Événements, Réunions… ?') %}
@@ -68,7 +70,7 @@
 <section class="card"><div class="actions"><h2>Comptes</h2>
 {% call help_menu('aide-comptes', 'Aide sur les comptes', 'Gérer une personne') %}
 <p><strong>En attente d’activation</strong> : la personne n’a pas encore utilisé son invitation. Envoyez-la avec « Inviter en une fois » (en haut) ; « Révoquer l’invitation » annule le lien envoyé.</p>
-<p><strong>Groupes</strong> : cochez les groupes de la personne, puis « Enregistrer les groupes ».</p>
+<p><strong>Groupes</strong> : pour une seule personne, cochez ses groupes puis « Enregistrer les groupes ». Pour remplir un groupe d’un coup, utilisez plutôt « Choisir les membres » dans le cadre « Créer un groupe ».</p>
 <p><strong>Nommer animateur</strong> (compte actif) : la personne gère comme vous les comptes, les accès et les dossiers.</p>
 <p><strong>Suspendre</strong> : coupe tout de suite ses accès ; « Réactiver » les rétablit.</p>
 {% endcall %}</div>
