@@ -43,7 +43,24 @@ class ImportErrorZIP(ValueError):
     pass
 
 
+def load_private_settings():
+    """Lit les réglages HUB_* d’un fichier privé du serveur (modifiable en SSH).
+
+    Fichier : HUB_ENV_FILE, ou ~/.ia-ipr-eps/hub.env. Une ligne par réglage : NOM=valeur.
+    Les variables déjà définies par l’hébergeur restent prioritaires.
+    """
+    path = Path(os.environ.get("HUB_ENV_FILE", Path.home() / ".ia-ipr-eps" / "hub.env"))
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, sep, value = line.strip().partition("=")
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if sep and key.startswith("HUB_") and not key.startswith("#"):
+            os.environ.setdefault(key, value)
+
+
 def create_app():
+    load_private_settings()
     app = Flask(__name__, instance_relative_config=True)
     secret = os.environ.get("HUB_SECRET_KEY", "")
     secret_file = os.environ.get("HUB_SECRET_KEY_FILE")
