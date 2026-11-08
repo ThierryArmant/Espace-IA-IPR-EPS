@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='grille-v2') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='retour-v1') }}">
 {% block scripts %}{% endblock %}
 </head>
 <body>
 <header class="top">
   <a class="brand" href="{{ url_for('folder') }}"><span class="mark">EPS</span><span><small>ESPACE DE TRAVAIL</small><strong>IA-IPR EPS</strong></span></a>
   {% if g.user %}
+  <a class="button secondary bouton-accueil" href="{{ url_for('folder') }}" title="Revenir à la page principale">⌂ Accueil</a>
   <div class="identity"><span class="role">{{ 'Animateur' if g.user.admin else 'Collaborateur' }}</span>
   <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="quiet">Déconnexion</button></form></div>
   {% endif %}

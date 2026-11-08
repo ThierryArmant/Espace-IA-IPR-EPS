@@ -245,3 +245,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .grille-acces select.remplir { margin-top: .3rem; font-size: .8rem; min-width: 8rem; }
 .grille-acces select.modifie { outline: 2px solid #e0a100; }
+
+/* Boutons de retour */
+.bouton-accueil { margin-inline-start: auto; margin-inline-end: 1rem; white-space: nowrap; }
+.retour { margin: 0 0 .5rem; }

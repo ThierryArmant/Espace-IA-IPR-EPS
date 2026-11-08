@@ -79,6 +79,7 @@
 {% endblock %}
 {% block content %}
 {% set mask=rights(node) %}
+{% if node.parent is not none %}<p class="retour"><a class="button secondary" href="{{ url_for('folder', node_id=node.parent) }}">← Dossier précédent</a></p>{% endif %}
 <nav class="crumb" aria-label="Chemin">{% for item in trail %}{% if not loop.last %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}{% endfor %}</nav>
 <div class="hero hero-dossier-prive tone-{{ node.color }}">
   <div><p class="eyebrow">{{ 'ESPACE DOCUMENTAIRE' if node.id==1 else 'DOSSIER' }}</p><h1>{{ node.name }}{% if node.id != 1 %} {{ lock(node) }}{% endif %}</h1><p class="subtle">{{ children[node.id]|length }} sous-dossier(s) · {{ files|length }} document(s) affiché(s)</p></div>
