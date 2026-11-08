@@ -21,6 +21,10 @@ def upgrade_users(db):
     columns = {row[1] for row in db.execute("PRAGMA table_info(users)")}
     if columns and "name" not in columns:
         db.execute("ALTER TABLE users ADD COLUMN name TEXT")
+    # Ordre d'affichage des dossiers (NULL : après les dossiers ordonnés, par date de création).
+    columns = {row[1] for row in db.execute("PRAGMA table_info(nodes)")}
+    if columns and "position" not in columns:
+        db.execute("ALTER TABLE nodes ADD COLUMN position INTEGER")
 
 
 def plain(text):

@@ -17,6 +17,14 @@
 <label>Nouveau nom <input name="name" value="{{ item.name }}" required maxlength="180"></label>
 <button>Enregistrer</button>
 </form></details>
+{% if g.user.admin %}
+<form method="post" action="{{ url_for('reorder_folder',node_id=item.id) }}" class="actions">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="retour" value="{{ 'parent' if item.id != node.id else '' }}">
+<button class="secondary" name="sens" value="monter" title="Afficher ce dossier plus haut">↑ Monter</button>
+<button class="secondary" name="sens" value="descendre" title="Afficher ce dossier plus bas">↓ Descendre</button>
+</form>
+<p><a href="{{ url_for('move_folder',node_id=item.id) }}">Déplacer vers…</a></p>
+{% endif %}
 <details><summary class="delete-action">Supprimer</summary>
 <form method="post" action="{{ url_for('delete_folder',node_id=item.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">

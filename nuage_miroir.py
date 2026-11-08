@@ -181,6 +181,21 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
             raise ValueError("Un dossier porte déjà ce nom dans Nuage.")
         raise StorageError(f"Nuage n’a pas renommé le dossier ({status}).")
 
+    def folder_moved(node, destination):
+        source = folder_path(lineage(node))
+        target = (*folder_path(lineage(destination)), node["name"])
+        status = storage.move(source, target)
+        if status in {201, 204, 404}:
+            return
+        if status == 412:
+            raise ValueError("Un dossier porte déjà ce nom à cet endroit dans Nuage.")
+        if status == 409:
+            storage.make_folders(target[:-1])
+            status = storage.move(source, target)
+            if status in {201, 204}:
+                return
+        raise StorageError(f"Nuage n’a pas déplacé le dossier ({status}).")
+
     def folder_deleted(node):
         path = folder_path(lineage(node))
         content = storage.listing(path)
@@ -285,5 +300,5 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
     return type("Mirror", (), dict(
         files=staticmethod(files), upload=staticmethod(upload), import_tree=staticmethod(import_tree),
         folder_created=staticmethod(folder_created), folder_renamed=staticmethod(folder_renamed),
-        folder_deleted=staticmethod(folder_deleted),
+        folder_deleted=staticmethod(folder_deleted), folder_moved=staticmethod(folder_moved),
     ))

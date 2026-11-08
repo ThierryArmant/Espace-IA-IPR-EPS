@@ -305,9 +305,12 @@ def create_app():
     def find_node(node_id):
         if "nodes" not in g:
             g.nodes = {r["id"]: r for r in g.db.execute(
-                "SELECT id,parent,name,kind,color,updated FROM nodes"
+                "SELECT id,parent,name,kind,color,updated,position FROM nodes"
             )}
         return g.nodes.get(node_id)
+
+    def display_order(row):
+        return (row["position"] is None, row["position"] or 0, row["id"])
 
     def get_node(node_id):
         node = find_node(node_id)
@@ -469,7 +472,7 @@ def create_app():
         children = defaultdict(list)
         visible_files = []
         search = request.args.get("q", "").strip().casefold()
-        for entry in sorted(g.nodes.values(), key=lambda row: row["id"]):
+        for entry in sorted(g.nodes.values(), key=display_order):
             if entry["kind"] == "folder" and entry["parent"] and rights(entry) & VIEW:
                 children[entry["parent"]].append(entry)
             elif (entry["kind"] == "file" and entry["parent"] == node_id
@@ -553,6 +556,67 @@ def create_app():
         g.db.commit()
         flash("Dossier supprimé.")
         return redirect(url_for("folder", node_id=node["parent"]))
+
+    @app.post("/dossier/<int:node_id>/ordre")
+    def reorder_folder(node_id):
+        require_admin()
+        node = allowed(node_id, VIEW, "folder")
+        if node["parent"] is None:
+            abort(400)
+        siblings = sorted((row for row in g.nodes.values()
+                           if row["parent"] == node["parent"] and row["kind"] == "folder"), key=display_order)
+        order = [row["id"] for row in siblings]
+        index = order.index(node_id)
+        target = index - 1 if request.form.get("sens") == "monter" else index + 1
+        if 0 <= target < len(order):
+            order[index], order[target] = order[target], order[index]
+            g.db.executemany("UPDATE nodes SET position=? WHERE id=?",
+                             [(rank * 10, item) for rank, item in enumerate(order)])
+            g.db.commit()
+        return redirect(request.form.get("retour") == "parent" and url_for("folder", node_id=node["parent"])
+                        or url_for("folder", node_id=node_id))
+
+    @app.route("/dossier/<int:node_id>/deplacer", methods=["GET", "POST"])
+    def move_folder(node_id):
+        require_admin()
+        node = allowed(node_id, VIEW, "folder")
+        if node["parent"] is None:
+            abort(400)
+        subtree, pending = {node_id}, [node_id]
+        while pending:
+            current = pending.pop()
+            for row in g.nodes.values():
+                if row["parent"] == current and row["kind"] == "folder":
+                    subtree.add(row["id"])
+                    pending.append(row["id"])
+        height = max(len(lineage(get_node(item))) for item in subtree) - len(lineage(node)) + 1
+        destinations = sorted(
+            ((" › ".join(part["name"] for part in lineage(item)[1:]) or "Accueil (dossier principal)", item["id"])
+             for item in g.nodes.values()
+             if item["kind"] == "folder" and item["id"] not in subtree and item["id"] != node["parent"]
+             and len(lineage(item)) + height <= 64),
+            key=lambda entry: (entry[1] != 1, entry[0].casefold()),
+        )
+        if request.method == "GET":
+            return render_template("deplacer_dossier.html", node=node, destinations=destinations)
+        destination = request.form.get("destination", type=int)
+        if destination not in {item_id for _, item_id in destinations}:
+            abort(400, "Destination invalide.")
+        try:
+            if g.db.execute("SELECT 1 FROM nodes WHERE parent=? AND name=?",
+                            (destination, node["name"])).fetchone():
+                raise ValueError("Un élément porte déjà ce nom dans le dossier de destination.")
+            if storage:
+                mirror.folder_moved(node, get_node(destination))
+            g.db.execute("UPDATE nodes SET parent=?, position=NULL WHERE id=?", (destination, node_id))
+            g.db.commit()
+            flash(f"« {node['name']} » a été déplacé. Vérifiez ses droits d’accès dans son nouvel emplacement.")
+        except (ValueError, StorageError, sqlite3.IntegrityError) as error:
+            g.db.rollback()
+            flash("Un élément porte déjà ce nom dans le dossier de destination."
+                  if isinstance(error, sqlite3.IntegrityError) else str(error))
+            return redirect(url_for("move_folder", node_id=node_id))
+        return redirect(url_for("folder", node_id=node_id))
 
     @app.post("/dossier/<int:node_id>/couleur")
     def folder_color(node_id):
