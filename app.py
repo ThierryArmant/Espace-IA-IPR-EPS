@@ -813,7 +813,8 @@ def create_app():
                                truncated=len(data) > 100000)
 
     def people():
-        return g.db.execute("SELECT id,email,name,active,admin,password IS NOT NULL AS activated FROM users ORDER BY email").fetchall()
+        return g.db.execute("SELECT id,email,name,active,admin,password IS NOT NULL AS activated FROM users "
+                            "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
 
     def groups():
         return g.db.execute("SELECT * FROM groups ORDER BY name").fetchall()
