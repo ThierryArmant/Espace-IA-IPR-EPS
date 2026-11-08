@@ -71,11 +71,15 @@
   <div class="actions">
   {% if mask is writable %}{{ folder_actions(node) }}{% endif %}
   {% if g.user.admin and node.id!=1 %}<a class="button secondary" href="{{ url_for('permissions',node_id=node.id) }}">Droits d’accès</a>{% endif %}
-  {% if mask is downloadable %}<a class="button secondary" href="{{ url_for('export_zip',node_id=node.id) }}">Exporter le ZIP</a>{% endif %}
+  {% if mask is downloadable and not nuage_storage %}<a class="button secondary" href="{{ url_for('export_zip',node_id=node.id) }}">Exporter le ZIP</a>{% endif %}
+  {% if nuage_storage and g.user.admin %}<form method="post" action="{{ url_for('miroir.sync', node_id=node.id) }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Reprendre les dossiers Nuage</button></form>{% endif %}
   </div>
 </div>
+{% if nuage_storage and g.user.admin and missing_folders %}<p class="notice">{{ missing_folders|length }} dossier(s) de Nuage ne sont pas encore dans le Hub ({{ missing_folders[:5]|join(', ') }}{% if missing_folders|length > 5 %}…{% endif %}). Cliquez sur « Reprendre les dossiers Nuage », puis réglez leurs droits.</p>{% endif %}
+{% if nuage_storage and g.user.admin and not (content_mask is readable) and node.id != 1 %}<p class="notice">Vous gérez ce dossier sans voir son contenu. Ajoutez-vous une règle dans « Droits d’accès » si vous devez y accéder.</p>{% endif %}
 {% if mask is writable %}
 <div class="tools">
+{% if not nuage_storage or content_mask is writable %}
 <div class="creation-nuage actions" aria-label="Créer dans Nuage">
   <form method="post" {% if nuage_connected %}data-nuage-create{% endif %} action="{{ url_for('nuage.create', node_id=node.id, kind='tableur') }}">
     <input type="hidden" name="csrf" value="{{ csrf }}"><button>＋ Créer un tableur</button>
@@ -88,14 +92,16 @@
   <p>Connectez votre compte Nuage si le Hub le demande. Le fichier s’ouvre dans Collabora, dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour retrouver votre dossier dans le Hub.</p>
   {% endcall %}
 </div>
+{% endif %}
 <details><summary>＋ Ajouter un dossier</summary><form method="post" action="{{ url_for('add_folder',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom <input name="name" required maxlength="180"></label>
 <label>Couleur <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label><button>Créer</button></form></details>
+{% if not nuage_storage or content_mask is writable %}
 <details><summary>↑ Importer des documents</summary>
 <div class="actions">
-  <span class="subtle">{{ 'Dépôt dans le Hub (stockage Nuage)' if nuage_storage else 'Dépôt sur le Hub' }}</span>
+  <span class="subtle">{{ 'Dépôt dans le dossier Nuage' if nuage_storage else 'Dépôt sur le Hub' }}</span>
   {% call help_menu('aide-import', 'Aide sur l’importation de documents', 'Importer un document dans le Hub') %}
-  <p>{% if nuage_storage %}Ce bouton range le fichier dans le stockage Nuage du Hub. Les droits restent ceux du Hub : les collègues autorisés le consultent et le téléchargent ici, sans compte Nuage.{% else %}Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.{% endif %}</p>
+  <p>{% if nuage_storage %}Ce bouton range le fichier dans le dossier Nuage correspondant. Les collègues autorisés dans le Hub le consultent et le téléchargent ici, sans compte Nuage.{% else %}Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.{% endif %}</p>
   <p>Pour modifier ensemble un tableur déjà existant, déposez sa version .ods dans le dossier correspondant sur Nuage et accordez aux collègues le droit de modification.</p>
   {% endcall %}
 </div>
@@ -103,6 +109,7 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers (32 Mio au total) <input type="file" name="files" multiple required></label><button>Importer</button></form></details>
 <details><summary>↑ Importer une arborescence</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('import_zip',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Archive ZIP <input type="file" name="archive" accept=".zip" required></label><button>Importer</button></form></details>
+{% endif %}
 {% if g.user.admin %}
 <details><summary>◈ Couleur du dossier</summary><form method="post" action="{{ url_for('folder_color',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Couleur <select name="color">{% for color in colors %}<option {% if color==node.color %}selected{% endif %}>{{ color }}</option>{% endfor %}</select></label><button>Appliquer</button></form></details>
@@ -118,13 +125,20 @@
 </div><a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a><form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
 {% if nuage_files %}<p class="empty subtle">Les fichiers Nuage s’ouvrent dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour revenir à votre dossier.</p>{% endif %}
 {% if nuage_error %}<p class="notice">{{ nuage_error }}</p>{% endif %}
-{% if files or nuage_files %}
+{% if files or nuage_files or mirror_files %}
 <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Modifié le (UTC)</th><th>Actions</th></tr></thead><tbody>
 {% for file in files %}
 <tr><td><a class="filename" href="{{ url_for('document',node_id=file.id) }}">{{ file.name }}</a> <span class="badge">Hub</span></td><td>{{ file.updated }}</td><td><div class="actions">
 {% if rights(file) is downloadable %}<a href="{{ url_for('download',node_id=file.id) }}">Télécharger</a>{% endif %}
 {% if can_notify_documents and mask is writable %}<a href="{{ url_for('notifications.compose',node_id=file.id) }}">Notifier</a>{% endif %}
 {% if g.user.admin %}<a href="{{ url_for('permissions',node_id=file.id) }}">Droits</a>{% endif %}
+</div></td></tr>
+{% endfor %}
+{% for item in mirror_files %}
+<tr><td><a class="filename" href="{{ url_for('miroir.document', node_id=node.id, nom=item.name) }}">{{ item.name }}</a> <span class="badge granted">Nuage</span></td><td>{{ item.modified or '—' }}</td><td><div class="actions">
+{% if content_mask is downloadable %}<a href="{{ url_for('miroir.download_file', node_id=node.id, nom=item.name) }}">Télécharger</a>{% endif %}
+{% if content_mask is writable and item.editor and item.name.lower().endswith(('.odt','.ods','.docx','.xlsx','.pptx','.odp')) %}<a href="{{ item.editor }}" target="_blank" rel="noopener noreferrer">Modifier à plusieurs</a>{% endif %}
+{% if can_notify_documents and content_mask is writable and item.editor %}<a href="{{ url_for('notifications.compose',node_id=node.id,nuage=nuage_notification_reference(node,item.name,item.editor)) }}">Notifier</a>{% endif %}
 </div></td></tr>
 {% endfor %}
 {% for name, link in nuage_files %}

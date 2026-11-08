@@ -78,34 +78,41 @@ domaine HTTPS configuré. Pour une base existante, utilisez
 `docker compose run --rm hub flask --app app migrate-db` à la place de
 `init-db`, après une sauvegarde et avant le redémarrage. Si un reverse proxy académique existe déjà, utilisez sa configuration de publication à la place du service Caddy.
 
-### Stocker les fichiers dans Nuage (compte fonctionnel)
+### Reprendre l’arborescence Nuage dans le Hub
 
-Les collègues travaillent uniquement dans le Hub. Le Hub conserve l’arborescence,
-les droits et les échanges. Le contenu des fichiers déposés est rangé dans Nuage,
-dans `IA IPR EPS/Stockage Hub`, sous un nom unique. Renommer ou déplacer un dossier
-dans le Hub ne touche donc pas à Nuage. Aucun collègue n’a besoin d’un compte Nuage
-pour consulter ou télécharger un fichier, et seul le Hub décide qui y a accès.
+Les collègues travaillent uniquement dans le Hub. Les documents restent dans Nuage, classés
+comme aujourd’hui. Chaque dossier du Hub correspond au dossier Nuage de même chemin sous la
+racine. Le Hub liste les fichiers, les affiche et les sert uniquement aux personnes que ses
+droits autorisent. Un dépôt dans le Hub arrive dans le bon dossier Nuage, sous son vrai nom.
+Créer, renommer ou supprimer (vide) un dossier dans le Hub fait de même dans Nuage. Les
+fichiers ne transitent par le serveur qu’au moment d’une consultation : l’espace disque de
+l’hébergement n’est pas consommé.
 
-1. Créez ou obtenez un compte Nuage fonctionnel (et non personnel), puis
-   connectez-vous-y dans le navigateur.
-2. Sur le serveur, lancez `flask --app app nuage-autoriser --fichier secrets/nuage_password`
-   et ouvrez le lien affiché. La commande affiche `HUB_NUAGE_LOGIN` et enregistre
-   le mot de passe d’application dans le fichier privé indiqué.
-3. Ajoutez à la configuration privée du serveur (variables d’environnement du site
-   chez l’hébergeur, ou fichier `.env` avec Compose) :
-   `HUB_NUAGE_LOGIN`, puis `HUB_NUAGE_APP_PASSWORD_FILE` (chemin du fichier) ou
-   `HUB_NUAGE_APP_PASSWORD`. `HUB_NUAGE_ROOT` indique le dossier de départ dans Nuage, sous-dossiers compris, par exemple `Dossiers IPR EPS/IA IPR EPS` (par défaut `IA IPR EPS`). Il vaut aussi pour les documents créés en coédition.
-4. Redémarrez, puis vérifiez avec `flask --app app nuage-verifier`.
-5. Pour déplacer dans Nuage les fichiers déjà déposés dans la base du Hub :
-   faites une sauvegarde, puis lancez `flask --app app nuage-transferer`.
+1. Connectez-vous dans le navigateur au compte Nuage qui contient les dossiers (le compte
+   fonctionnel dès qu’il est disponible).
+2. Sur le serveur : `flask --app app nuage-autoriser --fichier secrets/nuage_password`, puis
+   ouvrez le lien affiché. La commande affiche `HUB_NUAGE_LOGIN` et `HUB_NUAGE_URL`.
+3. Ajoutez à la configuration privée du serveur : `HUB_NUAGE_LOGIN`, `HUB_NUAGE_URL`,
+   `HUB_NUAGE_APP_PASSWORD_FILE` (ou `HUB_NUAGE_APP_PASSWORD`) et `HUB_NUAGE_ROOT`, le dossier
+   de départ avec ses sous-dossiers, par exemple `Dossiers IPR EPS/IA IPR EPS`.
+4. Redémarrez, puis `flask --app app nuage-verifier`.
+5. `flask --app app nuage-synchroniser` crée dans le Hub les dossiers déjà classés dans Nuage.
+   Aucun droit n’est ouvert : les nouvelles branches restent privées jusqu’à vos réglages.
+   Le bouton « Reprendre les dossiers Nuage » fait la même chose depuis un dossier.
+6. S’il reste des fichiers déposés dans la base du Hub : sauvegarde, puis
+   `flask --app app nuage-transferer` pour les ranger dans le dossier Nuage correspondant.
 
-Sans ces variables, le Hub garde le fonctionnement précédent (fichiers dans SQLite).
-Le mot de passe d’application ouvre tout le compte fonctionnel : ne le placez jamais
-dans le dépôt, et révoquez-le dans les paramètres de sécurité de Nuage en cas de doute.
-Si Nuage ne répond pas, les dépôts sont refusés sans rien enregistrer, et les
-téléchargements affichent un message d’indisponibilité.
-La création de documents en coédition (`.odt`/`.ods`) continue d’utiliser le compte
-Nuage personnel de chaque collègue, car l’éditeur s’ouvre dans Nuage.
+Les dossiers Nuage dont le nom contient `/`, `\` ou `:` sont ignorés et signalés. L’export ZIP
+d’un dossier est désactivé dans ce mode. « Modifier à plusieurs » ouvre l’éditeur de Nuage :
+il faut alors un compte Nuage ayant accès au dossier. Le mot de passe d’application ouvre tout
+le compte Nuage : ne le placez jamais dans le dépôt et révoquez-le en cas de doute.
+
+### Rôle Animateur
+
+L’animateur crée les comptes, voit toute l’arborescence, crée, renomme ou supprime les dossiers
+et règle les droits. Il ne voit les documents d’un dossier, ne les télécharge et n’y dépose
+que si une règle le lui accorde, comme tout collègue. Pour accéder à un dossier, il s’ajoute
+lui-même une règle dans « Droits d’accès ».
 
 ### Sauvegarder
 

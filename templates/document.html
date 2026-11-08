@@ -4,9 +4,8 @@
 <nav class="crumb" aria-label="Chemin">{% for item in trail[:-1] %}<a href="{{ url_for('folder',node_id=item.id) }}">{{ item.name }}</a><span aria-hidden="true">/</span>{% endfor %}<span aria-current="page">{{ node.name }}</span></nav>
 <div class="hero tone-bleu"><div><p class="eyebrow">DOCUMENT</p><h1>{{ node.name }}</h1></div>
 <div class="actions">
-{% call help_menu('aide-fiche', 'Aide sur cette fiche document', 'Ce fichier est rangé dans le stockage Nuage du Hub' if stored_in_nuage else 'Ce fichier est stocké sur le Hub') %}
+{% call help_menu('aide-fiche', 'Aide sur cette fiche document', 'Ce fichier est stocké sur le Hub') %}
 <p>Cette fiche sert à consulter le fichier selon son format. Le bouton « Télécharger » est disponible si vos droits le permettent.</p>
-{% if stored_in_nuage %}<p>Le contenu est conservé dans Nuage, mais l’accès se règle uniquement dans le Hub : vous n’avez pas besoin de compte Nuage pour le consulter.</p>{% endif %}
 <p>Pour travailler à plusieurs sur un tableur, déposez le fichier .ods dans le dossier correspondant sur Nuage, puis ouvrez cette copie depuis la liste Documents du Hub.</p>
 {% endcall %}
 {% if mask is downloadable %}<a class="button" href="{{ url_for('download',node_id=node.id) }}">Télécharger</a>{% endif %}
@@ -20,7 +19,7 @@
 {% elif preview %}
 <a class="button secondary" href="{{ url_for('preview_text',node_id=node.id) }}">Lire le texte</a>
 {% else %}
-<p class="subtle">L’aperçu et la modification en ligne sont indisponibles pour ce format. Téléchargez le fichier pour l’ouvrir.</p>
+<p class="subtle">L’aperçu et la modification en ligne sont indisponibles pour ce fichier stocké sur le Hub.</p>
 {% endif %}
 </section>
 {% endblock %}

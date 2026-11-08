@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_help.html" import help_menu %}
+{% block content %}
+<nav class="crumb" aria-label="Chemin">{% for part in trail %}<a href="{{ url_for('folder',node_id=part.id) }}">{{ part.name }}</a><span aria-hidden="true">/</span>{% endfor %}<span aria-current="page">{{ item.name }}</span></nav>
+<div class="hero tone-bleu"><div><p class="eyebrow">DOCUMENT</p><h1>{{ item.name }}</h1>
+<p class="subtle">{% if item.modified %}Modifié le {{ item.modified }} (UTC) · {% endif %}{{ (item.size / 1048576)|round(1) }} Mio</p></div>
+<div class="actions">
+{% call help_menu('aide-fiche', 'Aide sur cette fiche document', 'Ce fichier est rangé dans Nuage') %}
+<p>Le fichier est conservé dans le dossier Nuage correspondant. Vos droits dans le Hub décident si vous pouvez le consulter ou le télécharger : aucun compte Nuage n’est nécessaire pour cela.</p>
+<p>« Modifier à plusieurs » ouvre l’éditeur de Nuage dans un autre onglet : il faut alors un compte Nuage ayant accès au dossier.</p>
+{% endcall %}
+{% if mask is downloadable %}<a class="button" href="{{ url_for('miroir.download_file', node_id=node.id, nom=item.name) }}">Télécharger</a>{% endif %}
+{% if mask is writable and item.editor and item.name.lower().endswith(('.odt','.ods','.docx','.xlsx','.pptx','.odp')) %}<a class="button secondary" href="{{ item.editor }}" target="_blank" rel="noopener noreferrer">Modifier à plusieurs</a>{% endif %}
+<a class="button secondary" href="{{ url_for('folder', node_id=node.id) }}">Retour au dossier</a>
+</div></div>
+<section class="card">
+{% if suffix=='.pdf' %}
+<form class="actions" method="get"><input type="hidden" name="nom" value="{{ item.name }}"><label>Page <input type="number" name="page" min="1" max="1000" value="{{ page }}"></label><button class="secondary">Afficher</button></form>
+<img class="pdf" src="{{ url_for('miroir.preview_pdf', node_id=node.id, page=page, nom=item.name) }}" alt="Page {{ page }} du document. Si elle n’apparaît pas, vérifiez le numéro de page.">
+{% elif suffix in ('.txt', '.csv') %}
+<a class="button secondary" href="{{ url_for('miroir.preview_text', node_id=node.id, nom=item.name) }}">Lire le texte</a>
+{% else %}
+<p class="subtle">L’aperçu en ligne est indisponible pour ce format. Téléchargez le fichier pour l’ouvrir.</p>
+{% endif %}
+</section>
+{% endblock %}

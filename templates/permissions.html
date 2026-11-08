@@ -5,7 +5,7 @@
 <form method="post">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="kind" value="{{ kind }}">
 <label>{{ 'Personne' if kind=='user' else 'Groupe' }} <select name="subject" required><option value="">Choisir</option>
-{% for entry in subjects if kind!='user' or not entry.admin %}<option value="{{ entry.id }}">{{ entry.email if kind=='user' else entry.name }}</option>{% endfor %}
+{% for entry in subjects %}<option value="{{ entry.id }}">{{ entry.email if kind=='user' else entry.name }}</option>{% endfor %}
 </select></label>
 <fieldset><legend>Droits à appliquer</legend>
 <label class="check"><input type="checkbox" name="read" value="1"> Consulter</label>
