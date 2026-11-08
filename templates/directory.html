@@ -26,7 +26,7 @@
 </section>
 <section class="card"><h2>Comptes</h2>
 {% for person in people %}
-<div class="member"><div><strong>{{ person.email }}</strong>
+<div class="member"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}
 <p class="subtle">{{ 'Animateur' if person.admin else ('Actif' if person.active else ('Suspendu' if person.activated else 'En attente d’activation')) }}</p></div>
 {% if not person.admin %}
 <form method="post" action="{{ url_for('manage_user',user_id=person.id) }}">

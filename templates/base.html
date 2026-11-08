@@ -33,6 +33,9 @@
   <a class="rail-ipr" href="{{ url_for('ipr.module_page', module=key) }}" {% if request.view_args and request.view_args.get('module') == key %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
   {% endfor %}
   {% endif %}
+  {% if can_manage_access %}
+  <a class="rail-team" href="{{ url_for('autorisations.grid') }}" {% if request.endpoint == 'autorisations.grid' %}aria-current="page"{% endif %}><span aria-hidden="true">☑</span>Autorisations</a>
+  {% endif %}
   {% if g.user.admin %}
   <a class="rail-mail" href="{{ url_for('messages') }}"><span aria-hidden="true">✉</span>Demandes</a>
   {% endif %}

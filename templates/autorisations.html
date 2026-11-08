@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_help.html" import help_menu %}
+{% block content %}
+<div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Autorisations</h1>
+<p>Choisissez, pour chaque personne, son accès aux dossiers principaux.</p></div>
+<div class="actions">
+{% call help_menu('aide-autorisations', 'Aide sur le tableau des autorisations', 'Régler les accès') %}
+<p><strong>Consulter</strong> : lire et télécharger les documents du dossier et de ses sous-dossiers.</p>
+<p><strong>Contribuer</strong> : consulter, déposer des documents et créer des sous-dossiers.</p>
+<p><strong>—</strong> : aucun accès individuel. La mention « par groupe » signale un accès accordé par un groupe.</p>
+<p>Un réglage plus fin sur un sous-dossier se fait dans « Droits d’accès » de ce sous-dossier.</p>
+{% endcall %}
+</div></div>
+{% if not has_group and g.user.admin %}<p class="notice">Créez dans l’annuaire le groupe « {{ managers_group }} » et placez-y les personnes autorisées à modifier ce tableau.</p>{% endif %}
+{% if not folders %}<p class="empty">Aucun dossier principal. Créez ou reprenez d’abord les dossiers dans « Documents ».</p>
+{% else %}
+<form method="post" class="panel">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="panel-head"><h2>{{ people|length }} personne(s) · {{ folders|length }} dossier(s)</h2><button>Enregistrer les autorisations</button></div>
+<div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}</th>{% endfor %}</tr></thead><tbody>
+{% for person in people %}
+<tr><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span></th>
+{% for folder in folders %}{% set value = cells[(folder.id, person.id)] %}
+<td><select name="acces-{{ folder.id }}-{{ person.id }}" aria-label="{{ person.name or person.email }} — {{ folder.name }}">
+<option value="" {% if not value %}selected{% endif %}>—</option>
+<option value="consulter" {% if value=='consulter' %}selected{% endif %}>Consulter</option>
+<option value="contribuer" {% if value=='contribuer' %}selected{% endif %}>Contribuer</option>
+</select>{% if (folder.id, person.id) in via_group %}<br><span class="subtle">par groupe</span>{% endif %}</td>
+{% endfor %}</tr>
+{% endfor %}
+</tbody></table></div>
+<div class="actions"><button>Enregistrer les autorisations</button></div>
+</form>
+{% endif %}
+{% if g.user.admin %}
+<section class="card"><h2>Ajouter des personnes</h2>
+<p class="subtle">Une personne par ligne : « NOM Prénom » ou « NOM Prénom ; adresse ». Sans adresse, le Hub propose prenom.nom@ac-aix-marseille.fr : vérifiez-la.</p>
+<form method="post" action="{{ url_for('autorisations.add_people') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Personnes <textarea name="people" rows="8" placeholder="DUPONT Marie&#10;MARTIN Jean ; jean.martin2@ac-aix-marseille.fr"></textarea></label>
+<button>Ajouter</button></form></section>
+{% endif %}
+{% endblock %}

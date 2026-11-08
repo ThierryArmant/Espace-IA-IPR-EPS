@@ -23,6 +23,7 @@ from flask import (
 from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from autorisations import register_authorizations, upgrade_users
 from document_notifications import register_document_notifications
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
 from login_code import CodeMailer, login_with_code, start_session
@@ -82,6 +83,8 @@ def create_app():
 
     with closing(connect()) as db:
         db.executescript(Path(__file__).with_name("ipr_schema.sql").read_text(encoding="utf-8"))
+    with closing(connect()) as db, db:
+        upgrade_users(db)
 
     @app.template_test("readable")
     def readable(mask):
@@ -104,6 +107,7 @@ def create_app():
             raise click.ClickException("Adresse valide et mot de passe de 14 caractères minimum requis.")
         with closing(connect()) as db, db:
             db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+            upgrade_users(db)
             db.execute("BEGIN IMMEDIATE")
             if db.execute("SELECT 1 FROM users WHERE admin=1").fetchone():
                 raise click.ClickException("Un compte Animateur existe déjà.")
@@ -117,6 +121,7 @@ def create_app():
             if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'").fetchone():
                 raise click.ClickException("Initialisez d’abord la base du Hub.")
             db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+            upgrade_users(db)
         click.echo("Schéma du Hub mis à jour.")
 
     def require_storage():
@@ -722,7 +727,7 @@ def create_app():
                                truncated=len(data) > 100000)
 
     def people():
-        return g.db.execute("SELECT id,email,active,admin,password IS NOT NULL AS activated FROM users ORDER BY email").fetchall()
+        return g.db.execute("SELECT id,email,name,active,admin,password IS NOT NULL AS activated FROM users ORDER BY email").fetchall()
 
     def groups():
         return g.db.execute("SELECT * FROM groups ORDER BY name").fetchall()
@@ -849,6 +854,7 @@ def create_app():
         return render_template("messages.html", people=[row for row in people() if row["active"]])
 
     register_ipr_modules(app)
+    register_authorizations(app, VIEW, DOWNLOAD, WRITE)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
                                  require_admin=require_admin, view=VIEW, download=DOWNLOAD, write=WRITE)

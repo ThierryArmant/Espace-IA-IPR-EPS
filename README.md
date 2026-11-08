@@ -107,6 +107,18 @@ d’un dossier est désactivé dans ce mode. « Modifier à plusieurs » ouvre l
 il faut alors un compte Nuage ayant accès au dossier. Le mot de passe d’application ouvre tout
 le compte Nuage : ne le placez jamais dans le dépôt et révoquez-le en cas de doute.
 
+### Tableau des autorisations
+
+Le module **Autorisations** présente un tableau : une ligne par personne, une colonne par
+dossier principal (les dossiers de premier niveau du Hub). Chaque case propose « — »,
+« Consulter » (lire et télécharger) ou « Contribuer » (consulter, déposer, créer des
+sous-dossiers), et crée ou retire la règle individuelle correspondante. Le tableau est
+modifiable par l’animateur et par les membres du groupe **Gestion des autorisations**, à créer
+dans l’annuaire. L’animateur peut y coller une liste de personnes, une par ligne :
+`NOM Prénom` ou `NOM Prénom ; adresse`. Sans adresse, le Hub propose
+`prenom.nom@ac-aix-marseille.fr`, à vérifier. Recoller une ligne avec la même adresse met le
+nom à jour sans créer de doublon. Les invitations s’envoient ensuite depuis l’annuaire.
+
 ### Rôle Animateur
 
 L’animateur crée les comptes, voit toute l’arborescence, crée, renomme ou supprime les dossiers

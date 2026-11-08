@@ -227,3 +227,8 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     margin: .35rem;
   }
 }
+
+/* Tableau des autorisations */
+.grille-acces th[scope="row"] { position: sticky; left: 0; background: var(--surface, #fff); text-align: left; min-width: 14rem; z-index: 1; }
+.grille-acces td { text-align: center; white-space: nowrap; }
+.grille-acces select { min-width: 8.5rem; }
