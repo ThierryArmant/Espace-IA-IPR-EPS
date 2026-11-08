@@ -169,7 +169,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .explorateur-enfants:not(.explorateur-panneau) > .explorateur-liste > li::before { content: ""; position: absolute; inset-block-start: .99rem; inset-inline-start: calc(-1 * var(--pas-arbre)); width: calc(var(--pas-arbre) - .12rem); border-block-start: 1px solid #a9bfd5; pointer-events: none; }
 .explorateur-panneau { padding: .38rem; border: 1px solid #a8bfd4; border-radius: .55rem; background: var(--paper); }
 @media (min-width: 841px) {
-  .explorateur-panneau { position: absolute; z-index: 5; inset-inline-start: 100%; inset-block-start: 0; width: clamp(18rem, 39vw, 30rem); max-height: 62vh; overflow: auto; box-shadow: 0 10px 24px #1b36572b; }
+  .explorateur-panneau { position: absolute; z-index: 5; inset-inline-start: 100%; inset-block-start: 0; width: clamp(19rem, 43vw, 36rem); max-height: calc(100vh - 1.5rem); max-height: calc(100dvh - 1.5rem); overflow: auto; box-shadow: 0 10px 24px #1b36572b; }
   .explorateur-racine > .explorateur-ligne > .explorateur-fleche[aria-expanded="true"] span { transform: none; }
 }
 @media (max-width: 840px) {

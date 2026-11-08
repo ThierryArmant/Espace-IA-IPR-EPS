@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Documents Nuage · IA-IPR EPS{% endblock %}
+{% block content %}
+<a href="{{ url_for('folder', node_id=node.id) }}">← Revenir au dossier {{ node.name }}</a>
+<section class="card">
+  <h1>Documents Nuage</h1>
+  <p class="subtle">{{ path|join(' › ') }}</p>
+  {% if connected %}
+  {% for name, link in files %}
+  <p>{% if link %}<a href="{{ link }}">{{ name }}</a>{% else %}{{ name }}{% endif %}</p>
+  {% else %}<p>Aucun document texte ou tableur à afficher.</p>{% endfor %}
+  <form method="post" action="{{ url_for('nuage.disconnect', node_id=node.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Déconnecter Nuage</button>
+  </form>
+  {% elif authorization %}
+  <p><a class="button" href="{{ authorization[0] }}" target="_blank" rel="noopener noreferrer">Autoriser sur Nuage</a></p>
+  <p>Après l’autorisation, revenez dans cet onglet.</p>
+  <form method="post" action="{{ url_for('nuage.confirm', node_id=node.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button>J’ai autorisé l’accès</button>
+  </form>
+  {% else %}
+  <p>Connectez votre compte sur la page officielle de Nuage pour ouvrir vos documents ici.</p>
+  <form method="post" action="{{ url_for('nuage.connect', node_id=node.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><button>Connecter Nuage</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

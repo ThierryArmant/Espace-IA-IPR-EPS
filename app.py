@@ -24,6 +24,7 @@ from werkzeug.exceptions import SecurityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from login_code import CodeMailer, login_with_code, start_session
+from nuage_hub import register_nuage
 
 VIEW, DOWNLOAD, WRITE = 1, 2, 4
 ALL = VIEW | DOWNLOAD | WRITE
@@ -175,9 +176,10 @@ def create_app():
             response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
+        form_targets = "'self' https://nuage01.apps.education.fr" if request.endpoint == "folder" else "'self'"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; object-src 'none'; frame-ancestors 'none'; "
-            "base-uri 'none'; form-action 'self'"
+            f"base-uri 'none'; form-action {form_targets}"
         )
         return response
 
@@ -679,4 +681,5 @@ def create_app():
                                    draft=mailto(email, subject, body))
         return render_template("messages.html", people=[row for row in people() if row["active"]])
 
+    register_nuage(app, allowed, lineage, VIEW, WRITE)
     return app
