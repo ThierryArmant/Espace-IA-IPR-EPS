@@ -9,10 +9,20 @@
 <p><strong>Nommer animateur</strong> : la personne gère comme vous les comptes, les groupes, les accès et les dossiers. Elle ne voit le contenu d’un dossier que si elle y a accès dans Autorisations. Le compte doit être activé. Il reste toujours au moins un animateur.</p>
 {% endcall %}</div></div>
 <div class="split">
-<section class="card"><h2>Inviter un collaborateur</h2><form method="post" action="{{ url_for('invite') }}">
+<section class="card"><div class="actions"><h2>Inviter un collaborateur</h2>
+{% call help_menu('aide-inviter', 'Aide sur l’invitation', 'Inviter une personne') %}
+<p>Pour <strong>une seule personne</strong> : tapez son adresse académique, puis « Préparer l’invitation ».</p>
+<p>Le Hub affiche un lien personnel, valable 48 heures, et ouvre un brouillon de courriel dans votre messagerie : relisez, puis envoyez.</p>
+<p>La personne clique sur le lien, choisit son mot de passe, et son compte devient actif. Pensez à lui ouvrir des dossiers dans <strong>Autorisations</strong>.</p>
+{% endcall %}</div><form method="post" action="{{ url_for('invite') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Adresse électronique <input name="email" type="email" required maxlength="254"></label><button>Préparer l’invitation</button>
 </form></section>
-<section class="card"><h2>Inviter en une fois</h2>
+<section class="card"><div class="actions"><h2>Inviter en une fois</h2>
+{% call help_menu('aide-inviter-tous', 'Aide sur l’invitation groupée', 'Inviter plusieurs personnes') %}
+<p>Prépare <strong>d’un coup</strong> un courriel pour chaque compte encore « en attente d’activation » (par exemple les personnes ajoutées par liste dans Autorisations).</p>
+<p>« Qui inviter » : tout le monde, ou seulement les membres d’un groupe (pratique pour commencer par les IPR).</p>
+<p>La page suivante affiche un bouton « Ouvrir le courriel » par personne : cliquez, vérifiez, envoyez. Les liens sont valables 48 heures ; refaire l’opération crée de nouveaux liens.</p>
+{% endcall %}</div>
 <p class="subtle">Prépare un courriel par compte en attente d’activation (ajouté par exemple depuis Autorisations).</p>
 <form method="post" action="{{ url_for('invite_all') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% block content %}
 <section class="card"><h1>Aperçu texte</h1>{% if truncated %}<p>Aperçu limité aux 100 premiers Ko.</p>{% endif %}<pre>{{ data }}</pre></section>
 {% endblock %}

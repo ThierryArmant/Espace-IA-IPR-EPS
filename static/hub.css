@@ -267,3 +267,4 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .etapes li { margin-block: .3rem; }
 .titre-outils { margin: 0 0 .35rem; width: 100%; }
 .titre-outils .explication { font-size: .82rem; color: #4a5f74; }
+.rail-aide { display: flex; justify-content: center; padding-block: .3rem; }

@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% from "_help.html" import help_menu %}
 {% block title %}Notifier une mise à jour · IA-IPR EPS{% endblock %}
 {% block content %}
 <p><a href="{{ url_for('folder' if nuage else 'document', node_id=node.id) }}">← Revenir {{ 'au dossier' if nuage else 'au document' }}</a></p>
 <section class="card">
-  <h1>Notifier une mise à jour</h1>
+  <div class="actions"><h1>Notifier une mise à jour</h1>
+{% call help_menu('aide-notifier', 'Aide sur la notification', 'Prévenir des collègues') %}
+<p>Cochez les collègues à prévenir, ou cliquez sur « Notifier tous les collègues autorisés ».</p>
+<p>Ils verront l’alerte dans <strong>Notifications</strong> (barre de droite), avec un lien vers le document. Seules les personnes qui ont accès au document sont proposées.</p>
+{% endcall %}</div>
   <p><strong>{{ name }}</strong></p>
   <p>L’alerte apparaîtra dans la rubrique Notifications des collègues choisis.</p>
   {% if nuage %}<p>L’alerte indique le dossier. Les droits Nuage s’appliquent à l’ouverture du fichier.</p>{% endif %}

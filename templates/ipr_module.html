@@ -22,7 +22,11 @@
 {% elif mode in ('create', 'edit') %}
 {% set editing = mode == 'edit' %}
 <section class="card">
-  <h2>{{ 'Modifier' if editing else 'Ajouter' }}</h2>
+  <div class="actions"><h2>{{ 'Modifier' if editing else 'Ajouter' }}</h2>
+  {% call help_menu('aide-formulaire', 'Aide sur le formulaire', 'Remplir le formulaire') %}
+  <p>Donnez un titre clair, puis complétez les champs proposés. Les dates sont à l’heure de Paris.</p>
+  <p>« Enregistrer » publie l’entrée pour tous les membres du groupe. Vous pourrez la modifier ou la supprimer ensuite.</p>
+  {% endcall %}</div>
   <form method="post" action="{{ module_url }}"{% if module == 'publications' %} enctype="multipart/form-data"{% endif %}>
     <input type="hidden" name="csrf" value="{{ csrf }}">
     {% if editing %}<input type="hidden" name="entry" value="{{ selected.id }}">{% endif %}
@@ -103,13 +107,16 @@
 {% if module in ('evenements', 'reunions', 'creneaux', 'questionnaires') %}
 <section class="card">
   {% if module in ('evenements', 'reunions') %}
-  <h2>Participation</h2>
+  <div class="actions"><h2>Participation</h2>
+  {% call help_menu('aide-participation', 'Aide sur la participation', 'Indiquer sa présence') %}<p>Choisissez votre réponse et validez. Vous pouvez la changer à tout moment ; l’auteur voit la liste des réponses.</p>{% endcall %}</div>
   <p>{{ yes_count }} présent(s) · {{ no_count }} absent(s)</p>
   {% elif module == 'creneaux' %}
-  <h2>Réservations</h2>
+  <div class="actions"><h2>Réservations</h2>
+  {% call help_menu('aide-reservations', 'Aide sur les réservations', 'Réserver un créneau') %}<p>Réservez une place tant qu’il en reste. Vous pouvez annuler votre réservation pour libérer la place.</p>{% endcall %}</div>
   <p>{{ response_count }} / {{ selected.capacity }} places réservées</p>
   {% else %}
-  <h2>Répondre au questionnaire</h2>
+  <div class="actions"><h2>Répondre au questionnaire</h2>
+  {% call help_menu('aide-repondre', 'Aide sur le questionnaire', 'Répondre') %}<p>Répondez à chaque question puis enregistrez. Vous pouvez revenir modifier vos réponses ; l’auteur consulte l’ensemble des réponses.</p>{% endcall %}</div>
   <p>Vos réponses sont visibles par l’auteur et les animateurs.</p>
   {% endif %}
   <form method="post" action="{{ module_url }}">
@@ -139,7 +146,8 @@
 {% endif %}
 {% if results or roster %}
 <section class="card">
-  <h2>{{ 'Réponses reçues' if module == 'questionnaires' else 'Participants et réponses' }}</h2>
+  <div class="actions"><h2>{{ 'Réponses reçues' if module == 'questionnaires' else 'Participants et réponses' }}</h2>
+  {% call help_menu('aide-reponses', 'Aide sur les réponses', 'Suivre les réponses') %}<p>Liste des réponses des membres du groupe, mise à jour à chaque visite.</p>{% endcall %}</div>
   {% for email, values in results %}
   <details><summary>{{ email }}</summary>
     <dl>{% for answer in values %}<dt>{{ questions[loop.index0] }}</dt><dd class="ipr-text">{{ answer }}</dd>{% endfor %}</dl>

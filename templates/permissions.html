@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
 {% macro rule_form(kind, subjects, label) %}
-<section class="card"><h2>{{ label }}</h2>
+<section class="card"><div class="actions"><h2>{{ label }}</h2>
+{% call help_menu('aide-regle-' ~ kind, 'Aide sur ce réglage', 'Poser une règle') %}
+<p>Choisissez {{ 'une personne' if kind=='user' else 'un groupe' }}, cochez les droits, puis « Appliquer ».</p>
+<p>Aucune case cochée = accès fermé sur ce dossier. « Retirer cette règle » efface le réglage : le dossier reprend alors les droits du dossier au-dessus.</p>
+{% if kind=='user' %}<p>Une règle pour une personne passe avant celles de ses groupes.</p>{% else %}<p>Tous les membres du groupe reçoivent ces droits.</p>{% endif %}
+{% endcall %}</div>
 <form method="post">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="kind" value="{{ kind }}">
 <label>{{ 'Personne' if kind=='user' else 'Groupe' }} <select name="subject" required><option value="">Choisir</option>
@@ -30,7 +35,11 @@
 {% endif %}
 {% endcall %}
 </div><p>{{ node.name }}</p></div></div>
-<section class="card"><h2>Règles de ce niveau</h2>
+<section class="card"><div class="actions"><h2>Règles de ce niveau</h2>
+{% call help_menu('aide-regles', 'Aide sur les règles', 'Les règles déjà posées') %}
+<p>Liste des règles posées <strong>sur ce dossier précisément</strong>. Sans règle ici, le dossier reprend les droits du dossier au-dessus.</p>
+<p>« Accès refusé » signifie qu’une règle ferme volontairement ce dossier à la personne ou au groupe.</p>
+{% endcall %}</div>
 <p>Une règle individuelle prime sur les groupes au même niveau. Sans règle locale, le contenu hérite de son dossier parent. Les dossiers de premier niveau commencent sans accès collaborateur.</p>
 {% for rule in rules %}
 <p class="rule"><strong>{{ rule.label }}</strong> · {{ 'Personne' if rule.subject_kind=='user' else 'Groupe' }}

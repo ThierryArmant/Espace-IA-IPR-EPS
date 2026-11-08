@@ -27,7 +27,12 @@
 <form method="post" class="panel">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 {% if not top %}<input type="hidden" name="dossier" value="{{ parent.id }}">{% endif %}
-<div class="panel-head"><h2>{{ people|length }} personne(s) · {{ folders|length }} dossier(s)</h2>
+<div class="panel-head"><div class="actions"><h2>{{ people|length }} personne(s) · {{ folders|length }} dossier(s)</h2>
+{% call help_menu('aide-tableau', 'Aide sur le tableau', 'Lire et remplir le tableau') %}
+<p>Une <strong>ligne</strong> par personne, une <strong>colonne</strong> par dossier. Choisissez le niveau d’accès dans chaque case.</p>
+<p>Pour aller vite : « Toute la ligne » (une personne, tous les dossiers), « Toute la colonne » (tout le monde, un dossier) ou « Tout le tableau ».</p>
+<p>Les cases modifiées sont entourées en orange. Rien n’est enregistré avant « Enregistrer les autorisations ».</p>
+{% endcall %}</div>
 <div class="actions">{{ bulk('Tout le tableau', 'tout') }}<button>Enregistrer les autorisations</button></div></div>
 <p class="subtle">Les menus « Toute la colonne » et « Toute la ligne » remplissent les cases d’un coup : vérifiez, puis enregistrez. Rien n’est modifié avant « Enregistrer ».</p>
 <div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}{% if folder.id in has_children %}<br><a class="subtle" href="{{ url_for('autorisations.grid', dossier=folder.id) }}">sous-dossiers ›</a>{% endif %}<br>{{ bulk('Toute la colonne', 'col-' ~ folder.id) }}</th>{% endfor %}</tr></thead><tbody>
@@ -44,7 +49,12 @@
 </form>
 {% endif %}
 {% if g.user.admin %}
-<section class="card"><h2>Ajouter des personnes</h2>
+<section class="card"><div class="actions"><h2>Ajouter des personnes</h2>
+{% call help_menu('aide-ajout-personnes', 'Aide sur l’ajout de personnes', 'Ajouter des collègues par liste') %}
+<p>Collez une personne par ligne : « NOM Prénom » ou « NOM Prénom ; adresse ». Sans adresse, le Hub propose prenom.nom@ac-aix-marseille.fr — vérifiez-la.</p>
+<p>Les personnes apparaissent dans le tableau et dans l’Annuaire, « en attente d’activation ». Envoyez-leur ensuite l’invitation depuis l’Annuaire (« Inviter en une fois »).</p>
+<p>Recoller une ligne avec la même adresse met le nom à jour, sans doublon.</p>
+{% endcall %}</div>
 <p class="subtle">Une personne par ligne : « NOM Prénom » ou « NOM Prénom ; adresse ». Sans adresse, le Hub propose prenom.nom@ac-aix-marseille.fr : vérifiez-la.</p>
 <form method="post" action="{{ url_for('autorisations.add_people') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">

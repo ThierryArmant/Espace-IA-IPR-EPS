@@ -16,7 +16,11 @@
 <a class="button invitation-envoi" href="{{ draft }}">Ouvrir le courriel</a></div>
 {% endfor %}
 </section>
-<section class="card"><h2>Pour un publipostage</h2>
+<section class="card"><div class="actions"><h2>Pour un publipostage</h2>
+{% call help_menu('aide-publipostage', 'Aide sur le publipostage', 'Envoyer avec un publipostage') %}
+<p>Facultatif. Chaque ligne contient : adresse ; nom ; lien. Copiez-les dans un tableur pour un envoi groupé avec votre messagerie.</p>
+<p>Sinon, utilisez simplement les boutons « Ouvrir le courriel » plus haut.</p>
+{% endcall %}</div>
 <textarea readonly rows="8">{% for person, link, draft in invitations %}{{ person.email }} ; {{ person.name or '' }} ; {{ link }}
 {% endfor %}</textarea></section>
 {% endblock %}
