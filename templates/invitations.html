@@ -7,13 +7,19 @@
 <p>Chaque lien est personnel et valable 48 heures. Un lien précédent pour la même personne ne fonctionne plus.</p></div>
 <div class="actions">{% call help_menu('aide-invitations', 'Aide sur les invitations', 'Envoyer les invitations') %}
 <p>Cliquez sur <strong>Ouvrir le courriel</strong> : un brouillon déjà rédigé s’ouvre dans votre messagerie, avec le lien de la personne. Relisez, puis envoyez. Le bouton devient grisé pour vous aider à suivre où vous en êtes.</p>
+<p><strong>Envoyer depuis votre adresse académique :</strong> ouvrez votre messagerie académique dans un autre onglet, créez un nouveau message, puis utilisez « Copier l’adresse », « Copier l’objet » et « Copier le message » et collez chacun (Ctrl+V) à sa place. Ou, si votre adresse académique est configurée dans votre logiciel de messagerie, choisissez-la dans le champ « De » du brouillon.</p>
 <p>Pour un publipostage, copiez le tableau en bas de page (adresse ; nom ; lien).</p>
 <p>Ne fermez pas cette page avant d’avoir tout envoyé : les liens ne sont affichés qu’une fois. Sinon, refaites simplement « Préparer les invitations ».</p>
 {% endcall %}</div></div>
 <section class="card">
-{% for person, link, draft in invitations %}
-<div class="member"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</div>
-<a class="button invitation-envoi" href="{{ draft }}">Ouvrir le courriel</a></div>
+{% for person, link, draft, body in invitations %}
+<div class="member invitation-ligne"><div><strong>{{ person.name or person.email }}</strong>{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</div>
+<div class="actions">
+<a class="button invitation-envoi" href="{{ draft }}" title="Ouvre un brouillon dans la messagerie par défaut de cet ordinateur">Ouvrir le courriel</a>
+<button type="button" class="quiet copier" data-texte="{{ person.email }}">Copier l’adresse</button>
+<button type="button" class="quiet copier" data-texte="Invitation à l’espace IA-IPR EPS">Copier l’objet</button>
+<button type="button" class="quiet copier" data-texte="{{ body }}">Copier le message</button>
+</div></div>
 {% endfor %}
 </section>
 <section class="card"><div class="actions"><h2>Pour un publipostage</h2>
@@ -21,7 +27,7 @@
 <p>Facultatif. Chaque ligne contient : adresse ; nom ; lien. Copiez-les dans un tableur pour un envoi groupé avec votre messagerie.</p>
 <p>Sinon, utilisez simplement les boutons « Ouvrir le courriel » plus haut.</p>
 {% endcall %}</div>
-<textarea readonly rows="8">{% for person, link, draft in invitations %}{{ person.email }} ; {{ person.name or '' }} ; {{ link }}
+<textarea readonly rows="8">{% for person, link, draft, body in invitations %}{{ person.email }} ; {{ person.name or '' }} ; {{ link }}
 {% endfor %}</textarea></section>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='invitations.js') }}" defer></script>{% endblock %}

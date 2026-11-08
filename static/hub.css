@@ -289,3 +289,6 @@ main .quiet:hover { background: #e3edf7; }
 .membres-groupe .bouton-retirer:hover { background: #f9d6d6; }
 .membres-groupe .bouton-deplacer { color: #1f4e79; background: #e6f0fa; border-color: #a9c4de; padding: .3rem .6rem; }
 .membres-groupe select { padding: .25rem .3rem; border: 1px solid #a9c4de; border-radius: .35rem; background: #fff; color: #1d3247; }
+
+.invitation-ligne .actions { flex-wrap: wrap; gap: .35rem; }
+.invitation-traitee { background: #f1f8f3; }

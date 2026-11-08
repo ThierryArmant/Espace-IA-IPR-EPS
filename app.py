@@ -1053,7 +1053,7 @@ def create_app():
                     "et choisissez votre mot de passe :\n\n" + link +
                     "\n\nEnsuite, connectez-vous avec votre adresse académique. "
                     "Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
-            invitations.append((person, link, mailto(person["email"], "Invitation à l’espace IA-IPR EPS", body)))
+            invitations.append((person, link, mailto(person["email"], "Invitation à l’espace IA-IPR EPS", body), body))
         g.db.commit()
         return render_template("invitations.html", invitations=invitations)
 
