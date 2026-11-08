@@ -93,9 +93,9 @@
 <label>Couleur <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label><button>Créer</button></form></details>
 <details><summary>↑ Importer des documents</summary>
 <div class="actions">
-  <span class="subtle">Dépôt sur le Hub</span>
+  <span class="subtle">{{ 'Dépôt dans le Hub (stockage Nuage)' if nuage_storage else 'Dépôt sur le Hub' }}</span>
   {% call help_menu('aide-import', 'Aide sur l’importation de documents', 'Importer un document dans le Hub') %}
-  <p>Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.</p>
+  <p>{% if nuage_storage %}Ce bouton range le fichier dans le stockage Nuage du Hub. Les droits restent ceux du Hub : les collègues autorisés le consultent et le téléchargent ici, sans compte Nuage.{% else %}Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.{% endif %}</p>
   <p>Pour modifier ensemble un tableur déjà existant, déposez sa version .ods dans le dossier correspondant sur Nuage et accordez aux collègues le droit de modification.</p>
   {% endcall %}
 </div>

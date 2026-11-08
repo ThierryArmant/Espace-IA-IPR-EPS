@@ -10,7 +10,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py document_notifications.py login_code.py nuage_hub.py nuage_pilote.py ipr_modules.py schema.sql ipr_schema.sql ./
+COPY app.py document_notifications.py login_code.py nuage_hub.py nuage_pilote.py nuage_stockage.py ipr_modules.py schema.sql ipr_schema.sql ./
 COPY templates/ templates/
 COPY static/ static/
 USER hub

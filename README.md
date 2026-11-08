@@ -78,6 +78,35 @@ domaine HTTPS configuré. Pour une base existante, utilisez
 `docker compose run --rm hub flask --app app migrate-db` à la place de
 `init-db`, après une sauvegarde et avant le redémarrage. Si un reverse proxy académique existe déjà, utilisez sa configuration de publication à la place du service Caddy.
 
+### Stocker les fichiers dans Nuage (compte fonctionnel)
+
+Les collègues travaillent uniquement dans le Hub. Le Hub conserve l’arborescence,
+les droits et les échanges. Le contenu des fichiers déposés est rangé dans Nuage,
+dans `IA IPR EPS/Stockage Hub`, sous un nom unique. Renommer ou déplacer un dossier
+dans le Hub ne touche donc pas à Nuage. Aucun collègue n’a besoin d’un compte Nuage
+pour consulter ou télécharger un fichier, et seul le Hub décide qui y a accès.
+
+1. Créez ou obtenez un compte Nuage fonctionnel (et non personnel), puis
+   connectez-vous-y dans le navigateur.
+2. Sur le serveur, lancez `flask --app app nuage-autoriser --fichier secrets/nuage_password`
+   et ouvrez le lien affiché. La commande affiche `HUB_NUAGE_LOGIN` et enregistre
+   le mot de passe d’application dans le fichier privé indiqué.
+3. Ajoutez à la configuration privée du serveur (variables d’environnement du site
+   chez l’hébergeur, ou fichier `.env` avec Compose) :
+   `HUB_NUAGE_LOGIN`, puis `HUB_NUAGE_APP_PASSWORD_FILE` (chemin du fichier) ou
+   `HUB_NUAGE_APP_PASSWORD`. `HUB_NUAGE_ROOT` est facultatif (par défaut `IA IPR EPS`).
+4. Redémarrez, puis vérifiez avec `flask --app app nuage-verifier`.
+5. Pour déplacer dans Nuage les fichiers déjà déposés dans la base du Hub :
+   faites une sauvegarde, puis lancez `flask --app app nuage-transferer`.
+
+Sans ces variables, le Hub garde le fonctionnement précédent (fichiers dans SQLite).
+Le mot de passe d’application ouvre tout le compte fonctionnel : ne le placez jamais
+dans le dépôt, et révoquez-le dans les paramètres de sécurité de Nuage en cas de doute.
+Si Nuage ne répond pas, les dépôts sont refusés sans rien enregistrer, et les
+téléchargements affichent un message d’indisponibilité.
+La création de documents en coédition (`.odt`/`.ods`) continue d’utiliser le compte
+Nuage personnel de chaque collègue, car l’éditeur s’ouvre dans Nuage.
+
 ### Sauvegarder
 
 ```bash

@@ -27,6 +27,7 @@ from document_notifications import register_document_notifications
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
 from login_code import CodeMailer, login_with_code, start_session
 from nuage_hub import register_nuage
+from nuage_stockage import NuageStorage, StorageError, authorize_service_account
 
 VIEW, DOWNLOAD, WRITE = 1, 2, 4
 ALL = VIEW | DOWNLOAD | WRITE
@@ -38,6 +39,15 @@ DUMMY_PASSWORD = generate_password_hash(secrets.token_hex(16))
 
 class ImportErrorZIP(ValueError):
     pass
+
+
+def upgrade_nodes(db):
+    # Columns added for Nuage storage. SQLite cannot add a column only if missing.
+    columns = {row[1] for row in db.execute("PRAGMA table_info(nodes)")}
+    if columns:
+        for name, kind in (("nuage_ref", "TEXT"), ("size", "INTEGER")):
+            if name not in columns:
+                db.execute(f"ALTER TABLE nodes ADD COLUMN {name} {kind}")
 
 
 def create_app():
@@ -62,6 +72,7 @@ def create_app():
     if auth_mode not in {"password", "email_code"}:
         raise RuntimeError("HUB_AUTH_MODE doit être password ou email_code.")
     mailer = CodeMailer.from_environment() if auth_mode == "email_code" else None
+    storage = NuageStorage.from_environment(local_http)
     app.config.update(
         TRUSTED_HOSTS=[origin.hostname] if not local_http else ["localhost", "127.0.0.1"],
         SECRET_KEY=secret,
@@ -79,6 +90,8 @@ def create_app():
 
     with closing(connect()) as db:
         db.executescript(Path(__file__).with_name("ipr_schema.sql").read_text(encoding="utf-8"))
+    with closing(connect()) as db, db:
+        upgrade_nodes(db)
 
     @app.template_test("readable")
     def readable(mask):
@@ -101,6 +114,7 @@ def create_app():
             raise click.ClickException("Adresse valide et mot de passe de 14 caractères minimum requis.")
         with closing(connect()) as db, db:
             db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+            upgrade_nodes(db)
             db.execute("BEGIN IMMEDIATE")
             if db.execute("SELECT 1 FROM users WHERE admin=1").fetchone():
                 raise click.ClickException("Un compte Animateur existe déjà.")
@@ -114,7 +128,68 @@ def create_app():
             if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'").fetchone():
                 raise click.ClickException("Initialisez d’abord la base du Hub.")
             db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+            upgrade_nodes(db)
         click.echo("Schéma du Hub mis à jour.")
+
+    @app.cli.command("nuage-autoriser")
+    @click.option("--fichier", type=click.Path(path_type=Path),
+                  help="Enregistre le mot de passe d’application dans ce fichier privé.")
+    def nuage_authorize(fichier):
+        """Relie le compte Nuage fonctionnel qui stockera les fichiers du Hub."""
+        try:
+            login, password = authorize_service_account(click.echo)
+        except (StorageError, OSError, ValueError, KeyError) as error:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"HUB_NUAGE_LOGIN={login}")
+        if fichier:
+            descriptor = os.open(fichier, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+                output.write(password + "\n")
+            click.echo(f"HUB_NUAGE_APP_PASSWORD_FILE={fichier}")
+        else:
+            click.echo(f"HUB_NUAGE_APP_PASSWORD={password}")
+            click.echo("Conservez ce mot de passe dans la configuration privée du serveur uniquement.")
+
+    @app.cli.command("nuage-verifier")
+    def nuage_check():
+        """Teste l’écriture, la lecture et la suppression dans Nuage."""
+        if not storage:
+            raise click.ClickException("Stockage Nuage non configuré (HUB_NUAGE_LOGIN).")
+        reference = storage.new_reference("verification-hub.txt")
+        try:
+            storage.check()
+            storage.put(reference, b"Test du Hub")
+            if storage.get(reference, 1024) != b"Test du Hub":
+                raise StorageError("Le contenu relu ne correspond pas.")
+        except StorageError as error:
+            raise click.ClickException(str(error)) from error
+        finally:
+            storage.delete(reference)
+        click.echo("Stockage Nuage opérationnel.")
+
+    @app.cli.command("nuage-transferer")
+    def nuage_transfer():
+        """Déplace dans Nuage les fichiers encore stockés dans la base du Hub."""
+        if not storage:
+            raise click.ClickException("Stockage Nuage non configuré (HUB_NUAGE_LOGIN).")
+        moved = 0
+        with closing(connect()) as db:
+            ids = [row[0] for row in db.execute(
+                "SELECT id FROM nodes WHERE kind='file' AND nuage_ref IS NULL ORDER BY id")]
+            for node_id in ids:
+                name, data = db.execute("SELECT name, content FROM nodes WHERE id=?", (node_id,)).fetchone()
+                reference = storage.new_reference(name)
+                try:
+                    storage.put(reference, data or b"")
+                    with db:
+                        db.execute("UPDATE nodes SET nuage_ref=?, size=?, content=NULL WHERE id=?",
+                                   (reference, len(data or b""), node_id))
+                except (StorageError, sqlite3.Error) as error:
+                    storage.delete(reference)
+                    raise click.ClickException(f"Arrêt sur « {name} » : {error}. {moved} fichier(s) déplacé(s).")
+                moved += 1
+            db.execute("VACUUM")
+        click.echo(f"{moved} fichier(s) déplacé(s) dans Nuage.")
 
     @app.cli.command("backup-db")
     @click.argument("destination", type=click.Path(path_type=Path))
@@ -191,7 +266,8 @@ def create_app():
     def template_values():
         if "csrf" not in session:
             session["csrf"] = secrets.token_urlsafe(32)
-        return dict(csrf=session["csrf"], VIEW=VIEW, DOWNLOAD=DOWNLOAD, WRITE=WRITE, colors=COLORS)
+        return dict(csrf=session["csrf"], VIEW=VIEW, DOWNLOAD=DOWNLOAD, WRITE=WRITE, colors=COLORS,
+                    nuage_storage=bool(storage))
 
     def require_admin():
         if not g.user["admin"]:
@@ -263,12 +339,12 @@ def create_app():
             raise ValueError("Nom invalide ou trop long.")
         return value
 
-    def insert_node(parent, name, kind, color="bleu", content=None):
+    def insert_node(parent, name, kind, color="bleu", content=None, ref=None, size=None):
         cursor = g.db.execute(
-            """INSERT INTO nodes(id,parent,name,kind,color,content)
-               SELECT MAX((SELECT MAX(id) FROM nodes), last_deleted_id) + 1, ?, ?, ?, ?, ?
+            """INSERT INTO nodes(id,parent,name,kind,color,content,nuage_ref,size)
+               SELECT MAX((SELECT MAX(id) FROM nodes), last_deleted_id) + 1, ?, ?, ?, ?, ?, ?, ?
                FROM node_id_watermark WHERE singleton=1""",
-            (parent, name, kind, color, content),
+            (parent, name, kind, color, content, ref, size),
         )
         if cursor.rowcount != 1:
             raise RuntimeError("Appliquez la migration de la base du Hub.")
@@ -279,6 +355,7 @@ def create_app():
     @app.errorhandler(404)
     @app.errorhandler(413)
     @app.errorhandler(429)
+    @app.errorhandler(503)
     def show_error(error):
         if isinstance(error, SecurityError):
             return "Requête invalide.", 400
@@ -426,29 +503,68 @@ def create_app():
         g.db.commit()
         return redirect(url_for("folder", node_id=node_id))
 
+    def discard(references):
+        for reference in references:
+            if reference:
+                storage.delete(reference)
+
+    def stage(batch):
+        """Send file contents to Nuage before recording them in the Hub."""
+        if not storage:
+            return [None] * len(batch)
+        # Transfers can be slow: release SQLite's write lock meanwhile.
+        g.db.rollback()
+        references = []
+        try:
+            for name, data in batch:
+                reference = storage.new_reference(name)
+                storage.put(reference, data)
+                references.append(reference)
+        except StorageError:
+            discard(references)
+            raise
+        g.db.execute("BEGIN IMMEDIATE")
+        return references
+
+    def store_file(parent, name, data, reference=None):
+        insert_node(parent, name, "file", content=None if reference else data,
+                    ref=reference, size=len(data))
+
     @app.post("/dossier/<int:node_id>/fichiers")
     def upload(node_id):
         allowed(node_id, WRITE, "folder")
+        references = []
         try:
             files = request.files.getlist("files")
             if not files or len(files) > 200:
                 raise ValueError("Sélectionnez entre 1 et 200 fichiers.")
             total = 0
+            batch = []
             for file in files:
                 name = clean_name(file.filename or "")
                 data = file.read(LIMIT + 1)
                 total += len(data)
                 if total > LIMIT:
                     raise ValueError("La sélection dépasse 32 Mio.")
-                insert_node(node_id, name, "file", content=data)
+                batch.append((name, data))
+            names = [name.casefold() for name, _ in batch]
+            if len(set(names)) != len(names) or any(g.db.execute(
+                    "SELECT 1 FROM nodes WHERE parent=? AND name=?", (node_id, name)).fetchone()
+                    for name, _ in batch):
+                raise sqlite3.IntegrityError("duplicate")
+            references = stage(batch)
+            for (name, data), reference in zip(batch, references):
+                store_file(node_id, name, data, reference)
             g.db.commit()
             flash("Documents importés.")
-        except (ValueError, sqlite3.IntegrityError) as error:
+        except (ValueError, StorageError, sqlite3.IntegrityError) as error:
             g.db.rollback()
-            flash(str(error) if isinstance(error, ValueError) else "Un nom existe déjà. Aucun fichier importé.")
+            discard(references)
+            flash("Un nom existe déjà. Aucun fichier importé." if isinstance(error, sqlite3.IntegrityError)
+                  else str(error))
         return redirect(url_for("folder", node_id=node_id))
 
-    def unpack(archive, node):
+    def unpack(archive, node, keep):
         infos = archive.infolist()
         if len(infos) > 1000 or sum(info.file_size for info in infos) > LIMIT:
             raise ImportErrorZIP("Le ZIP dépasse 1 000 entrées ou 32 Mio décompressés.")
@@ -468,25 +584,36 @@ def create_app():
                     imported_folders[path] = insert_node(parent, name, "folder")
                 parent = imported_folders[path]
             if not info.is_dir():
-                insert_node(parent, parts[-1], "file", content=archive.read(info))
+                keep(parent, parts[-1], archive.read(info))
 
     @app.post("/dossier/<int:node_id>/importer-zip")
     def import_zip(node_id):
         node = allowed(node_id, WRITE, "folder")
         file = request.files.get("archive")
+        references = []
         try:
             if not file:
                 raise ImportErrorZIP("Sélectionnez une archive ZIP.")
             with ZipFile(file.stream) as archive:
-                unpack(archive, node)
+                if storage:
+                    # First pass validates names and structure, second records Nuage references.
+                    planned = []
+                    unpack(archive, node, lambda parent, name, data: (
+                        planned.append((name, data)), store_file(parent, name, data, "?")))
+                    references = stage(planned)
+                    pending = iter(references)
+                    unpack(archive, node, lambda parent, name, data: store_file(parent, name, data, next(pending)))
+                else:
+                    unpack(archive, node, store_file)
             g.db.commit()
             flash("Arborescence importée.")
         except (BadZipFile, ValueError, RuntimeError, NotImplementedError, zlib.error, sqlite3.IntegrityError) as error:
             g.db.rollback()
+            discard(references)
             if isinstance(error, sqlite3.IntegrityError):
                 flash("Un nom existe déjà. Aucun élément importé.")
             else:
-                flash(str(error) if isinstance(error, ValueError) else "Archive ZIP invalide ou illisible.")
+                flash(str(error) if isinstance(error, (ValueError, StorageError)) else "Archive ZIP invalide ou illisible.")
         return redirect(url_for("folder", node_id=node_id))
 
     @app.get("/dossier/<int:node_id>/exporter-zip")
@@ -514,7 +641,8 @@ def create_app():
             for row, path in entries:
                 data = b""
                 if row["kind"] == "file":
-                    size = g.db.execute("SELECT length(content) FROM nodes WHERE id=?", (row["id"],)).fetchone()[0]
+                    size = g.db.execute("SELECT COALESCE(size, length(content), 0) FROM nodes WHERE id=?",
+                                        (row["id"],)).fetchone()[0]
                     total += size
                     if total > LIMIT:
                         abort(413)
@@ -524,8 +652,19 @@ def create_app():
         return send_file(target, mimetype="application/zip", as_attachment=True,
                          download_name=node["name"] + ".zip", conditional=False)
 
-    def content(node_id):
-        return g.db.execute("SELECT content FROM nodes WHERE id=?", (node_id,)).fetchone()[0]
+    def content(node_id, first_bytes=None):
+        reference = g.db.execute("SELECT nuage_ref FROM nodes WHERE id=?", (node_id,)).fetchone()[0]
+        if reference is None:
+            if first_bytes:
+                return g.db.execute("SELECT substr(content,1,?) FROM nodes WHERE id=?",
+                                    (first_bytes, node_id)).fetchone()[0]
+            return g.db.execute("SELECT content FROM nodes WHERE id=?", (node_id,)).fetchone()[0]
+        if not storage:
+            abort(503, "Le stockage Nuage du Hub n’est pas configuré.")
+        try:
+            return storage.get(reference, LIMIT, first_bytes)
+        except StorageError:
+            abort(503, "Nuage ne répond pas. Réessayez dans quelques minutes.")
 
     @app.get("/document/<int:node_id>")
     def document(node_id):
@@ -533,8 +672,11 @@ def create_app():
         suffix = Path(node["name"]).suffix.lower()
         preview = suffix in {".pdf", ".txt", ".csv"}
         page = max(1, min(1000, request.args.get("page", 1, type=int)))
+        stored_in_nuage = g.db.execute("SELECT nuage_ref IS NOT NULL FROM nodes WHERE id=?",
+                                       (node_id,)).fetchone()[0]
         return render_template("document.html", node=node, trail=lineage(node),
                                mask=rights(node), preview=preview, suffix=suffix, page=page,
+                               stored_in_nuage=bool(stored_in_nuage),
                                can_update_folder=bool(rights(get_node(node["parent"])) & WRITE))
 
     @app.get("/document/<int:node_id>/telecharger")
@@ -566,7 +708,7 @@ def create_app():
         node = allowed(node_id, VIEW, "file")
         if Path(node["name"]).suffix.lower() not in {".txt", ".csv"}:
             abort(404)
-        data = g.db.execute("SELECT substr(content,1,100001) FROM nodes WHERE id=?", (node_id,)).fetchone()[0]
+        data = content(node_id, 100001)
         return render_template("text.html", data=data[:100000].decode("utf-8", "replace"),
                                truncated=len(data) > 100000)
 
