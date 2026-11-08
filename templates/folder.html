@@ -84,7 +84,7 @@
   </div>
 </div>
 {% if nuage_storage and g.user.admin and missing_folders %}<p class="notice">{{ missing_folders|length }} dossier(s) de Nuage ne sont pas encore dans le Hub ({{ missing_folders[:5]|join(', ') }}{% if missing_folders|length > 5 %}…{% endif %}). Cliquez sur « Reprendre les dossiers Nuage », puis réglez leurs droits.</p>{% endif %}
-{% if nuage_storage and node.id == 1 and g.user.admin %}<p class="subtle">Les fichiers posés directement à la racine du dossier Nuage ne sont affichés à personne. Rangez-les dans un dossier pour les partager.</p>{% endif %}
+{% if nuage_storage and node.id == 1 and g.user.admin %}<p class="subtle">Les fichiers posés directement à la racine du dossier Nuage ne sont affectés à personne. Rangez-les dans un dossier pour les partager.</p>{% endif %}
 {% if nuage_storage and g.user.admin and not (content_mask is readable) and node.id != 1 %}<p class="notice">Vous gérez ce dossier sans voir son contenu. Ajoutez-vous une règle dans « Droits d’accès » si vous devez y accéder.</p>{% endif %}
 {% if mask is writable %}
 <div class="tools">
