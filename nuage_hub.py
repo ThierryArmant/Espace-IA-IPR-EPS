@@ -20,6 +20,8 @@ from nuage_pilote import (
 
 CONNECTION_ERRORS = (ValueError, KeyError, TypeError, AttributeError, OSError, URLError, ElementTree.ParseError)
 LABELS = {"texte": "Document texte", "tableur": "Tableur"}
+AUTHORIZATION_LIFETIME = 900
+ACCOUNT_LIFETIME = 8 * 3600
 OFFICE_LIST_QUERY = FILE_ID_QUERY.replace(b"<oc:fileid/>", b"<oc:fileid/><d:resourcetype/>")
 
 
@@ -90,27 +92,34 @@ def register_nuage(app, allowed, lineage, rights, view, write):
         return None
 
     def folder_documents(node_id):
-        account = unseal("nuage_account", 3600)
+        account = unseal("nuage_account", ACCOUNT_LIFETIME)
         if not account:
             return False, [], None
         _, path = folder_path(node_id)
         files, error = read_folder(account, path)
         return True, files, error
 
+    def requested_kind(node_id):
+        intent = session.get("nuage_creation")
+        if intent and intent[0] == node_id:
+            return intent[1]
+        return None
+
     @nuage.get("/dossier/<int:node_id>/nuage")
     def documents(node_id):
         node, path = folder_path(node_id)
-        account = unseal("nuage_account", 3600)
+        account = unseal("nuage_account", ACCOUNT_LIFETIME)
         files, error = read_folder(account, path)
         if error:
             flash(error)
         return render_template("nuage_dossier.html", node=node, path=path, files=files,
-                               connected=bool(account), authorization=unseal("nuage_flow", 900))
+                               connected=bool(account), authorization=unseal("nuage_flow", AUTHORIZATION_LIFETIME),
+                               creation_kind=requested_kind(node_id))
 
     @nuage.route("/dossier/<int:node_id>/nuage/deplacer", methods=["GET", "POST"])
     def move(node_id):
         node, path = folder_path(node_id, write)
-        account = unseal("nuage_account", 3600)
+        account = unseal("nuage_account", ACCOUNT_LIFETIME)
         if not account:
             return redirect(url_for("nuage.documents", node_id=node_id), code=303)
         name = (request.form if request.method == "POST" else request.args).get("name", "")
@@ -153,12 +162,13 @@ def register_nuage(app, allowed, lineage, rights, view, write):
             flash("Déplacement non confirmé. Vérifiez les deux dossiers avant de réessayer.")
         return redirect(url_for("folder", node_id=node_id), code=303)
 
-    @nuage.post("/dossier/<int:node_id>/nuage/connecter")
-    def connect(node_id):
-        folder_path(node_id)
+    def begin_authorization():
         session.pop("nuage_flow", None)
         try:
-            status, body = nuage_request(f"{NUAGE_LOGIN}/index.php/login/v2", "POST", payload=b"")
+            status, body = nuage_request(
+                f"{NUAGE_LOGIN}/index.php/login/v2", "POST", payload=b"",
+                headers={"User-Agent": "IA-IPR EPS"},
+            )
             if status != 200:
                 raise ValueError("Autorisation indisponible")
             data = json.loads(body)
@@ -170,12 +180,18 @@ def register_nuage(app, allowed, lineage, rights, view, write):
             session["nuage_flow"] = seal([login_url, poll_url, token])
         except CONNECTION_ERRORS:
             flash("Impossible de démarrer l’autorisation Nuage.")
+
+    @nuage.post("/dossier/<int:node_id>/nuage/connecter")
+    def connect(node_id):
+        folder_path(node_id)
+        begin_authorization()
         return redirect(url_for("nuage.documents", node_id=node_id), code=303)
 
     @nuage.post("/dossier/<int:node_id>/nuage/confirmer")
     def confirm(node_id):
-        folder_path(node_id)
-        flow = unseal("nuage_flow", 900)
+        kind = requested_kind(node_id)
+        _, path = folder_path(node_id, write if kind else view)
+        flow = unseal("nuage_flow", AUTHORIZATION_LIFETIME)
         if flow:
             try:
                 _, url, token = flow
@@ -192,11 +208,17 @@ def register_nuage(app, allowed, lineage, rights, view, write):
                         raise ValueError("Compte Nuage non reconnu")
                     session["nuage_account"] = seal([login, password])
                     session.pop("nuage_flow", None)
-                    flash("Nuage est connecté. Vous pouvez créer un document.")
-                    return redirect(url_for("folder", node_id=node_id), code=303)
-                flash("Autorisez d’abord l’accès sur la page officielle Nuage.")
+                else:
+                    flash("Autorisez d’abord l’accès sur la page officielle Nuage.")
             except CONNECTION_ERRORS:
                 flash("Impossible de confirmer l’autorisation Nuage.")
+            else:
+                if status == 200:
+                    if kind:
+                        session.pop("nuage_creation", None)
+                        return create_document(node_id, kind, path, [login, password])
+                    flash("Nuage est connecté. Vous pouvez créer un document.")
+                    return redirect(url_for("folder", node_id=node_id), code=303)
         else:
             flash("L’autorisation a expiré. Cliquez sur « Connecter Nuage ».")
         return redirect(url_for("nuage.documents", node_id=node_id), code=303)
@@ -204,7 +226,7 @@ def register_nuage(app, allowed, lineage, rights, view, write):
     @nuage.post("/dossier/<int:node_id>/nuage/fermer")
     def disconnect(node_id):
         folder_path(node_id)
-        for key in ("nuage_account", "nuage_flow", "nuage_pending"):
+        for key in ("nuage_account", "nuage_flow", "nuage_pending", "nuage_creation"):
             session.pop(key, None)
         return redirect(url_for("folder", node_id=node_id), code=303)
 
@@ -213,11 +235,23 @@ def register_nuage(app, allowed, lineage, rights, view, write):
         _, path = folder_path(node_id, write)
         if kind not in OFFICE_TYPES:
             abort(404)
-        account = unseal("nuage_account", 3600)
+        account = unseal("nuage_account", ACCOUNT_LIFETIME)
         if not account:
-            flash("Connectez Nuage une première fois, puis revenez au bouton de création.")
-            return redirect(url_for("nuage.documents", node_id=node_id), code=303)
+            session["nuage_creation"] = [node_id, kind]
+            if not unseal("nuage_flow", AUTHORIZATION_LIFETIME):
+                begin_authorization()
+            return creation_response(node_id, endpoint="nuage.documents")
+        if requested_kind(node_id):
+            session.pop("nuage_creation", None)
+        return create_document(node_id, kind, path, account)
 
+    def creation_response(node_id, editor=None, *, endpoint="folder"):
+        destination = url_for(endpoint, node_id=node_id)
+        if request.accept_mimetypes.best == "application/json":
+            return {"editor": editor, "folder": destination}
+        return redirect(destination, code=303)
+
+    def create_document(node_id, kind, path, account):
         ext, mime, data = blank_office_document(kind)
         pending = session.get("nuage_pending")
         name = (pending[2] if pending and pending[:2] == [node_id, kind]
@@ -240,7 +274,7 @@ def register_nuage(app, allowed, lineage, rights, view, write):
                 flash("Nuage a refusé la création. Vérifiez le droit de modification du dossier.")
             else:
                 flash(f"Nuage n’a pas créé le document ({status}). Vérifiez le dossier partagé « {root} ».")
-            return redirect(url_for("folder", node_id=node_id), code=303)
+            return creation_response(node_id)
 
         try:
             _, files = listing(account, path)
@@ -249,11 +283,10 @@ def register_nuage(app, allowed, lineage, rights, view, write):
         if status == 201 or name in files:
             session.pop("nuage_pending", None)
             flash("Document créé dans ce dossier.")
-            if request.accept_mimetypes.best == "application/json":
-                return {"editor": files.get(name)}
+            return creation_response(node_id, files.get(name))
         else:
             flash("Création non confirmée. Un nouvel essai reprendra le même fichier.")
-        return redirect(url_for("folder", node_id=node_id), code=303)
+        return creation_response(node_id)
 
     app.register_blueprint(nuage)
     return folder_documents

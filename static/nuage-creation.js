@@ -21,7 +21,7 @@ for (const form of creationForms) {
             if (editor && result.editor) editor.location.replace(result.editor);
             else if (editor) editor.close();
             // Refresh the original folder, including the new document and any notice.
-            const folder = new URL(window.location.href);
+            const folder = new URL(result.folder || window.location.href, window.location.origin);
             folder.searchParams.delete("q");
             window.location.replace(folder);
         } catch {
