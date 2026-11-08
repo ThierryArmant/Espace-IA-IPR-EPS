@@ -10,7 +10,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py autorisations.py connexion_academique.py document_notifications.py outils.py login_code.py nuage_hub.py nuage_miroir.py nuage_pilote.py nuage_stockage.py ipr_modules.py schema.sql ipr_schema.sql ./
+COPY app.py autorisations.py document_notifications.py outils.py login_code.py nuage_hub.py nuage_miroir.py nuage_pilote.py nuage_stockage.py ipr_modules.py schema.sql ipr_schema.sql ./
 COPY templates/ templates/
 COPY static/ static/
 USER hub
