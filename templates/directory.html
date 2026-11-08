@@ -15,7 +15,9 @@
 <p>Le Hub affiche un lien personnel, valable 48 heures, et ouvre un brouillon de courriel dans votre messagerie : relisez, puis envoyez.</p>
 <p>La personne clique sur le lien, choisit son mot de passe, et son compte devient actif. Pensez à lui ouvrir des dossiers dans <strong>Autorisations</strong>.</p>
 {% endcall %}</div><form method="post" action="{{ url_for('invite') }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Adresse électronique <input name="email" type="email" required maxlength="254"></label><button>Préparer l’invitation</button>
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom ou adresse <input name="email" type="text" list="liste-personnes" required maxlength="254" autocomplete="off" placeholder="Tapez quelques lettres du nom"></label>
+<datalist id="liste-personnes">{% for person in people if not person.activated %}<option value="{{ person.email }}">{{ person.name or person.email }}</option>{% endfor %}</datalist>
+<p class="subtle">La liste propose les personnes en attente d’activation. Pour quelqu’un de nouveau, tapez son adresse académique complète.</p><button>Préparer l’invitation</button>
 </form></section>
 <section class="card"><div class="actions"><h2>Inviter en une fois</h2>
 {% call help_menu('aide-inviter-tous', 'Aide sur l’invitation groupée', 'Inviter plusieurs personnes') %}

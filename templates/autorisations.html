@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
-{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='1') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='2') }}" defer></script>{% endblock %}
 {% block content %}
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Autorisations</h1>
 <p>Choisissez, pour chaque personne, son accès aux dossiers principaux.</p></div>
@@ -35,6 +35,7 @@
 {% endcall %}</div>
 <div class="actions">{{ bulk('Tout le tableau', 'tout') }}<button>Enregistrer les autorisations</button></div></div>
 <p class="subtle">Les menus « Toute la colonne » et « Toute la ligne » remplissent les cases d’un coup : vérifiez, puis enregistrez. Rien n’est modifié avant « Enregistrer ».</p>
+<label class="filtre-grille">Filtrer par nom <input id="filtre-grille" type="search" autocomplete="off" placeholder="Tapez quelques lettres d’un nom"></label>
 <div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}{% if folder.id in has_children %}<br><a class="subtle" href="{{ url_for('autorisations.grid', dossier=folder.id) }}">sous-dossiers ›</a>{% endif %}<br>{{ bulk('Toute la colonne', 'col-' ~ folder.id) }}</th>{% endfor %}</tr></thead><tbody>
 {% for person in people %}
 <tr><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span>

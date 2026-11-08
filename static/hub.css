@@ -304,3 +304,5 @@ main .quiet:hover { background: #e3edf7; }
 
 .mode-emploi { background: #eef5ec; border: 1px solid #c7dfc2; border-radius: .5rem; padding: .6rem .9rem; margin-block: .6rem; }
 .mode-emploi p { margin: 0 0 .3rem; }
+
+.filtre-grille { display: block; max-width: 24rem; margin-block: .5rem; }

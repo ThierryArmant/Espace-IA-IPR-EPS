@@ -20,3 +20,15 @@ for (const menu of document.querySelectorAll("select.remplir")) {
 for (const cell of document.querySelectorAll("select[data-col]")) {
   cell.addEventListener("change", () => cell.classList.add("modifie"));
 }
+
+// Filtre des lignes par nom ou adresse.
+const filtre = document.getElementById("filtre-grille");
+if (filtre) {
+  filtre.addEventListener("input", () => {
+    const texte = filtre.value.trim().toLowerCase();
+    for (const ligne of document.querySelectorAll(".grille-acces tbody tr")) {
+      const nom = ligne.querySelector("th").textContent.toLowerCase();
+      ligne.hidden = texte !== "" && !nom.includes(texte);
+    }
+  });
+}

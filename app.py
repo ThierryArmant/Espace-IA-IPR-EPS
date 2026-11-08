@@ -1008,7 +1008,15 @@ def create_app():
     @app.post("/annuaire/inviter")
     def invite():
         require_admin()
-        email = request.form.get("email", "").strip().lower()
+        email = request.form.get("email", "").strip()
+        if not EMAIL.fullmatch(email):
+            # Un nom a été tapé : retrouver la personne dans la liste des membres.
+            match = g.db.execute("SELECT email FROM users WHERE name=? COLLATE NOCASE", (email,)).fetchall()
+            if len(match) != 1:
+                flash("Personne introuvable : choisissez un nom dans la liste proposée ou tapez l’adresse complète.")
+                return redirect(url_for("directory"))
+            email = match[0]["email"]
+        email = email.lower()
         if len(email) > 254 or not EMAIL.fullmatch(email):
             abort(400, "Adresse électronique invalide.")
         user = g.db.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
