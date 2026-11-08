@@ -36,7 +36,7 @@
 </div>
 </details>
 {% endmacro %}
-{% macro lock(item) %}{% set access = rights(item, structure=False) %}{% if not access is readable %}<span class="acces-icone" title="Accès restreint : vous ne voyez pas le contenu de ce dossier" aria-label="Accès restreint">🔒</span>{% elif not access is writable %}<span class="acces-icone" title="Consultation seule : lire et télécharger" aria-label="Consultation seule">👁</span>{% endif %}{% endmacro %}
+{% macro lock(item) %}{% set access = rights(item, structure=False) %}{% if not access is readable %}<span class="cadenas cadenas-rouge" title="Non autorisé : vous ne voyez pas le contenu de ce dossier" aria-label="Non autorisé"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1.6" fill="currentColor"/></svg></span>{% else %}<span class="cadenas cadenas-vert" title="{{ 'Autorisé : accès complet (consulter et déposer)' if access is writable else 'Autorisé : consultation seule (lire et télécharger)' }}" aria-label="Autorisé"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 6.8-1.2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1.6" fill="currentColor"/></svg></span>{% endif %}{% endmacro %}
 {% macro branch(items, active, principal=false) %}
 {% set palette = ['bleu','menthe','lavande','rose','sable','menthe'] %}
 <ul class="explorateur-liste{{ ' explorateur-racines' if principal else '' }}">

@@ -233,5 +233,8 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .grille-acces td { text-align: center; white-space: nowrap; }
 .grille-acces select { min-width: 8.5rem; }
 
-/* Symboles d’accès (cadenas, consultation seule) */
-.acces-icone { margin-inline-start: .35rem; font-size: .85em; opacity: .8; cursor: help; }
+/* Cadenas d’accès : rouge = non autorisé, vert = autorisé */
+.cadenas { display: inline-flex; vertical-align: -.1em; margin-inline-start: .35rem; cursor: help; }
+.cadenas svg { width: .95em; height: .95em; }
+.cadenas-rouge { color: #c62828; }
+.cadenas-vert { color: #2e7d32; }
