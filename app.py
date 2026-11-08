@@ -862,8 +862,12 @@ def create_app():
         members = defaultdict(set)
         for row in g.db.execute("SELECT * FROM memberships"):
             members[row["user_id"]].add(row["group_id"])
+        counts = defaultdict(int)
+        for groups_of_user in members.values():
+            for group_id in groups_of_user:
+                counts[group_id] += 1
         return render_template("directory.html", people=people(), groups=groups(), members=members,
-                               ipr_group_id=ipr_group_id())
+                               ipr_group_id=ipr_group_id(), counts=counts)
 
     @app.post("/annuaire/groupe")
     def add_group():
