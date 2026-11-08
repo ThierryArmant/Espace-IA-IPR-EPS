@@ -288,6 +288,83 @@ def report(database=None):
     return 0
 
 
+def clean(database=None, ask=input):
+    """Aligne le Hub sur Nuage : ajoute les dossiers Nuage manquants, puis retire
+    (après confirmation) les dossiers du Hub absents de Nuage et sans fichier du Hub."""
+    import sqlite3
+    from nuage_miroir import synchronize
+    _load_settings()
+    storage = NuageStorage.from_environment(os.environ.get("HUB_LOCAL_HTTP") == "1")
+    if not storage:
+        print("Nuage n’est pas branché : lancez « autoriser ».")
+        return 1
+    database = database or os.environ.get("HUB_DATABASE") or str(Path.home() / ".ia-ipr-eps" / "hub.sqlite3")
+    db = sqlite3.connect(database, timeout=30)
+    db.execute("PRAGMA foreign_keys=ON")
+    print("1. Ajout des dossiers présents dans Nuage…")
+    created, skipped = synchronize(db, storage, 1, print)
+    print(f"   {created} dossier(s) ajouté(s).")
+
+    rows = {r[0]: r for r in db.execute("SELECT id,parent,name,kind FROM nodes")}
+    children = {}
+    for node_id, parent, _, _ in rows.values():
+        children.setdefault(parent, []).append(node_id)
+
+    def path_of(node_id):
+        names = []
+        while rows[node_id][1] is not None:
+            names.append(rows[node_id][2])
+            node_id = rows[node_id][1]
+        return tuple(reversed(names))
+
+    def subtree(node_id):
+        found, pending = [], [node_id]
+        while pending:
+            current = pending.pop()
+            found.append(current)
+            pending.extend(children.get(current, []))
+        return found
+
+    print("2. Recherche des dossiers du Hub absents de Nuage…")
+    listings, orphans = {}, []
+    for node_id, parent, name, kind in sorted(rows.values()):
+        if kind != "folder" or parent is None:
+            continue
+        path = path_of(node_id)
+        if any(orphan == path[:len(orphan)] for orphan in map(path_of, orphans)):
+            continue
+        if path[:-1] not in listings:
+            content = storage.listing(path[:-1])
+            listings[path[:-1]] = set(content[0]) if content else set()
+        if name not in listings[path[:-1]]:
+            orphans.append(node_id)
+    removable, kept = [], []
+    for node_id in orphans:
+        nodes = subtree(node_id)
+        (kept if any(rows[n][3] == "file" for n in nodes) else removable).append((node_id, nodes))
+    for node_id, nodes in kept:
+        print(f"   Conservé (contient des fichiers du Hub) : {' / '.join(path_of(node_id))}")
+    if not removable:
+        print("   Aucun dossier à retirer. Le Hub est aligné sur Nuage.")
+        return 0
+    print(f"   {len(removable)} dossier(s) à retirer du Hub (rien n’est supprimé dans Nuage) :")
+    for node_id, nodes in removable:
+        extra = f" (+ {len(nodes) - 1} sous-dossier(s))" if len(nodes) > 1 else ""
+        print(f"   • {' / '.join(path_of(node_id))}{extra}")
+    if ask("Retirer ces dossiers du Hub ? Tapez oui pour confirmer : ").strip().lower() != "oui":
+        print("Rien n’a été retiré.")
+        return 0
+    with db:
+        for _, nodes in removable:
+            for node_id in sorted(nodes, key=lambda n: -len(path_of(n))):
+                db.execute("UPDATE node_id_watermark SET last_deleted_id=MAX(last_deleted_id, ?) WHERE singleton=1",
+                           (node_id,))
+                db.execute("DELETE FROM rules WHERE node=?", (node_id,))
+                db.execute("DELETE FROM nodes WHERE id=?", (node_id,))
+    print("Dossiers retirés. Le Hub est aligné sur Nuage.")
+    return 0
+
+
 def main(argv):
     """python nuage_stockage.py autoriser | verifier  (sur le serveur, en SSH)."""
     action = argv[1] if len(argv) > 1 else ""
@@ -324,7 +401,9 @@ def main(argv):
         return 0
     if action == "etat":
         return report(argv[2] if len(argv) > 2 else None)
-    print("Usage : python nuage_stockage.py autoriser | verifier | etat")
+    if action == "nettoyer":
+        return clean(argv[2] if len(argv) > 2 else None)
+    print("Usage : python nuage_stockage.py autoriser | verifier | etat | nettoyer")
     return 1
 
 
