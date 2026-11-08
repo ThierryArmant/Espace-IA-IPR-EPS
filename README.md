@@ -171,6 +171,22 @@ Recette attendue : depuis l’interface GitHub, déposer un PDF fictif, vérifie
 présence dans le dossier Jalios choisi, puis tester la consultation et le dépôt
 avec un compte autorisé et un compte qui ne l’est pas.
 
+### Essayer le Hub complet sur Windows
+
+Téléchargez le ZIP du dépôt, extrayez-le, puis double-cliquez sur `Lancer-Hub.cmd`
+(Python 3.12 requis). Au premier lancement :
+
+1. Répondez `O` pour brancher Nuage, ouvrez le lien affiché et autorisez l’accès avec le
+   compte Nuage qui contient les dossiers.
+2. Indiquez le dossier de départ, par exemple `Dossiers IPR EPS`.
+3. Créez le compte Animateur (adresse, puis mot de passe de 14 caractères minimum).
+
+Le Hub s’ouvre sur http://127.0.0.1:8080. Les dossiers Nuage sont repris à chaque lancement.
+Fermez la fenêtre pour arrêter le Hub. Ce Hub n’est joignable que depuis ce PC : il sert à
+essayer et à préparer les réglages. Les données locales (base, clé, accès Nuage) sont dans
+`donnees-hub-local`, exclu du dépôt. Pour repartir de zéro, supprimez ce dossier et
+révoquez l’accès dans les paramètres de sécurité de Nuage.
+
 ### Essai local avec Nuage sur Windows
 
 Téléchargez le ZIP du dépôt, extrayez-le puis double-cliquez sur

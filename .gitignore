@@ -4,3 +4,4 @@ instance/
 *.sqlite3*
 .env
 secrets/
+donnees-hub-local/
