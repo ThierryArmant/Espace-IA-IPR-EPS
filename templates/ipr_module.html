@@ -10,13 +10,24 @@
 {% set editing = mode == 'edit' %}
 <section class="card">
   <h2>{{ 'Modifier' if editing else 'Ajouter' }}</h2>
-  <form method="post" action="{{ module_url }}">
+  <form method="post" action="{{ module_url }}"{% if module == 'publications' %} enctype="multipart/form-data"{% endif %}>
     <input type="hidden" name="csrf" value="{{ csrf }}">
     {% if editing %}<input type="hidden" name="entry" value="{{ selected.id }}">{% endif %}
     <label>Titre <input name="title" value="{{ selected.title if editing else '' }}" maxlength="180" required></label>
     <label>{{ 'Ordre du jour' if module == 'reunions' else 'Texte' if module == 'publications' else 'Description' }}
-      <textarea name="body" rows="5" maxlength="12000" {% if module == 'publications' %}required{% endif %}>{{ selected.body if editing else '' }}</textarea>
+      <textarea name="body" rows="5" maxlength="12000">{{ selected.body if editing else '' }}</textarea>
     </label>
+    {% if module == 'publications' %}
+    <label>Joindre des documents <input type="file" name="attachments" multiple></label>
+    <p class="subtle">Jusqu’à cinq fichiers par publication, 16 Mio au total.</p>
+    {% if editing and attachments %}
+    <fieldset><legend>Pièces jointes actuelles</legend>
+    {% for attachment in attachments %}
+    <label class="check"><input type="checkbox" name="remove_attachment" value="{{ attachment.id }}"> Retirer {{ attachment.name }}</label>
+    {% endfor %}
+    </fieldset>
+    {% endif %}
+    {% endif %}
     {% if module in ('evenements', 'reunions', 'creneaux') %}
     <div class="split">
       <label>Début (heure de Paris) <input type="datetime-local" name="starts" value="{{ selected.starts_at if editing else '' }}" required></label>
@@ -46,6 +57,14 @@
   <h2>{{ selected.title }}</h2>
   {% if selected.starts_at %}<p><strong>Début</strong> {{ selected.starts_at|replace('T', ' à ') }}{% if selected.ends_at %} · <strong>Fin</strong> {{ selected.ends_at|replace('T', ' à ') }}{% endif %} (heure de Paris)</p>{% endif %}
   {% if selected.body %}<p class="ipr-text">{{ selected.body }}</p>{% endif %}
+  {% if attachments %}
+  <h3>Pièces jointes</h3>
+  <ul>
+  {% for attachment in attachments %}
+  <li><a href="{{ url_for('ipr.publication_attachment', publication_id=selected.id, attachment_id=attachment.id) }}">{{ attachment.name }}</a> <small>({{ attachment.size|filesizeformat(true) }})</small></li>
+  {% endfor %}
+  </ul>
+  {% endif %}
   {% if selected.link %}<p><a class="button secondary" href="{{ selected.link }}" target="_blank" rel="noopener noreferrer">{{ 'Ouvrir la visioconférence' if module == 'reunions' else 'Ouvrir le lien' }}</a></p>{% endif %}
   {% if can_manage %}
   <div class="actions">

@@ -38,3 +38,11 @@ CREATE TABLE IF NOT EXISTS document_notification_recipients (
     is_read INTEGER NOT NULL DEFAULT 0 CHECK(is_read IN (0,1)),
     PRIMARY KEY (user_id,notification_id)
 );
+
+CREATE TABLE IF NOT EXISTS publication_attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    publication_id INTEGER NOT NULL REFERENCES ipr_entries(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    content BLOB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS publication_attachments_scope ON publication_attachments(publication_id);
