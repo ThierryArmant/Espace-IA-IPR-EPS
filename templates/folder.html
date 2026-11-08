@@ -24,6 +24,9 @@
 <button class="secondary" name="sens" value="descendre" title="Afficher ce dossier plus bas">↓ Descendre</button>
 </form>
 {% if item.parent not in (none, 1) %}<p><a href="{{ url_for('move_folder',node_id=item.id) }}">Déplacer vers…</a></p>{% endif %}
+<details><summary>Couleur</summary>
+<form method="post" action="{{ url_for('folder_color',node_id=item.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Couleur <select name="color">{% for color in colors %}<option {% if color==item.color %}selected{% endif %}>{{ color }}</option>{% endfor %}</select></label><button>Appliquer</button></form></details>
 {% endif %}
 <details><summary class="delete-action">Supprimer</summary>
 <form method="post" action="{{ url_for('delete_folder',node_id=item.id) }}">
@@ -101,7 +104,7 @@
 {% if nuage_storage and g.user.admin and missing_folders %}<p class="notice">{{ missing_folders|length }} dossier(s) de Nuage ne sont pas encore dans le Hub ({{ missing_folders[:5]|join(', ') }}{% if missing_folders|length > 5 %}…{% endif %}). Cliquez sur « Reprendre les dossiers Nuage », puis réglez leurs droits.</p>{% endif %}
 {% if nuage_storage and node.id == 1 and g.user.admin %}<p class="subtle">Les fichiers posés directement à la racine du dossier Nuage ne sont affectés à personne. Rangez-les dans un dossier pour les partager.</p>{% endif %}
 {% if nuage_storage and g.user.admin and not (content_mask is readable) and node.id != 1 %}<p class="notice">Vous gérez ce dossier sans voir son contenu. Ajoutez-vous une règle dans « Droits d’accès » si vous devez y accéder.</p>{% endif %}
-{% if mask is writable %}
+{% if (nuage_storage and content_mask is writable) or (not nuage_storage and mask is writable) %}
 <div class="tools">
 {% if nuage_storage and content_mask is writable %}
 <div class="creation-outils actions" aria-label="Créer avec Grist ou Docs">
@@ -140,9 +143,6 @@
   {% endcall %}
 </div>
 {% endif %}
-<details><summary>＋ Ajouter un dossier</summary><form method="post" action="{{ url_for('add_folder',node_id=node.id) }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom <input name="name" required maxlength="180"></label>
-<label>Couleur <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label><button>Créer</button></form></details>
 {% if not nuage_storage or content_mask is writable %}
 <details><summary>↑ Importer des documents</summary>
 <div class="actions">
@@ -156,10 +156,6 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers (32 Mio au total) <input type="file" name="files" multiple required></label><button>Importer</button></form></details>
 <details><summary>↑ Importer une arborescence</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('import_zip',node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Archive ZIP <input type="file" name="archive" accept=".zip" required></label><button>Importer</button></form></details>
-{% endif %}
-{% if g.user.admin %}
-<details><summary>◈ Couleur du dossier</summary><form method="post" action="{{ url_for('folder_color',node_id=node.id) }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Couleur <select name="color">{% for color in colors %}<option {% if color==node.color %}selected{% endif %}>{{ color }}</option>{% endfor %}</select></label><button>Appliquer</button></form></details>
 {% endif %}
 </div>
 {% endif %}
