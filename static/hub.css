@@ -273,3 +273,9 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .membre-ligne { display: flex; gap: .45rem; align-items: baseline; padding: .25rem .3rem; border-radius: .35rem; }
 .membre-ligne:hover { background: #eef3f9; }
 .liste-groupes { padding-inline-start: 1.1rem; }
+
+.groupe-deroulant > summary { cursor: pointer; padding-block: .2rem; }
+.membres-groupe { list-style: none; padding-inline-start: .8rem; margin: .4rem 0; }
+.membres-groupe li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .4rem; padding: .2rem .3rem; border-bottom: 1px solid #e3eaf2; }
+.membres-groupe form { gap: .3rem; }
+.membres-groupe select { width: auto; font-size: .82rem; }

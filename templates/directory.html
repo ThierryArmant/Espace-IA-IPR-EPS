@@ -44,8 +44,24 @@
 <form method="post" action="{{ url_for('add_group') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>
-{% if groups %}<h3>Groupes existants</h3><ul class="liste-groupes">
-{% for group in groups %}<li><strong>{{ group.name }}</strong> <span class="badge granted">{{ counts[group.id] }} membre{{ 's' if counts[group.id] > 1 else '' }}</span>{% if group.id == ipr_group_id %} <span class="badge">applications</span>{% endif %}{% if group.id == managers_group_id %} <span class="badge">autorisations</span>{% endif %} · <a href="{{ url_for('group_members', group_id=group.id) }}">{{ 'Voir ou modifier les membres' if counts[group.id] else 'Choisir les membres' }}</a></li>{% endfor %}
+{% if groups %}<h3 id="groupes">Groupes existants</h3><ul class="liste-groupes">
+{% for group in groups %}
+<li><details class="groupe-deroulant"><summary><strong>{{ group.name }}</strong> <span class="badge granted">{{ counts[group.id] }} membre{{ 's' if counts[group.id] > 1 else '' }}</span>{% if group.id == ipr_group_id %} <span class="badge">applications</span>{% endif %}{% if group.id == managers_group_id %} <span class="badge">autorisations</span>{% endif %}</summary>
+<ul class="membres-groupe">
+{% for person in people if group.id in members[person.id] %}
+<li><span>{{ person.name or person.email }}</span>
+<form method="post" action="{{ url_for('group_member_action', group_id=group.id, user_id=person.id) }}" class="actions">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<button class="quiet" name="action" value="retirer" title="Retirer {{ person.name or person.email }} de ce groupe">Retirer</button>
+{% if groups|length > 1 %}<select name="vers" aria-label="Groupe d’arrivée"><option value="">Déplacer vers…</option>{% for other in groups if other.id != group.id %}<option value="{{ other.id }}">{{ other.name }}</option>{% endfor %}</select>
+<button class="quiet" name="action" value="deplacer">OK</button>{% endif %}
+</form></li>
+{% else %}<li class="subtle">Aucun membre pour l’instant.</li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('group_members', group_id=group.id) }}">＋ Ajouter ou cocher des membres</a></p>
+</details></li>
+{% endfor %}
 </ul>{% endif %}</section>
 </div>
 <section class="card"><div class="actions"><h2>Groupe qui gère les autorisations</h2>

@@ -901,6 +901,27 @@ def create_app():
         members = {row[0] for row in g.db.execute("SELECT user_id FROM memberships WHERE group_id=?", (group_id,))}
         return render_template("groupe_membres.html", group=group, everyone=everyone, members=members)
 
+    @app.post("/annuaire/groupe/<int:group_id>/membre/<int:user_id>")
+    def group_member_action(group_id, user_id):
+        require_admin()
+        if not g.db.execute("SELECT 1 FROM memberships WHERE group_id=? AND user_id=?", (group_id, user_id)).fetchone():
+            abort(404)
+        person = g.db.execute("SELECT email,name FROM users WHERE id=?", (user_id,)).fetchone()
+        label = person["name"] or person["email"]
+        target = request.form.get("vers", type=int)
+        if request.form.get("action") == "deplacer":
+            group = g.db.execute("SELECT name FROM groups WHERE id=?", (target,)).fetchone()
+            if not group or target == group_id:
+                flash("Choisissez le groupe d’arrivée.")
+                return redirect(url_for("directory") + "#groupes")
+            g.db.execute("INSERT OR IGNORE INTO memberships VALUES(?,?)", (user_id, target))
+            flash(f"{label} a été déplacé(e) vers « {group['name']} ».")
+        else:
+            flash(f"{label} a été retiré(e) du groupe.")
+        g.db.execute("DELETE FROM memberships WHERE group_id=? AND user_id=?", (group_id, user_id))
+        g.db.commit()
+        return redirect(url_for("directory") + "#groupes")
+
     @app.post("/annuaire/compte/<int:user_id>/supprimer")
     def delete_user(user_id):
         require_admin()
