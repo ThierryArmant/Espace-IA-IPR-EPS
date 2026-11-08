@@ -36,8 +36,13 @@ def insert_folder(db, parent, name):
 
 
 def synchronize(db, storage, start_id=1, echo=print):
-    """Crée dans le Hub les dossiers Nuage manquants, à partir de start_id."""
+    """Crée dans le Hub les dossiers Nuage manquants, à partir de start_id.
+
+    Lit d'abord toute l'arborescence Nuage sans toucher à la base, puis écrit les
+    dossiers manquants en une seule transaction courte.
+    """
     rows = {row[0]: row for row in db.execute("SELECT id,parent,name FROM nodes WHERE kind='folder'")}
+    db.rollback()
 
     def path_of(node_id):
         names = []
@@ -46,28 +51,42 @@ def synchronize(db, storage, start_id=1, echo=print):
             node_id = rows[node_id][1]
         return tuple(reversed(names))
 
-    pending, created, skipped, seen = [start_id], 0, [], 0
+    base = path_of(start_id)
+    found, skipped, pending, seen = [], [], [()], 0
     while pending:
-        node_id = pending.pop()
+        relative = pending.pop()
         seen += 1
         if seen > MAX_SYNC_FOLDERS:
             echo("Limite de dossiers atteinte : relancez la synchronisation plus bas dans l’arborescence.")
             break
-        path = path_of(node_id)
-        content = storage.listing(path)
+        if seen % 25 == 0:
+            echo(f"… {seen} dossiers lus dans Nuage")
+        content = storage.listing((*base, *relative))
         if content is None:
             continue
-        existing = {row[2].casefold(): row[0] for row in rows.values() if row[1] == node_id}
         for name in content[0]:
-            if not valid_name(name) or len(path) >= 63:
-                skipped.append("/".join((*path, name)))
+            if not valid_name(name) or len(base) + len(relative) >= 63:
+                skipped.append("/".join((*base, *relative, name)))
                 continue
-            child = existing.get(name.casefold())
-            if child is None:
-                child = insert_folder(db, node_id, name)
-                rows[child] = (child, node_id, name)
-                created += 1
-            pending.append(child)
+            found.append((*relative, name))
+            pending.append((*relative, name))
+
+    db.execute("BEGIN IMMEDIATE")
+    rows = {row[0]: row for row in db.execute("SELECT id,parent,name FROM nodes WHERE kind='folder'")}
+    children = {}
+    for node_id, parent, name in rows.values():
+        children.setdefault(parent, {})[name.casefold()] = node_id
+    ids, created = {(): start_id}, 0
+    for relative in sorted(found, key=len):
+        parent = ids.get(relative[:-1])
+        if parent is None:
+            continue
+        child = children.get(parent, {}).get(relative[-1].casefold())
+        if child is None:
+            child = insert_folder(db, parent, relative[-1])
+            children.setdefault(parent, {})[relative[-1].casefold()] = child
+            created += 1
+        ids[relative] = child
     db.commit()
     for name in skipped:
         echo(f"Dossier ignoré (nom non accepté par le Hub) : {name}")
