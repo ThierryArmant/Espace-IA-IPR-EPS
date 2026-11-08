@@ -107,6 +107,7 @@
 {% if (nuage_storage and content_mask is writable) or (not nuage_storage and mask is writable) %}
 <div class="tools">
 {% if nuage_storage and content_mask is writable %}
+<p class="titre-outils"><strong>Créer un nouveau document en ligne</strong> <span class="explication">— un clic suffit ; la bulle ? vous aide à choisir l’outil</span></p>
 <div class="creation-outils actions" aria-label="Créer avec Grist ou Docs">
   <form method="post" action="{{ url_for('miroir.create_office', node_id=node.id, kind='tableur') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button title="Tableur façon Excel, rangé dans ce dossier Nuage">＋ Tableur (Collabora)</button></form>
   <form method="post" action="{{ url_for('miroir.create_office', node_id=node.id, kind='texte') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button title="Texte façon Word, rangé dans ce dossier Nuage">＋ Texte (Collabora)</button></form>
@@ -121,8 +122,13 @@
   <p>Pensez à partager aussi le tableur ou le document avec vos collègues dans Grist ou Docs.</p>
   {% endcall %}
 </div>
-<details><summary>🔗 Ranger un lien Grist ou Docs</summary>
-<p class="subtle">Dans Grist ou Docs, copiez l’adresse du tableur ou du document (barre d’adresse du navigateur), puis collez-la ici avec un titre. Pensez à le partager aussi avec vos collègues dans l’outil (bouton « Partager »).</p>
+<details class="outil-explique"><summary><strong>🔗 Ajouter un lien Grist ou Docs</strong><span class="explication">Ranger ici un tableur Grist ou un document Docs déjà créé</span></summary>
+<ol class="etapes">
+<li>Créez votre tableur ou document avec « Tableur (Grist) » ou « Document (Docs) » ci-dessus.</li>
+<li>Dans l’onglet Grist ou Docs, copiez l’adresse en haut du navigateur (cliquez dedans, puis Ctrl+C).</li>
+<li>Revenez ici, donnez un titre, collez l’adresse (Ctrl+V) et cliquez sur « Ajouter au dossier ».</li>
+<li>Dans Grist ou Docs, cliquez sur « Partager » pour l’ouvrir aussi à vos collègues.</li>
+</ol>
 <form method="post" action="{{ url_for('outils.add', node_id=node.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Titre <input name="title" required maxlength="180" placeholder="Suivi des inspections 2026-2027"></label>
@@ -144,18 +150,23 @@
 </div>
 {% endif %}
 {% if not nuage_storage or content_mask is writable %}
-<details><summary>↑ Importer des documents</summary>
-<div class="actions">
-  <span class="subtle">{{ 'Dépôt dans le dossier Nuage' if nuage_storage else 'Dépôt sur le Hub' }}</span>
-  {% call help_menu('aide-import', 'Aide sur l’importation de documents', 'Importer un document dans le Hub') %}
-  <p>{% if nuage_storage %}Ce bouton range le fichier dans le dossier Nuage correspondant. Les collègues autorisés dans le Hub le consultent et le téléchargent ici, sans compte Nuage.{% else %}Ce bouton stocke le fichier sur le Hub. Les collègues autorisés peuvent le consulter selon le format et le télécharger selon leurs droits.{% endif %}</p>
-  <p>Pour modifier ensemble un tableur déjà existant, déposez sa version .ods dans le dossier correspondant sur Nuage et accordez aux collègues le droit de modification.</p>
-  {% endcall %}
-</div>
+<details class="outil-explique"><summary><strong>↑ Déposer des fichiers</strong><span class="explication">Envoyer des documents de votre ordinateur dans ce dossier</span></summary>
+<ol class="etapes">
+<li>Cliquez sur « Choisir des fichiers » (ou « Parcourir ») et sélectionnez un ou plusieurs fichiers. Astuce : Ctrl+clic pour en choisir plusieurs.</li>
+<li>Cliquez sur « Déposer ». Les fichiers apparaissent dans la liste « Documents » ci-dessous.</li>
+</ol>
+<p class="subtle">PDF, Word, Excel, images… jusqu’à 32 Mio en tout par envoi. Les collègues autorisés sur ce dossier pourront les consulter et les télécharger. Un fichier du même nom déjà présent n’est pas remplacé.</p>
 <form method="post" enctype="multipart/form-data" action="{{ url_for('upload',node_id=node.id) }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers (32 Mio au total) <input type="file" name="files" multiple required></label><button>Importer</button></form></details>
-<details><summary>↑ Importer une arborescence</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('import_zip',node_id=node.id) }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Archive ZIP <input type="file" name="archive" accept=".zip" required></label><button>Importer</button></form></details>
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers <input type="file" name="files" multiple required></label><button>Déposer</button></form></details>
+<details class="outil-explique"><summary><strong>↑ Déposer un dossier complet</strong><span class="explication">Envoyer d’un coup un dossier avec ses sous-dossiers (fichier ZIP)</span></summary>
+<ol class="etapes">
+<li>Sur votre ordinateur, faites un clic droit sur le dossier à envoyer, puis « Envoyer vers » → « Dossier compressé » (Windows) ou « Compresser » (Mac). Un fichier .zip est créé.</li>
+<li>Cliquez sur « Choisir un fichier », sélectionnez ce .zip, puis « Déposer le dossier ».</li>
+<li>Les dossiers et fichiers sont recréés ici, à l’identique. Rien n’est remplacé si un nom existe déjà.</li>
+</ol>
+<p class="subtle">Jusqu’à 32 Mio et 1 000 éléments par envoi.</p>
+<form method="post" enctype="multipart/form-data" action="{{ url_for('import_zip',node_id=node.id) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichier ZIP <input type="file" name="archive" accept=".zip" required></label><button>Déposer le dossier</button></form></details>
 {% endif %}
 </div>
 {% endif %}
@@ -172,7 +183,7 @@
 <p>Les fichiers importés directement dans le Hub ont une fiche de consultation. Les droits du Hub s’appliquent à cette fiche. Pour un fichier Nuage, vos droits dans Nuage s’appliquent aussi.</p>
 {% endif %}
 {% endcall %}
-</div>{% if not nuage_storage %}<a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a>{% endif %}<form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Rechercher dans ce dossier"><button class="secondary">Rechercher</button></form></div>
+</div>{% if not nuage_storage %}<a class="button secondary" href="{{ url_for('nuage.documents', node_id=node.id) }}">{{ "Compte Nuage" if nuage_connected else "Connecter Nuage" }}</a>{% endif %}<form method="get" class="search"><input aria-label="Rechercher dans ce dossier" name="q" value="{{ search }}" placeholder="Nom d’un document de ce dossier" title="Tapez une partie du nom d’un document, puis Rechercher. Seul ce dossier est parcouru."><button class="secondary">Rechercher</button></form></div>
 {% if nuage_files %}<p class="empty subtle">Les fichiers Nuage s’ouvrent dans un autre onglet. Après l’enregistrement, fermez cet onglet du navigateur pour revenir à votre dossier.</p>{% endif %}
 {% if nuage_error %}<p class="notice">{{ nuage_error }}</p>{% endif %}
 {% set links = folder_links(node) %}

@@ -256,3 +256,14 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .help-popover .badge { background: #fff8; }
 .explorateur-panneau, .folder-actions-panel { background: var(--flottant-menu); border-color: var(--flottant-bord); }
 .explorateur-panneau .explorateur-ligne:hover, .folder-actions-panel summary:hover { background: #d9e7f7; border-radius: .4rem; }
+
+/* Cadres d’outils expliqués (titre + phrase d’explication visible) */
+.outil-explique > summary { display: grid; grid-template-columns: auto 1fr; column-gap: .4rem; cursor: pointer; }
+.outil-explique > summary::marker { content: ""; }
+.outil-explique > summary strong::before { content: "▸ "; }
+.outil-explique[open] > summary strong::before { content: "▾ "; }
+.outil-explique .explication { grid-column: 1 / -1; font-size: .82rem; font-weight: 400; color: #4a5f74; }
+.etapes { margin: .6rem 0; padding-inline-start: 1.3rem; }
+.etapes li { margin-block: .3rem; }
+.titre-outils { margin: 0 0 .35rem; width: 100%; }
+.titre-outils .explication { font-size: .82rem; color: #4a5f74; }
