@@ -7,12 +7,12 @@ from urllib.parse import urlsplit
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, send_file, url_for
 
 MODULES = {
-    "evenements": ("Événements", "▦", "Publier un événement et recueillir les participations."),
-    "reunions": ("Réunions", "◉", "Fixer une réunion, partager son ordre du jour et son lien de visioconférence."),
-    "creneaux": ("Créneaux", "◷", "Proposer des créneaux et réserver les places disponibles."),
-    "questionnaires": ("Questionnaires", "☷", "Poser des questions au groupe et consulter les réponses reçues."),
-    "marque-pages": ("Marque-pages", "◇", "Retrouver les liens utiles du groupe."),
-    "publications": ("Publications", "▤", "Partager les annonces et les informations du groupe."),
+    "evenements": ("Événements", "📅", "Publier un événement et recueillir les participations."),
+    "reunions": ("Réunions", "🎥", "Fixer une réunion, partager son ordre du jour et son lien de visioconférence."),
+    "creneaux": ("Créneaux", "🕒", "Proposer des créneaux et réserver les places disponibles."),
+    "questionnaires": ("Questionnaires", "📝", "Poser des questions au groupe et consulter les réponses reçues."),
+    "marque-pages": ("Marque-pages", "🔖", "Retrouver les liens utiles du groupe."),
+    "publications": ("Publications", "📢", "Partager les annonces et les informations du groupe."),
 }
 SCHEDULED = {"evenements", "reunions", "creneaux"}
 RSVP = {"evenements", "reunions"}

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='nouveautes-v1') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='logos-v1') }}">
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -34,28 +34,28 @@
   <p><strong>Aide</strong> : le guide de prise en main.{% if g.user.admin %} <strong>Demandes</strong> : préparer un courriel pour un membre.{% endif %}</p>
   <p>Survolez une entrée avec la souris pour un rappel rapide.</p>
   {% endcall %}</div>
-  <a class="rail-doc" href="{{ url_for('folder') }}" title="Tous vos dossiers et documents"><span aria-hidden="true">▤</span>Documents</a>
+  <a class="rail-doc" href="{{ url_for('folder') }}" title="Tous vos dossiers et documents"><span aria-hidden="true">📁</span>Documents</a>
   <a class="rail-mail" href="{{ url_for('activite.page') }}" title="Ce qui a été déposé ou modifié dans vos dossiers" {% if request.endpoint == 'activite.page' %}aria-current="page"{% endif %}><span aria-hidden="true">🔔</span>Nouveautés{% if nouveautes_non_lues %} <span class="pastille">{{ nouveautes_non_lues }}</span>{% endif %}</a>
   {% if can_notify_documents %}
-  <a class="rail-mail" href="{{ url_for('notifications.inbox') }}" title="Les mises à jour de documents signalées par vos collègues"><span aria-hidden="true">♢</span>Notifications{% if notification_unread %} ({{ notification_unread }}){% endif %}</a>
+  <a class="rail-mail" href="{{ url_for('notifications.inbox') }}" title="Les mises à jour de documents signalées par vos collègues"><span aria-hidden="true">📣</span>Notifications{% if notification_unread %} ({{ notification_unread }}){% endif %}</a>
   {% endif %}
   {% if ipr_visible %}
-  <a class="rail-team" href="{{ url_for('directory' if g.user.admin else 'ipr.directory') }}" title="{{ 'Comptes, invitations et groupes' if g.user.admin else 'Les adresses des membres du groupe' }}"><span aria-hidden="true">♙</span>Annuaire</a>
+  <a class="rail-team" href="{{ url_for('directory' if g.user.admin else 'ipr.directory') }}" title="{{ 'Comptes, invitations et groupes' if g.user.admin else 'Les adresses des membres du groupe' }}"><span aria-hidden="true">📇</span>Annuaire</a>
   {% for key, (label, icon, description) in ipr_modules.items() %}
   <a class="rail-ipr" href="{{ url_for('ipr.module_page', module=key) }}" title="{{ description }}" {% if request.view_args and request.view_args.get('module') == key %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
   {% endfor %}
   {% endif %}
   {% if nuage_storage %}
-  <a class="rail-doc" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Ouvrir Grist (tableurs partagés) dans un autre onglet"><span aria-hidden="true">▦</span>Grist</a>
-  <a class="rail-doc" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Ouvrir Docs (textes à plusieurs) dans un autre onglet"><span aria-hidden="true">✎</span>Docs</a>
+  <a class="rail-doc" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Ouvrir Grist (tableurs partagés) dans un autre onglet"><span aria-hidden="true">📊</span>Grist</a>
+  <a class="rail-doc" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Ouvrir Docs (textes à plusieurs) dans un autre onglet"><span aria-hidden="true">📄</span>Docs</a>
   {% endif %}
   {% if can_manage_access %}
-  <a class="rail-team" href="{{ url_for('autorisations.grid') }}" title="Qui a accès à quels dossiers" {% if request.endpoint == 'autorisations.grid' %}aria-current="page"{% endif %}><span aria-hidden="true">☑</span>Autorisations</a>
+  <a class="rail-team" href="{{ url_for('autorisations.grid') }}" title="Qui a accès à quels dossiers" {% if request.endpoint == 'autorisations.grid' %}aria-current="page"{% endif %}><span aria-hidden="true">🔐</span>Autorisations</a>
   <a class="rail-team" href="{{ url_for('autorisations.groups_page') }}" title="Affecter les collègues aux groupes" {% if request.endpoint == 'autorisations.groups_page' %}aria-current="page"{% endif %}><span aria-hidden="true">👥</span>Groupes</a>
   {% endif %}
-  <a class="rail-doc" href="{{ url_for('outils.guide') }}" title="Guide de prise en main" {% if request.endpoint == 'outils.guide' %}aria-current="page"{% endif %}><span aria-hidden="true">?</span>Aide</a>
+  <a class="rail-doc" href="{{ url_for('outils.guide') }}" title="Guide de prise en main" {% if request.endpoint == 'outils.guide' %}aria-current="page"{% endif %}><span aria-hidden="true">❓</span>Aide</a>
   {% if g.user.admin %}
-  <a class="rail-mail" href="{{ url_for('messages') }}" title="Préparer un courriel pour un membre"><span aria-hidden="true">✉</span>Demandes</a>
+  <a class="rail-mail" href="{{ url_for('messages') }}" title="Préparer un courriel pour un membre"><span aria-hidden="true">✉️</span>Demandes</a>
   {% endif %}
 </nav>
 {% endif %}
