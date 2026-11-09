@@ -368,3 +368,6 @@ main .quiet:hover { background: #e3edf7; }
 .lien-app img.logo-app { width: 22px; height: 22px; object-fit: contain; background: white; border-radius: .3rem; padding: 2px; box-sizing: content-box; }
 .lien-app:hover, .lien-app:focus-visible { background: #ffffff22; color: white; }
 @media (max-width: 900px) { .lien-app { min-width: 2.6rem; font-size: 0; gap: 0; } .lien-app span { font-size: 1.25rem; } }
+/* Accueil + applications regroupés au centre de la bannière */
+.top .bouton-accueil { margin-inline: auto .6rem; }
+.top .barre-apps { margin-inline-end: auto; }
