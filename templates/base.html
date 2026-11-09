@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='gaufre-v1') }}">
-<script src="{{ url_for('static', filename='gaufre.js') }}" defer></script>
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='logos-v2') }}">
+<script src="{{ url_for('static', filename='gaufre.js') }}?v=2" defer></script>
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -17,12 +17,12 @@
   <details class="gaufre">
     <summary class="button secondary" title="Ouvrir les applications des agents">▦ Applications</summary>
     <div class="gaufre-panneau" role="menu" aria-label="Applications des agents">
-      <a class="tuile-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><span aria-hidden="true">🎥</span>Visio-Agents</a>
-      <a class="tuile-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><span aria-hidden="true">💬</span>Tchap</a>
-      <a class="tuile-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><span aria-hidden="true">📄</span>Docs</a>
-      <a class="tuile-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><span aria-hidden="true">📊</span>Grist</a>
-      <a class="tuile-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><span aria-hidden="true">📤</span>France Transfert</a>
-      <a class="tuile-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Créer des formulaires et des démarches en ligne"><span aria-hidden="true">🗂️</span>Démarches numériques</a>
+      <a class="tuile-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><img class="logo-app" src="https://visio-agents.education.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">🎥</span>Visio-Agents</a>
+      <a class="tuile-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><img class="logo-app" src="https://tchap.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">💬</span>Tchap</a>
+      <a class="tuile-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><img class="logo-app" src="https://docs.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📄</span>Docs</a>
+      <a class="tuile-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><img class="logo-app" src="https://grist.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📊</span>Grist</a>
+      <a class="tuile-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><img class="logo-app" src="https://francetransfert.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📤</span>France Transfert</a>
+      <a class="tuile-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Créer des formulaires et des démarches en ligne"><img class="logo-app" src="https://demarche.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">🗂️</span>Démarches numériques</a>
       <p class="subtle">S’ouvrent dans un autre onglet, avec votre compte académique.</p>
     </div>
   </details>

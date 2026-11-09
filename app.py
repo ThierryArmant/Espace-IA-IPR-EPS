@@ -294,6 +294,7 @@ def create_app():
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; object-src 'none'; frame-ancestors 'none'; "
+            "img-src 'self' https://visio-agents.education.fr https://*.numerique.gouv.fr; "
             "base-uri 'none'; form-action 'self'"
         )
         return response

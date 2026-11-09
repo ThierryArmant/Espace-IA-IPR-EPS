@@ -359,3 +359,4 @@ main .quiet:hover { background: #e3edf7; }
 /* Dépôt avec progression */
 .progression-depot p { margin: .3rem 0; font-size: .85rem; }
 .progression-depot progress { width: 10rem; vertical-align: middle; margin-inline: .3rem; }
+.tuile-app img.logo-app { width: 2rem; height: 2rem; object-fit: contain; }
