@@ -327,3 +327,7 @@ main .quiet:hover { background: #e3edf7; }
 .grille-groupes td input { width: 1.15rem; height: 1.15rem; }
 .grille-groupes td.modifie { outline: 2px solid #e0a100; outline-offset: -2px; }
 .grille-groupes button.tout { font-size: .72rem; padding: .15rem .35rem; margin-top: .2rem; }
+
+.nouveau-groupe { align-items: flex-end; }
+.nouveau-groupe label { flex: 1 1 22rem; max-width: 30rem; }
+.nouveau-groupe input { width: 100%; }
