@@ -360,3 +360,11 @@ main .quiet:hover { background: #e3edf7; }
 .progression-depot p { margin: .3rem 0; font-size: .85rem; }
 .progression-depot progress { width: 10rem; vertical-align: middle; margin-inline: .3rem; }
 .tuile-app img.logo-app { width: 2rem; height: 2rem; object-fit: contain; }
+
+/* Applications directement dans la bannière */
+.barre-apps { display: flex; align-items: center; gap: .15rem; margin-inline-end: 1rem; overflow-x: auto; scrollbar-width: thin; }
+.lien-app { display: flex; flex-direction: column; align-items: center; gap: .15rem; min-width: 3.6rem; padding: .3rem .35rem; border-radius: .5rem; color: #eaf3fc; font: 600 .68rem system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
+.lien-app span { font-size: 1.25rem; line-height: 1; }
+.lien-app img.logo-app { width: 22px; height: 22px; object-fit: contain; background: white; border-radius: .3rem; padding: 2px; box-sizing: content-box; }
+.lien-app:hover, .lien-app:focus-visible { background: #ffffff22; color: white; }
+@media (max-width: 900px) { .lien-app { min-width: 2.6rem; font-size: 0; gap: 0; } .lien-app span { font-size: 1.25rem; } }

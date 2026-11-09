@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='logos-v2') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='barre-apps-v3') }}">
 <script src="{{ url_for('static', filename='gaufre.js') }}?v=2" defer></script>
 {% block scripts %}{% endblock %}
 </head>
@@ -14,20 +14,16 @@
   <a class="brand" href="{{ url_for('folder') }}"><span class="mark">EPS</span><span><small>ESPACE DE TRAVAIL</small><strong>IA-IPR EPS</strong></span></a>
   {% if g.user %}
   <a class="button secondary bouton-accueil" href="{{ url_for('folder') }}" title="Revenir à la page principale">⌂ Accueil</a>
-  <details class="gaufre">
-    <summary class="button secondary" title="Ouvrir les applications des agents">▦ Applications</summary>
-    <div class="gaufre-panneau" role="menu" aria-label="Applications des agents">
-      <a class="tuile-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><img class="logo-app" src="https://visio-agents.education.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">🎥</span>Visio-Agents</a>
-      <a class="tuile-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><img class="logo-app" src="https://tchap.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">💬</span>Tchap</a>
-      <a class="tuile-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><img class="logo-app" src="https://docs.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📄</span>Docs</a>
-      <a class="tuile-app" href="https://visio.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence de La Suite numérique"><img class="logo-app" src="https://visio.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📹</span>Visio</a>
-      <a class="tuile-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><img class="logo-app" src="https://grist.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📊</span>Grist</a>
-      <a class="tuile-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><img class="logo-app" src="https://francetransfert.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📤</span>France Transfert</a>
-      <a class="tuile-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Créer des formulaires et des démarches en ligne"><img class="logo-app" src="https://demarche.numerique.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">🗂️</span>Démarches numériques</a>
-      <a class="tuile-app" href="https://rdv.anct.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Prise de rendez-vous (RDV Service Public)"><img class="logo-app" src="https://rdv.anct.gouv.fr/favicon.ico" alt="" width="32" height="32" hidden><span aria-hidden="true">📅</span>RDV</a>
-      <p class="subtle">S’ouvrent dans un autre onglet, avec votre compte académique.</p>
-    </div>
-  </details>
+  <nav class="barre-apps" aria-label="Applications des agents (s’ouvrent dans un autre onglet)">
+    <a class="lien-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><img class="logo-app" src="https://visio-agents.education.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">🎥</span>Visio-Agents</a>
+    <a class="lien-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><img class="logo-app" src="https://tchap.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">💬</span>Tchap</a>
+    <a class="lien-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><img class="logo-app" src="https://docs.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📄</span>Docs</a>
+    <a class="lien-app" href="https://visio.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence de La Suite numérique"><img class="logo-app" src="https://visio.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📹</span>Visio</a>
+    <a class="lien-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><img class="logo-app" src="https://grist.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📊</span>Grist</a>
+    <a class="lien-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><img class="logo-app" src="https://francetransfert.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📤</span>Fr. Transfert</a>
+    <a class="lien-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Créer des formulaires et des démarches en ligne"><img class="logo-app" src="https://demarche.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">🗂️</span>Démarches</a>
+    <a class="lien-app" href="https://rdv.anct.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Prise de rendez-vous (RDV Service Public)"><img class="logo-app" src="https://rdv.anct.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📅</span>RDV</a>
+  </nav>
   <div class="identity"><span class="role">{{ 'Animateur' if g.user.admin else 'Collaborateur' }}</span>
   <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="quiet">Déconnexion</button></form></div>
   {% endif %}
@@ -44,7 +40,7 @@
   <p><strong>Documents</strong> : vos dossiers et fichiers. <strong>Nouveautés</strong> : ce que les collègues ont déposé ou modifié, automatiquement.{% if can_notify_documents %} <strong>Notifications</strong> : les mises à jour signalées par les collègues.{% endif %}</p>
   {% if ipr_visible %}<p><strong>Annuaire</strong> : {{ 'comptes, invitations et groupes' if g.user.admin else 'les adresses des membres' }}.</p>
   <p><strong>Événements</strong> (formations, journées) et <strong>Réunions</strong> (avec ordre du jour et visio) : chacun indique s’il vient. <strong>Créneaux</strong> : réserver une place (entretiens, visites). <strong>Questionnaires</strong> : interroger le groupe. <strong>Marque-pages</strong> : les liens utiles. <strong>Publications</strong> : annonces avec pièces jointes.</p>{% endif %}
-  <p><strong>Applications</strong> (en haut) : Visio-Agents, Tchap, Docs, Visio, Grist, France Transfert, Démarches numériques, RDV. Les documents, eux, se déposent dans le hub (jusqu’à 2 Go par fichier).</p>
+  <p><strong>Applications</strong> (dans la bannière, en haut) : Visio-Agents, Tchap, Docs, Visio, Grist, France Transfert, Démarches numériques, RDV. Les documents, eux, se déposent dans le hub (jusqu’à 2 Go par fichier).</p>
   {% if can_manage_access %}<p><strong>Autorisations</strong> (animateurs) : qui a accès à quels dossiers. <strong>Groupes</strong> : affecter les collègues aux groupes.</p>{% else %}<p><strong>Groupes</strong> : voir qui fait partie de quel groupe (consultation).</p>{% endif %}
   <p><strong>Aide</strong> : le guide de prise en main.{% if g.user.admin %} <strong>Demandes</strong> : préparer un courriel pour un membre.{% endif %}</p>
   <p>Survolez une entrée avec la souris pour un rappel rapide.</p>
