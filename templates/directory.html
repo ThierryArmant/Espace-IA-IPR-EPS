@@ -42,7 +42,7 @@
 <p><strong>Comment faire :</strong> tapez le nom, cliquez sur « Créer », puis cliquez sur « Choisir les membres » à côté du groupe : cochez toutes les personnes et enregistrez une seule fois.</p>
 <p>Un groupe peut aussi recevoir des droits sur un dossier, dans « Droits d’accès ».</p>
 {% endcall %}</div>
-<p class="subtle">Par exemple « IPR » ou « Gestion des autorisations ».</p>
+<p class="subtle">Plus simple : la page <a href="{{ url_for('autorisations.groups_page') }}">Groupes</a> montre tous les collègues et tous les groupes dans un seul tableau à cocher.</p>
 <form method="post" action="{{ url_for('add_group') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><label>Nom du groupe <input name="name" required maxlength="180"></label><button>Créer</button>
 </form>

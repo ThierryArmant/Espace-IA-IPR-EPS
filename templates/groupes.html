@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_help.html" import help_menu %}
+{% block title %}Groupes · IA-IPR EPS{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupes.js') }}" defer></script>{% endblock %}
+{% block content %}
+<div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes</h1>
+<p>Tous les collègues en lignes, les groupes en colonnes : cochez pour affecter un collègue à un groupe.</p></div>
+<div class="actions">{% call help_menu('aide-groupes-page', 'Aide sur les groupes', 'Organiser les groupes') %}
+<p><strong>1. Créer un groupe</strong> (si besoin) : tapez son nom dans « Nouveau groupe » puis « Créer ». Une colonne apparaît.</p>
+<p><strong>2. Affecter les collègues</strong> : cochez les cases dans la colonne du groupe. « Filtrer par nom » aide à retrouver quelqu’un ; « Tout cocher / Tout décocher » sous le nom du groupe agit sur les lignes affichées.</p>
+<p><strong>3. Enregistrer</strong> une seule fois, en haut ou en bas.</p>
+<p><strong>4. Donner un accès au groupe</strong> : dans <a href="{{ url_for('autorisations.grid') }}">Autorisations</a>, les groupes ont leur ligne en haut du tableau ; un réglage s’applique à tous leurs membres.</p>
+{% endcall %}</div></div>
+<section class="card"><form method="post" class="actions">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="creer">
+<label>Nouveau groupe <input name="name" maxlength="80" required placeholder="Par exemple « Formateurs APSA »"></label>
+<button>Créer</button></form></section>
+{% if not group_rows %}<p class="empty">Aucun groupe pour l’instant : créez le premier ci-dessus.</p>
+{% else %}
+<form method="post" class="panel">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% for group in group_rows %}<input type="hidden" name="groupes" value="{{ group.id }}">{% endfor %}
+<div class="panel-head"><h2>{{ people|length }} collègue(s) · {{ group_rows|length }} groupe(s)</h2><button>Enregistrer les groupes</button></div>
+<label class="filtre-grille">Filtrer par nom <input id="filtre-groupes" type="search" autocomplete="off" placeholder="Tapez quelques lettres d’un nom"></label>
+<div class="table-wrap"><table class="grille-acces grille-groupes"><thead><tr><th>Collègue</th>
+{% for group in group_rows %}<th>{{ group.name }}<br><span class="badge granted" data-compte="{{ group.id }}">{{ sizes.get(group.id, 0) }}</span><br>
+<button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="1">Tout cocher</button> <button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="0">Tout décocher</button></th>{% endfor %}</tr></thead><tbody>
+{% for person in people %}
+<tr><th scope="row">{{ person.name or person.email }}{% if person.name %}<br><span class="subtle">{{ person.email }}</span>{% endif %}</th>
+{% for group in group_rows %}<td><input type="checkbox" name="m-{{ group.id }}-{{ person.id }}" data-groupe="{{ group.id }}" aria-label="{{ person.name or person.email }} dans {{ group.name }}" {% if (group.id, person.id) in members %}checked{% endif %}></td>{% endfor %}</tr>
+{% endfor %}
+</tbody></table></div>
+<div class="actions"><button>Enregistrer les groupes</button></div>
+</form>
+{% endif %}
+{% endblock %}

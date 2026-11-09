@@ -8,6 +8,7 @@ pour chaque personne, l'accès aux dossiers de premier niveau :
 Chaque choix crée ou retire la règle individuelle correspondante.
 """
 import re
+import sqlite3
 import unicodedata
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
@@ -121,26 +122,31 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         person_ids = {row["id"] for row in people}
         rules = {(row["node"], row["subject"]): row["mask"] for row in g.db.execute(
             "SELECT node,subject,mask FROM rules WHERE subject_kind='user'")}
+        group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
+        group_ids = {row["id"] for row in group_rows}
+        group_rules = {(row["node"], row["subject"]): row["mask"] for row in g.db.execute(
+            "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")}
         allowed_values = set(levels) | ({"aucun"} if not top else set())
         if request.method == "POST":
             changed = 0
             for key, value in request.form.items():
-                match = re.fullmatch(r"acces-(\d+)-(\d+)", key)
+                match = re.fullmatch(r"acces-(g-)?(\d+)-(\d+)", key)
                 if not match or value not in allowed_values:
                     continue
-                folder, person = int(match[1]), int(match[2])
-                if folder not in folder_ids or person not in person_ids:
+                kind = "group" if match[1] else "user"
+                folder, subject = int(match[2]), int(match[3])
+                if folder not in folder_ids or subject not in (group_ids if kind == "group" else person_ids):
                     abort(400)
-                current = rules.get((folder, person))
+                current = (group_rules if kind == "group" else rules).get((folder, subject))
                 if cell_value(current, top) == value:
                     continue
                 if value:
-                    g.db.execute("""INSERT INTO rules VALUES(?, 'user', ?, ?)
+                    g.db.execute("""INSERT INTO rules VALUES(?, ?, ?, ?)
                                     ON CONFLICT(node,subject_kind,subject) DO UPDATE SET mask=excluded.mask""",
-                                 (folder, person, levels.get(value, 0)))
+                                 (folder, kind, subject, levels.get(value, 0)))
                 elif current is not None:
-                    g.db.execute("DELETE FROM rules WHERE node=? AND subject_kind='user' AND subject=?",
-                                 (folder, person))
+                    g.db.execute("DELETE FROM rules WHERE node=? AND subject_kind=? AND subject=?",
+                                 (folder, kind, subject))
                 else:
                     continue
                 changed += 1
@@ -153,6 +159,9 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
                ON r.subject_kind='group' AND r.subject=m.group_id WHERE r.mask & ? <> 0""", (view,))}
         cells = {(folder["id"], person["id"]): cell_value(rules.get((folder["id"], person["id"])), top)
                  for folder in folders for person in people}
+        group_cells = {(folder["id"], group["id"]): cell_value(group_rules.get((folder["id"], group["id"])), top)
+                       for folder in folders for group in group_rows}
+        group_sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
         no_parent_access = set()
         trail = []
         if not top:
@@ -169,7 +178,57 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         return render_template("autorisations.html", folders=folders, people=people, cells=cells,
                                via_group=via_group, managers_group=MANAGERS_GROUP,
                                has_group=managers_group() is not None, top=top, parent=parent,
-                               trail=trail, no_parent_access=no_parent_access, has_children=has_children)
+                               trail=trail, no_parent_access=no_parent_access, has_children=has_children,
+                               group_rows=group_rows, group_cells=group_cells, group_sizes=group_sizes)
+
+    @bp.route("/groupes", methods=["GET", "POST"])
+    def groups_page():
+        if not can_manage():
+            abort(403, "Cette page est réservée aux personnes qui gèrent les autorisations.")
+        if request.method == "POST":
+            if request.form.get("action") == "creer":
+                name = " ".join(request.form.get("name", "").split())
+                if not 1 <= len(name) <= 80 or any(c in name for c in "/\\:"):
+                    flash("Donnez un nom de groupe (80 caractères maximum, sans / \\ ni :).")
+                else:
+                    try:
+                        g.db.execute("INSERT INTO groups(name) VALUES(?)", (name,))
+                        g.db.commit()
+                        flash(f"Groupe « {name} » créé : cochez maintenant ses membres dans sa colonne.")
+                    except sqlite3.IntegrityError:
+                        g.db.rollback()
+                        flash("Ce nom de groupe existe déjà.")
+                return redirect(url_for("autorisations.groups_page"))
+            groups_shown = {int(x) for x in request.form.getlist("groupes") if x.isdigit()}
+            known_groups = {row[0] for row in g.db.execute("SELECT id FROM groups")}
+            known_people = {row[0] for row in g.db.execute("SELECT id FROM users")}
+            if not groups_shown <= known_groups:
+                abort(400)
+            wanted = set()
+            for key in request.form:
+                match = re.fullmatch(r"m-(\d+)-(\d+)", key)
+                if match:
+                    group, person = int(match[1]), int(match[2])
+                    if group not in groups_shown or person not in known_people:
+                        abort(400)
+                    wanted.add((group, person))
+            before = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")
+                      if row[0] in groups_shown}
+            for group, person in before - wanted:
+                g.db.execute("DELETE FROM memberships WHERE group_id=? AND user_id=?", (group, person))
+            for group, person in wanted - before:
+                g.db.execute("INSERT INTO memberships(user_id,group_id) VALUES(?,?)", (person, group))
+            g.db.commit()
+            changes = len(before ^ wanted)
+            flash(f"{changes} changement(s) enregistré(s) dans les groupes." if changes else "Aucun changement.")
+            return redirect(url_for("autorisations.groups_page"))
+        people = g.db.execute(
+            "SELECT id,email,name,active,password IS NOT NULL AS activated FROM users "
+            "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
+        group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
+        members = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")}
+        sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
+        return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes)
 
     @bp.post("/autorisations/personnes")
     def add_people():

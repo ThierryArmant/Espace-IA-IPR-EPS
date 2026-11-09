@@ -319,3 +319,11 @@ main .quiet:hover { background: #e3edf7; }
 .fiche-compacte h2 { margin-block: .2rem .4rem; }
 .fiche-compacte p { margin-block: .35rem; }
 .fiche-compacte p + p, .fiche-compacte p + form { margin-top: .4rem; }
+
+/* Groupes : lignes de groupes dans les autorisations, tableau des groupes */
+.grille-acces .intertitre th { background: #e8eef6; text-align: left; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; position: static; }
+.grille-acces .ligne-groupe th { background: #f2f7ee; }
+.grille-groupes td { text-align: center; }
+.grille-groupes td input { width: 1.15rem; height: 1.15rem; }
+.grille-groupes td.modifie { outline: 2px solid #e0a100; outline-offset: -2px; }
+.grille-groupes button.tout { font-size: .72rem; padding: .15rem .35rem; margin-top: .2rem; }

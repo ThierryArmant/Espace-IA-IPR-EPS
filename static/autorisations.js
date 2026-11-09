@@ -26,7 +26,7 @@ const filtre = document.getElementById("filtre-grille");
 if (filtre) {
   filtre.addEventListener("input", () => {
     const texte = filtre.value.trim().toLowerCase();
-    for (const ligne of document.querySelectorAll(".grille-acces tbody tr")) {
+    for (const ligne of document.querySelectorAll(".grille-acces tbody tr:not(.intertitre)")) {
       const nom = ligne.querySelector("th").textContent.toLowerCase();
       ligne.hidden = texte !== "" && !nom.includes(texte);
     }
