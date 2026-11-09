@@ -156,6 +156,25 @@ class NuageStorage:
         if status not in {201, 204}:
             raise StorageError(f"Nuage n’a pas enregistré « {path[-1]} » ({status}).")
 
+    def put_stream(self, path, stream, length):
+        """Envoie un gros fichier à Nuage au fil de l’eau, sans le garder en mémoire."""
+        self.make_folders(path[:-1])
+        request = Request(self.url(path), data=stream, method="PUT", headers={
+            **self.auth, "Content-Type": "application/octet-stream", "Content-Length": str(length),
+            "If-None-Match": "*"})
+        try:
+            response = build_opener(NoRedirect()).open(request, timeout=300)
+            status = response.status
+            response.close()
+        except HTTPError as error:
+            status = error.code
+        except NETWORK_ERRORS as error:
+            raise StorageError("Le transfert vers Nuage a été interrompu.") from error
+        if status == 412:
+            raise FileExistsError(path[-1])
+        if status not in {201, 204}:
+            raise StorageError(f"Nuage n’a pas enregistré « {path[-1]} » ({status}).")
+
     def get(self, path, limit, first_bytes=None):
         headers = {"Range": f"bytes=0-{first_bytes - 1}"} if first_bytes else None
         status, data = self._request("GET", path, headers=headers, limit=limit)

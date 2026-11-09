@@ -64,7 +64,7 @@
 {% endfor %}
 </ul>
 {% endmacro %}
-{% block scripts %}<script src="{{ url_for('static', filename='explorateur-prive.js', v='3') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='depot.js') }}" defer></script><script src="{{ url_for('static', filename='explorateur-prive.js', v='3') }}" defer></script>{% endblock %}
 {% block sidebar %}
 {% set active=trail|map(attribute='id')|list %}
 <aside class="sidebar" aria-label="Arborescence">
@@ -155,9 +155,10 @@
 <li>Cliquez sur « Choisir des fichiers » (ou « Parcourir ») et sélectionnez un ou plusieurs fichiers. Astuce : Ctrl+clic pour en choisir plusieurs.</li>
 <li>Cliquez sur « Déposer ». Les fichiers apparaissent dans la liste « Documents » ci-dessous.</li>
 </ol>
-<p class="subtle">PDF, Word, Excel, images… jusqu’à 32 Mio en tout par envoi. Les collègues autorisés sur ce dossier pourront les consulter et les télécharger. Un fichier du même nom déjà présent n’est pas remplacé.</p>
-<form method="post" enctype="multipart/form-data" action="{{ url_for('upload',node_id=node.id) }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers <input type="file" name="files" multiple required></label><button>Déposer</button></form></details>
+<p class="subtle">PDF, Word, Excel, images, vidéos… {% if nuage_storage %}jusqu’à 2 Go par fichier (une barre de progression s’affiche).{% else %}jusqu’à 32 Mio en tout par envoi.{% endif %} Les collègues autorisés sur ce dossier pourront les consulter et les télécharger. Un fichier du même nom déjà présent n’est pas remplacé.</p>
+<form method="post" enctype="multipart/form-data" action="{{ url_for('upload',node_id=node.id) }}" class="depot-fichiers"{% if nuage_storage %} data-gros="{{ url_for('miroir.big_upload', node_id=node.id) }}" data-csrf="{{ csrf }}"{% endif %}>
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Fichiers <input type="file" name="files" multiple required></label><button>Déposer</button>
+<div class="progression-depot" role="status" aria-live="polite"></div></form></details>
 <details class="outil-explique"><summary><strong>↑ Déposer un dossier complet</strong><span class="explication">Envoyer d’un coup un dossier avec ses sous-dossiers (fichier ZIP)</span></summary>
 <ol class="etapes">
 <li>Sur votre ordinateur, faites un clic droit sur le dossier à envoyer, puis « Envoyer vers » → « Dossier compressé » (Windows) ou « Compresser » (Mac). Un fichier .zip est créé.</li>

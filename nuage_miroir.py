@@ -4,19 +4,35 @@ Chaque dossier du Hub correspond au dossier Nuage de même chemin sous la racine
 Les fichiers restent dans Nuage : le Hub les liste, les montre et les sert
 seulement aux personnes autorisées, avec le compte de service.
 """
+import os
 import re
+import secrets
 import subprocess
 import unicodedata
 from pathlib import Path
 from urllib.parse import quote
 
-from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 
 from nuage_pilote import OFFICE_TYPES, blank_office_document
 from activite import detect_changes, record as record_activity
 from nuage_stockage import StorageError
 
 PREVIEW_LIMIT = 32 * 1024 * 1024
+BIG_FILE_LIMIT = int(os.environ.get("HUB_GROS_FICHIER_MAX", 2 * 1024 * 1024 * 1024))
+
+
+class CountingStream:
+    """Lit le corps de la requête par morceaux et vérifie la taille annoncée."""
+
+    def __init__(self, stream, length):
+        self.stream, self.length, self.read_bytes = stream, length, 0
+
+    def read(self, size=-1):
+        size = 1024 * 1024 if size is None or size < 0 else min(size, 1024 * 1024)
+        block = self.stream.read(min(size, self.length - self.read_bytes))
+        self.read_bytes += len(block)
+        return block
 MAX_SYNC_FOLDERS = 5000
 
 
@@ -297,6 +313,40 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
             unavailable()
         return render_template("text.html", data=data[:100000].decode("utf-8", "replace"),
                                truncated=len(data) > 100000)
+
+    @mirror.put("/dossier/<int:node_id>/gros-fichier")
+    def big_upload(node_id):
+        expected = session.get("csrf", "")
+        if not expected or not secrets.compare_digest(expected, request.headers.get("X-CSRF-Token", "")):
+            abort(400, "Rechargez la page puis recommencez.")
+        node, path = folder_and_path(node_id, write)
+        from urllib.parse import unquote
+        name = unquote(request.headers.get("X-Nom", ""))
+        length = request.content_length
+        if not valid_name(name):
+            return jsonify(ok=False, message="Nom de fichier invalide (évitez / \\ et :)."), 400
+        if not length:
+            return jsonify(ok=False, message="Fichier vide ou taille inconnue."), 400
+        if length > BIG_FILE_LIMIT:
+            return jsonify(ok=False, message=f"Fichier trop lourd (maximum {BIG_FILE_LIMIT // 1024 ** 3} Go)."), 413
+        request.max_content_length = BIG_FILE_LIMIT
+        g.db.rollback()  # Le transfert peut être long : libérer la base.
+        try:
+            content = storage.listing(path)
+            if content and any(item["name"].casefold() == name.casefold() for item in content[1]):
+                return jsonify(ok=False, message=f"« {name} » existe déjà dans ce dossier."), 409
+            stream = CountingStream(request.stream, length)
+            storage.put_stream((*path, name), stream, length)
+        except FileExistsError:
+            return jsonify(ok=False, message=f"« {name} » existe déjà dans ce dossier."), 409
+        except StorageError as error:
+            return jsonify(ok=False, message=str(error)), 502
+        if stream.read_bytes != length:
+            storage.delete((*path, name))
+            return jsonify(ok=False, message="Le fichier n’a pas été reçu en entier. Recommencez."), 400
+        record_activity(g.db, node_id, "depot", name, g.user["id"], fresh=True)
+        g.db.commit()
+        return jsonify(ok=True, message=f"« {name} » déposé.")
 
     @mirror.post("/dossier/<int:node_id>/creer/<kind>")
     def create_office(node_id, kind):

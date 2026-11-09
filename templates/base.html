@@ -17,15 +17,11 @@
   <details class="gaufre">
     <summary class="button secondary" title="Ouvrir les applications des agents">▦ Applications</summary>
     <div class="gaufre-panneau" role="menu" aria-label="Applications des agents">
-      <a class="tuile-app" href="https://nuage.apps.education.fr/" target="_blank" rel="noopener noreferrer" title="Stockage des documents (apps.education)"><span aria-hidden="true">☁️</span>Nuage</a>
       <a class="tuile-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><span aria-hidden="true">🎥</span>Visio-Agents</a>
       <a class="tuile-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><span aria-hidden="true">💬</span>Tchap</a>
       <a class="tuile-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><span aria-hidden="true">📄</span>Docs</a>
-      <a class="tuile-app" href="https://visio.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence de La Suite numérique"><span aria-hidden="true">📹</span>Visio</a>
       <a class="tuile-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><span aria-hidden="true">📊</span>Grist</a>
       <a class="tuile-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><span aria-hidden="true">📤</span>France Transfert</a>
-      <a class="tuile-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Formulaires et démarches en ligne"><span aria-hidden="true">🗂️</span>Démarche</a>
-      <a class="tuile-app" href="https://lasuite.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Fichiers, RDV et les autres services de l’État"><span aria-hidden="true">🧩</span>Toute La Suite</a>
       <p class="subtle">S’ouvrent dans un autre onglet, avec votre compte académique.</p>
     </div>
   </details>
@@ -45,7 +41,7 @@
   <p><strong>Documents</strong> : vos dossiers et fichiers. <strong>Nouveautés</strong> : ce que les collègues ont déposé ou modifié, automatiquement.{% if can_notify_documents %} <strong>Notifications</strong> : les mises à jour signalées par les collègues.{% endif %}</p>
   {% if ipr_visible %}<p><strong>Annuaire</strong> : {{ 'comptes, invitations et groupes' if g.user.admin else 'les adresses des membres' }}.</p>
   <p><strong>Événements</strong> (formations, journées) et <strong>Réunions</strong> (avec ordre du jour et visio) : chacun indique s’il vient. <strong>Créneaux</strong> : réserver une place (entretiens, visites). <strong>Questionnaires</strong> : interroger le groupe. <strong>Marque-pages</strong> : les liens utiles. <strong>Publications</strong> : annonces avec pièces jointes.</p>{% endif %}
-  <p><strong>Applications</strong> (en haut) : Nuage, Visio-Agents, Tchap, Docs, Visio, Grist, France Transfert, Démarche…</p>
+  <p><strong>Applications</strong> (en haut) : Visio-Agents, Tchap, Grist, Docs, France Transfert. Les documents, eux, se déposent dans le hub (jusqu’à 2 Go par fichier).</p>
   {% if can_manage_access %}<p><strong>Autorisations</strong> : qui a accès à quels dossiers. <strong>Groupes</strong> : affecter les collègues aux groupes.</p>{% endif %}
   <p><strong>Aide</strong> : le guide de prise en main.{% if g.user.admin %} <strong>Demandes</strong> : préparer un courriel pour un membre.{% endif %}</p>
   <p>Survolez une entrée avec la souris pour un rappel rapide.</p>

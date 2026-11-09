@@ -355,3 +355,7 @@ main .quiet:hover { background: #e3edf7; }
 .tuile-app span { font-size: 1.6rem; line-height: 1; }
 .tuile-app:hover, .tuile-app:focus-visible { background: #d9e7f7; }
 .gaufre-panneau .subtle { grid-column: 1 / -1; margin: .2rem 0 0; font-size: .74rem; text-align: center; }
+
+/* Dépôt avec progression */
+.progression-depot p { margin: .3rem 0; font-size: .85rem; }
+.progression-depot progress { width: 10rem; vertical-align: middle; margin-inline: .3rem; }
