@@ -23,7 +23,10 @@ CREATE TABLE IF NOT EXISTS folder_links (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M','now'))
 );
 CREATE INDEX IF NOT EXISTS folder_links_node ON folder_links(node_id);
+CREATE TABLE IF NOT EXISTS hub_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
+VISIO_AGENTS = "https://visio-agents.education.fr/"
+VISIO_HOSTS = {"visio-agents.education.fr"}
 
 
 def tool_of(url):
@@ -48,9 +51,34 @@ def register_tools(app, allowed, rights, view, write):
         return g.db.execute("SELECT * FROM folder_links WHERE node_id=? ORDER BY title COLLATE NOCASE",
                             (node["id"],)).fetchall()
 
+    def group_room():
+        if g.get("db") is None:
+            return None
+        row = g.db.execute("SELECT value FROM hub_settings WHERE key='salle_visio'").fetchone()
+        return row[0] if row else None
+
     @bp.app_context_processor
     def values():
-        return {"tools": TOOLS, "folder_links": links}
+        return {"tools": TOOLS, "folder_links": links, "salle_visio": group_room(), "visio_agents": VISIO_AGENTS}
+
+    @bp.post("/reunions/salle-du-groupe")
+    def set_room():
+        if not g.user["admin"]:
+            abort(403, "Ce réglage est réservé à l’animateur.")
+        url = request.form.get("url", "").strip()
+        if not url:
+            g.db.execute("DELETE FROM hub_settings WHERE key='salle_visio'")
+            flash("Salle de visio du groupe retirée.")
+        else:
+            parts = urlsplit(url)
+            if parts.scheme != "https" or parts.hostname not in VISIO_HOSTS or len(url) > 2048 or parts.username:
+                flash("Collez le lien d’invitation de la salle, qui commence par https://visio-agents.education.fr/.")
+                return redirect(url_for("ipr.module_page", module="reunions"))
+            g.db.execute("INSERT INTO hub_settings VALUES('salle_visio', ?) "
+                         "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (url,))
+            flash("Salle de visio du groupe enregistrée : elle sera proposée pour chaque nouvelle réunion.")
+        g.db.commit()
+        return redirect(url_for("ipr.module_page", module="reunions"))
 
     @bp.post("/dossier/<int:node_id>/liens")
     def add(node_id):

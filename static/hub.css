@@ -306,3 +306,8 @@ main .quiet:hover { background: #e3edf7; }
 .mode-emploi p { margin: 0 0 .3rem; }
 
 .filtre-grille { display: block; max-width: 24rem; margin-block: .5rem; }
+
+/* Visio */
+.bouton-visio { background: #1d6b3c; font-size: .95rem; padding: .6rem 1rem; }
+.visio-aide { background: #eef5ec; border: 1px solid #c7dfc2; border-radius: .5rem; padding: .5rem .8rem; margin-block: .5rem; }
+.visio-aide p { margin: 0 0 .3rem; }

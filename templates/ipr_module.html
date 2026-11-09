@@ -17,6 +17,25 @@
 {% for line in module_help[module] %}<p>{{ line }}</p>{% endfor %}
 <p>Le bouton <strong>Ajouter</strong> crée une nouvelle entrée ; l’auteur et l’animateur peuvent la modifier ou la supprimer.</p>
 {% endcall %}</div></div>
+{% if module == 'reunions' and configured %}
+<section class="card salle-groupe"><div class="actions"><h2>🎥 Salle de visio du groupe</h2>
+{% call help_menu('aide-salle', 'Aide sur la salle du groupe', 'La salle de visio du groupe') %}
+<p>Une salle permanente Visio-Agents, toujours la même : on la rejoint d’un clic, sans chercher de lien. Elle est proposée automatiquement pour chaque nouvelle réunion.</p>
+{% if g.user.admin %}<p><strong>La créer :</strong> « Créer une salle dans Visio-Agents » → « S’identifier » avec votre compte académique → « Créer une salle permanente » (par exemple « IA-IPR EPS ») → copiez son lien d’invitation et collez-le ci-dessous.</p>{% endif %}
+{% endcall %}</div>
+{% if salle_visio %}<p><a class="button bouton-visio" href="{{ salle_visio }}" target="_blank" rel="noopener noreferrer">Rejoindre la salle de visio du groupe</a></p>
+{% else %}<p class="subtle">Aucune salle de groupe pour l’instant{{ ' : créez-la ci-dessous.' if g.user.admin else '.' }}</p>{% endif %}
+{% if g.user.admin %}
+<details><summary>{{ 'Changer la salle du groupe' if salle_visio else 'Enregistrer la salle du groupe' }}</summary>
+<p><a class="button secondary" href="{{ visio_agents }}" target="_blank" rel="noopener noreferrer">Créer une salle dans Visio-Agents</a></p>
+<form method="post" action="{{ url_for('outils.set_room') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Lien d’invitation de la salle <input type="url" name="url" value="{{ salle_visio or '' }}" maxlength="2048" placeholder="https://visio-agents.education.fr/…"></label>
+<button>Enregistrer</button> <span class="subtle">Laisser vide puis enregistrer pour retirer la salle.</span>
+</form></details>
+{% endif %}
+</section>
+{% endif %}
 {% if not configured %}
 <section class="card"><p>Choisissez le groupe des applications dans <a href="{{ url_for('directory') }}">l’annuaire d’administration</a>.</p></section>
 {% elif mode in ('create', 'edit') %}
@@ -58,8 +77,19 @@
     </div>
     {% endif %}
     {% if module in ('evenements', 'reunions', 'marque-pages') %}
+    {% if module == 'reunions' %}
+    <div class="visio-aide">
+      <p><strong>Lien de visioconférence</strong>{% if salle_visio and not editing %} — la salle du groupe est déjà proposée ; gardez-la ou remplacez-la.{% endif %}</p>
+      <p><a class="button secondary" href="{{ visio_agents }}" target="_blank" rel="noopener noreferrer">🎥 Créer une salle dans Visio-Agents</a></p>
+      <ol class="etapes">
+        <li>Dans l’onglet Visio-Agents, cliquez sur « S’identifier » et connectez-vous avec votre compte académique.</li>
+        <li>Cliquez sur « Créer une salle permanente » (le lien reste valable, idéal pour une réunion à venir).</li>
+        <li>Copiez le lien d’invitation de la salle, revenez ici et collez-le ci-dessous (Ctrl+V).</li>
+      </ol>
+    </div>
+    {% endif %}
     <label>{{ 'Lien de visioconférence' if module == 'reunions' else 'Lien' }}
-      <input type="url" name="link" value="{{ selected.link if editing else '' }}" maxlength="2048" {% if module == 'marque-pages' %}required{% endif %}>
+      <input type="url" name="link" value="{{ selected.link if editing else (salle_visio if module == 'reunions' and salle_visio else '') }}" maxlength="2048" {% if module == 'marque-pages' %}required{% endif %} placeholder="{{ 'https://visio-agents.education.fr/…' if module == 'reunions' else 'https://…' }}">
     </label>
     {% endif %}
     {% if module == 'creneaux' %}
@@ -88,7 +118,8 @@
   {% endfor %}
   </ul>
   {% endif %}
-  {% if selected.link %}<p><a class="button secondary" href="{{ selected.link }}" target="_blank" rel="noopener noreferrer">{{ 'Ouvrir la visioconférence' if module == 'reunions' else 'Ouvrir le lien' }}</a></p>{% endif %}
+  {% if selected.link %}<p><a class="button {{ 'bouton-visio' if module == 'reunions' else 'secondary' }}" href="{{ selected.link }}" target="_blank" rel="noopener noreferrer">{{ '🎥 Rejoindre la visio' if module == 'reunions' else 'Ouvrir le lien' }}</a></p>
+  {% if module == 'reunions' %}<p class="subtle">La visio s’ouvre dans un autre onglet. Autorisez le micro et la caméra si le navigateur le demande.</p>{% endif %}{% endif %}
   {% if can_manage %}
   <div class="actions">
     <a href="{{ url_for('ipr.module_page', module=module, entry=selected.id, mode='edit') }}">Modifier</a>
