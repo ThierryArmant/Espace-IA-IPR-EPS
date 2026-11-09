@@ -331,3 +331,10 @@ main .quiet:hover { background: #e3edf7; }
 .nouveau-groupe { align-items: flex-end; }
 .nouveau-groupe label { flex: 1 1 22rem; max-width: 30rem; }
 .nouveau-groupe input { width: 100%; }
+
+/* Autorisations : filtres dans l’en-tête, lien « n membre(s) » */
+.entete-filtres { vertical-align: top; min-width: 15rem; }
+.entete-filtres input, .entete-filtres select { display: block; width: 100%; margin-top: .3rem; font-size: .82rem; padding: .3rem .4rem; }
+.lien-membres { background: #e3f4ea; color: #1d6b3c; border: 1px solid #a9d3b8; padding: .1rem .45rem; font-size: .78rem; border-radius: 1rem; margin-top: .2rem; }
+.lien-membres:hover { background: #cfeedd; }
+#recap-groupe { margin: .3rem 0 0; font-size: .78rem; }

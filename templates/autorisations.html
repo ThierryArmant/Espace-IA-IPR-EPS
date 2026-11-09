@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
-{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='3') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='4') }}" defer></script>{% endblock %}
 {% block content %}
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Autorisations</h1>
 <p>Choisissez, pour chaque personne, son accès aux dossiers principaux.</p></div>
@@ -35,18 +35,21 @@
 {% endcall %}</div>
 <div class="actions">{{ bulk('Tout le tableau', 'tout') }}<button>Enregistrer les autorisations</button></div></div>
 <p class="subtle">Les menus « Toute la colonne » et « Toute la ligne » remplissent les cases d’un coup : vérifiez, puis enregistrez. Rien n’est modifié avant « Enregistrer ».</p>
-<label class="filtre-grille">Filtrer par nom <input id="filtre-grille" type="search" autocomplete="off" placeholder="Tapez quelques lettres d’un nom"></label>
-<div class="table-wrap"><table class="grille-acces"><thead><tr><th>Personne</th>{% for folder in folders %}<th>{{ folder.name }}{% if folder.id in has_children %}<br><a class="subtle" href="{{ url_for('autorisations.grid', dossier=folder.id) }}">sous-dossiers ›</a>{% endif %}<br>{{ bulk('Toute la colonne', 'col-' ~ folder.id) }}</th>{% endfor %}</tr></thead><tbody>
+<div class="table-wrap"><table class="grille-acces"><thead><tr><th class="entete-filtres">Personne
+<input id="filtre-grille" type="search" autocomplete="off" placeholder="Filtrer par nom" aria-label="Filtrer par nom">
+{% if group_rows %}<select id="filtre-groupe" aria-label="Afficher les membres d’un groupe"><option value="">Groupe : tous</option>{% for group in group_rows %}<option value="{{ group.id }}">Groupe : {{ group.name }}</option>{% endfor %}</select>{% endif %}
+<p id="recap-groupe" class="subtle" hidden><span></span> <button type="button" class="quiet" id="tout-afficher">Tout afficher</button></p></th>{% for folder in folders %}<th>{{ folder.name }}{% if folder.id in has_children %}<br><a class="subtle" href="{{ url_for('autorisations.grid', dossier=folder.id) }}">sous-dossiers ›</a>{% endif %}<br>{{ bulk('Toute la colonne', 'col-' ~ folder.id) }}</th>{% endfor %}</tr></thead><tbody>
 {% if group_rows %}<tr class="intertitre"><th colspan="{{ folders|length + 1 }}">Groupes — un réglage s’applique à tous les membres du groupe</th></tr>
 {% for group in group_rows %}
-<tr class="ligne-groupe"><th scope="row">👥 {{ group.name }}<br><span class="subtle">{{ group_sizes.get(group.id, 0) }} membre(s) · <a href="{{ url_for('autorisations.groups_page') }}">membres</a></span></th>
+<tr class="ligne-groupe"><th scope="row">👥 {{ group.name }}<br><button type="button" class="lien-membres" data-groupe="{{ group.id }}" title="N’afficher que les membres de ce groupe">{{ group_sizes.get(group.id, 0) }} membre(s) ▾</button> · <a class="subtle" href="{{ url_for('autorisations.groups_page') }}">modifier</a>
+<br>{{ bulk('Toute la ligne', 'grow-' ~ group.id) }}</th>
 {% for folder in folders %}{% set value = group_cells[(folder.id, group.id)] %}
-<td><select name="acces-g-{{ folder.id }}-{{ group.id }}" aria-label="Groupe {{ group.name }} — {{ folder.name }}">{{ options(value, top) }}</select></td>
+<td><select name="acces-g-{{ folder.id }}-{{ group.id }}" data-col="{{ folder.id }}" data-grow="{{ group.id }}" aria-label="Groupe {{ group.name }} — {{ folder.name }}">{{ options(value, top) }}</select></td>
 {% endfor %}</tr>
 {% endfor %}
 <tr class="intertitre"><th colspan="{{ folders|length + 1 }}">Personnes</th></tr>{% endif %}
 {% for person in people %}
-<tr><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span>
+<tr class="ligne-personne" data-groupes=" {{ person_groups.get(person.id, [])|join(' ') }} "><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span>
 {% if person.id in no_parent_access %}<br><span class="badge denied" title="Sans accès à « {{ parent.name }} », les réglages de cette ligne restent sans effet.">Pas d’accès à « {{ parent.name }} »</span>{% endif %}
 <br>{{ bulk('Toute la ligne', 'row-' ~ person.id) }}</th>
 {% for folder in folders %}{% set value = cells[(folder.id, person.id)] %}

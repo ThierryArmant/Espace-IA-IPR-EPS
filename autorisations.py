@@ -162,6 +162,9 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         group_cells = {(folder["id"], group["id"]): cell_value(group_rules.get((folder["id"], group["id"])), top)
                        for folder in folders for group in group_rows}
         group_sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
+        person_groups = {}
+        for group, person in g.db.execute("SELECT group_id, user_id FROM memberships"):
+            person_groups.setdefault(person, []).append(group)
         no_parent_access = set()
         trail = []
         if not top:
@@ -179,7 +182,8 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
                                via_group=via_group, managers_group=MANAGERS_GROUP,
                                has_group=managers_group() is not None, top=top, parent=parent,
                                trail=trail, no_parent_access=no_parent_access, has_children=has_children,
-                               group_rows=group_rows, group_cells=group_cells, group_sizes=group_sizes)
+                               group_rows=group_rows, group_cells=group_cells, group_sizes=group_sizes,
+                               person_groups=person_groups)
 
     @bp.route("/groupes", methods=["GET", "POST"])
     def groups_page():
