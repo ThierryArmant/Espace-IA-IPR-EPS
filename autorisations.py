@@ -40,6 +40,17 @@ def plain(text):
     return "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
 
 
+def surname_first(full_name):
+    """« Prénom NOM » → « NOM Prénom » (le nom en majuscules passe devant)."""
+    words = full_name.split()
+    upper = [w.replace("-", "").replace("'", "").isupper() and len(w) > 1 for w in words]
+    if words and not upper[0] and any(upper):
+        first = upper.index(True)
+        if all(upper[first:]):
+            words = words[first:] + words[:first]
+    return " ".join(words)
+
+
 def guess_email(full_name):
     """« NOM Prénom » → prenom.nom@ac-aix-marseille.fr (à vérifier)."""
     words = full_name.split()
@@ -244,6 +255,7 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
             if not line:
                 continue
             name, _, email = (part.strip() for part in line.partition(";"))
+            name = surname_first(name)
             email = (email or guess_email(name) or "").lower()
             if not name or len(name) > 120 or len(email) > 254 or not EMAIL.fullmatch(email):
                 errors.append(line)
