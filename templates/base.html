@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='barre-apps-v4') }}">
-<script src="{{ url_for('static', filename='gaufre.js') }}?v=2" defer></script>
+<script src="{{ url_for('static', filename='gaufre.js') }}?v=3" defer></script>
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -15,11 +15,11 @@
   {% if g.user %}
   <a class="button secondary bouton-accueil" href="{{ url_for('folder') }}" title="Revenir à la page principale">⌂ Accueil</a>
   <nav class="barre-apps" aria-label="Applications des agents (s’ouvrent dans un autre onglet)">
-    <a class="lien-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><img class="logo-app" src="https://visio-agents.education.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">🎥</span>Visio-Agents</a>
+    <a class="lien-app" href="https://visio-agents.education.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence des agents (apps.education)"><img class="logo-app" src="https://visio-agents.education.fr/favicon.ico" data-autres="https://visio-agents.education.fr/favicon.svg https://visio-agents.education.fr/favicon.png https://visio-agents.education.fr/apple-touch-icon.png https://visio-agents.education.fr/images/favicon.svg https://visio-agents.education.fr/images/favicon.ico https://visio-agents.education.fr/static/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">🎥</span>Visio-Agents</a>
     <a class="lien-app" href="https://tchap.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Messagerie instantanée des agents publics"><img class="logo-app" src="https://tchap.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">💬</span>Tchap</a>
     <a class="lien-app" href="https://docs.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Écrire à plusieurs"><img class="logo-app" src="https://docs.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📄</span>Docs</a>
     <a class="lien-app" href="https://visio.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Visioconférence de La Suite numérique"><img class="logo-app" src="https://visio.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📹</span>Visio</a>
-    <a class="lien-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><img class="logo-app" src="https://grist.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📊</span>Grist</a>
+    <a class="lien-app" href="https://grist.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Tableurs partagés"><img class="logo-app" src="https://grist.numerique.gouv.fr/favicon.ico" data-autres="https://grist.numerique.gouv.fr/favicon.png https://grist.numerique.gouv.fr/v/unknown/favicon.png https://grist.numerique.gouv.fr/apple-touch-icon.png https://grist.numerique.gouv.fr/icons/favicon.png" alt="" width="22" height="22" hidden><span aria-hidden="true">📊</span>Grist</a>
     <a class="lien-app" href="https://francetransfert.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Envoyer des fichiers volumineux"><img class="logo-app" src="https://francetransfert.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📤</span>Fr. Transfert</a>
     <a class="lien-app" href="https://demarche.numerique.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Créer des formulaires et des démarches en ligne"><img class="logo-app" src="https://demarche.numerique.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">🗂️</span>Démarches</a>
     <a class="lien-app" href="https://rdv.anct.gouv.fr/" target="_blank" rel="noopener noreferrer" title="Prise de rendez-vous (RDV Service Public)"><img class="logo-app" src="https://rdv.anct.gouv.fr/favicon.ico" alt="" width="22" height="22" hidden><span aria-hidden="true">📅</span>RDV</a>
