@@ -105,7 +105,8 @@
   </form>
 </section>
 {% elif selected %}
-<section class="card">
+<div class="fiche-duo">
+<section class="card fiche-compacte">
   <p><a href="{{ module_url }}">← Retour à la liste</a></p>
   <h2>{{ selected.title }}</h2>
   {% if selected.starts_at %}<p><strong>Début</strong> {{ selected.starts_at|replace('T', ' à ') }}{% if selected.ends_at %} · <strong>Fin</strong> {{ selected.ends_at|replace('T', ' à ') }}{% endif %} (heure de Paris)</p>{% endif %}
@@ -136,7 +137,7 @@
   {% endif %}
 </section>
 {% if module in ('evenements', 'reunions', 'creneaux', 'questionnaires') %}
-<section class="card">
+<section class="card fiche-compacte">
   {% if module in ('evenements', 'reunions') %}
   <div class="actions"><h2>Participation</h2>
   {% call help_menu('aide-participation', 'Aide sur la participation', 'Indiquer sa présence') %}<p>Choisissez votre réponse et validez. Vous pouvez la changer à tout moment ; l’auteur voit la liste des réponses.</p>{% endcall %}</div>
@@ -175,6 +176,7 @@
   </form>
 </section>
 {% endif %}
+</div>
 {% if results or roster %}
 <section class="card">
   <div class="actions"><h2>{{ 'Réponses reçues' if module == 'questionnaires' else 'Participants et réponses' }}</h2>

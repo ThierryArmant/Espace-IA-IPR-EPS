@@ -311,3 +311,11 @@ main .quiet:hover { background: #e3edf7; }
 .bouton-visio { background: #1d6b3c; font-size: .95rem; padding: .6rem 1rem; }
 .visio-aide { background: #eef5ec; border: 1px solid #c7dfc2; border-radius: .5rem; padding: .5rem .8rem; margin-block: .5rem; }
 .visio-aide p { margin: 0 0 .3rem; }
+
+/* Fiche d’une réunion ou d’un événement : détail et participation côte à côte */
+.fiche-duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: .8rem; align-items: start; }
+.fiche-duo > .card { margin: 0; }
+.fiche-compacte { padding-block: .8rem; }
+.fiche-compacte h2 { margin-block: .2rem .4rem; }
+.fiche-compacte p { margin-block: .35rem; }
+.fiche-compacte p + p, .fiche-compacte p + form { margin-top: .4rem; }
