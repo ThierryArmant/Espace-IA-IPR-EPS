@@ -198,8 +198,11 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
 
     @bp.route("/groupes", methods=["GET", "POST"])
     def groups_page():
-        if not can_manage():
-            abort(403, "Cette page est réservée aux personnes qui gèrent les autorisations.")
+        if not g.get("user"):
+            abort(403)
+        can_edit = can_manage()
+        if request.method == "POST" and not can_edit:
+            abort(403, "Seuls les animateurs peuvent modifier les groupes.")
         if request.method == "POST":
             if request.form.get("action") == "creer":
                 name = " ".join(request.form.get("name", "").split())
@@ -243,7 +246,8 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
         members = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")}
         sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
-        return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes)
+        return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes,
+                               can_edit=can_edit)
 
     @bp.post("/autorisations/personnes")
     def add_people():
