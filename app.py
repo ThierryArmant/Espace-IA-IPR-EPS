@@ -25,6 +25,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from connexion_academique import register_academic_login
 from autorisations import SETTINGS_SCHEMA, register_authorizations, upgrade_users
+from activite import SCHEMA as ACTIVITY_SCHEMA, record as record_activity, register_activity
 from document_notifications import register_document_notifications
 from outils import SCHEMA as TOOLS_SCHEMA, register_tools
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
@@ -106,6 +107,7 @@ def create_app():
         upgrade_users(db)
         db.executescript(TOOLS_SCHEMA)
         db.executescript(SETTINGS_SCHEMA)
+        db.executescript(ACTIVITY_SCHEMA)
 
     @app.template_test("readable")
     def readable(mask):
@@ -655,6 +657,9 @@ def create_app():
                         raise ValueError("La sélection dépasse 32 Mio.")
                     batch.append((name, data))
                 mirror.upload(node, batch)
+                for name, _ in batch:
+                    record_activity(g.db, node_id, "depot", name, g.user["id"], fresh=True)
+                g.db.commit()
                 flash("Documents déposés dans le dossier.")
             except (ValueError, StorageError) as error:
                 flash(str(error))
@@ -671,6 +676,7 @@ def create_app():
                 if total > LIMIT:
                     raise ValueError("La sélection dépasse 32 Mio.")
                 insert_node(node_id, name, "file", content=data)
+                record_activity(g.db, node_id, "depot", name, g.user["id"])
             g.db.commit()
             flash("Documents importés.")
         except (ValueError, sqlite3.IntegrityError) as error:
@@ -724,6 +730,7 @@ def create_app():
                     unpack(archive, node, keep=lambda parts, data: None)
                 else:
                     unpack(archive, node)
+            record_activity(g.db, node_id, "import", file.filename or "archive.zip", g.user["id"])
             g.db.commit()
             flash("Arborescence importée.")
         except (BadZipFile, ValueError, RuntimeError, NotImplementedError, zlib.error, sqlite3.IntegrityError) as error:
@@ -1092,6 +1099,7 @@ def create_app():
     register_authorizations(app, VIEW, DOWNLOAD, WRITE, rights=rights, find_node=find_node)
     register_academic_login(app, os.environ.get("HUB_NUAGE_LOGIN_URL", "https://nuage.apps.education.fr"))
     register_tools(app, allowed, rights, VIEW, WRITE)
+    register_activity(app, rights, find_node, VIEW)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
                                  require_admin=require_admin, view=VIEW, download=DOWNLOAD, write=WRITE)

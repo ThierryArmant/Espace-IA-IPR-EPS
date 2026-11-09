@@ -338,3 +338,10 @@ main .quiet:hover { background: #e3edf7; }
 .lien-membres { background: #e3f4ea; color: #1d6b3c; border: 1px solid #a9d3b8; padding: .1rem .45rem; font-size: .78rem; border-radius: 1rem; margin-top: .2rem; }
 .lien-membres:hover { background: #cfeedd; }
 #recap-groupe { margin: .3rem 0 0; font-size: .78rem; }
+
+/* Nouveautés */
+.pastille { display: inline-block; min-width: 1.2rem; padding: 0 .3rem; border-radius: 1rem; background: #c62828; color: #fff; font-size: .7rem; line-height: 1.2rem; text-align: center; }
+.liste-nouveautes { list-style: none; padding: 0; margin: 0; }
+.liste-nouveautes li { display: flex; gap: .7rem; padding: .55rem .4rem; border-bottom: 1px solid #e3eaf2; }
+.liste-nouveautes li.nouveau { background: #f3f8ff; }
+.liste-nouveautes .icone { font-size: 1.1rem; width: 1.5rem; text-align: center; }

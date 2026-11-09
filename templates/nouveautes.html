@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_help.html" import help_menu %}
+{% block title %}Nouveautés · IA-IPR EPS{% endblock %}
+{% block content %}
+<div class="hero tone-rose"><div><p class="eyebrow">ACTIVITÉ</p><h1>Nouveautés</h1>
+<p>Ce qui a été déposé, créé ou modifié dans les dossiers auxquels vous avez accès.</p></div>
+<div class="actions">{% call help_menu('aide-nouveautes', 'Aide sur les nouveautés', 'Être au courant automatiquement') %}
+<p>Dès qu’un collègue dépose un fichier, crée un tableur ou un texte, ou range un lien Grist ou Docs dans un dossier, la nouveauté apparaît ici pour <strong>tous ceux qui ont accès à ce dossier</strong>.</p>
+<p>Les modifications faites dans Collabora sont repérées la prochaine fois qu’un dossier est ouvert ; plusieurs enregistrements rapprochés comptent pour une seule nouveauté.</p>
+<p>Le nombre dans le menu de droite indique les nouveautés pas encore vues ; il revient à zéro quand vous ouvrez cette page. Vos propres actions n’y figurent pas.</p>
+{% endcall %}</div></div>
+<section class="card">
+{% if not entries %}<p class="empty">Aucune nouveauté pour l’instant.</p>{% else %}
+<ul class="liste-nouveautes">
+{% for row, node in entries %}{% set label = labels.get(row.kind, ('•', row.kind)) %}
+<li class="{{ 'nouveau' if row.id > seen else '' }}">
+<span class="icone" aria-hidden="true">{{ label[0] }}</span>
+<div><a href="{{ url_for('folder', node_id=node.id, q=row.name) if row.kind not in ('lien', 'import') else url_for('folder', node_id=node.id) }}"><strong>{{ row.name }}</strong></a> {{ label[1] }}
+{% if row.actor_name or row.actor_email %}par {{ row.actor_name or row.actor_email }}{% endif %}
+<br><span class="subtle">dans « {{ node.name }} » · {{ row.created_at }} (UTC){% if row.id > seen %} · <span class="badge granted">nouveau</span>{% endif %}</span></div>
+</li>
+{% endfor %}
+</ul>{% endif %}
+</section>
+{% endblock %}

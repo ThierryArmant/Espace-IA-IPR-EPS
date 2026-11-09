@@ -13,6 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
 from nuage_pilote import OFFICE_TYPES, blank_office_document
+from activite import detect_changes, record as record_activity
 from nuage_stockage import StorageError
 
 PREVIEW_LIMIT = 32 * 1024 * 1024
@@ -140,6 +141,7 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
             return [], str(error), []
         if content is None:
             return [], None, []
+        detect_changes(g.db, node["id"], content[1])
         known = {row["name"].casefold() for row in g.nodes.values() if row["parent"] == node["id"]}
         missing = [name for name in content[0] if name.casefold() not in known]
         return content[1], None, missing
@@ -321,6 +323,8 @@ def register_mirror(app, storage, *, allowed, lineage, rights, require_admin, vi
         except StorageError as error:
             flash(str(error))
             return redirect(url_for("folder", node_id=node_id))
+        record_activity(g.db, node_id, "creation", name, g.user["id"], fresh=True)
+        g.db.commit()
         flash(f"« {name} » a été créé. Cliquez sur « Modifier à plusieurs » pour l’ouvrir dans Collabora.")
         return redirect(url_for("folder", node_id=node_id))
 

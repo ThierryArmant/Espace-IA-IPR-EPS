@@ -6,6 +6,7 @@ ce dossier. Les partages dans Grist ou Docs se règlent dans ces outils.
 """
 from urllib.parse import urlsplit
 
+from activite import record as record_activity
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 TOOLS = {
@@ -95,6 +96,7 @@ def register_tools(app, allowed, rights, view, write):
         else:
             g.db.execute("INSERT INTO folder_links(node_id,kind,title,url,author_id) VALUES(?,?,?,?,?)",
                          (node_id, kind, title, url, g.user["id"]))
+            record_activity(g.db, node_id, "lien", title, g.user["id"])
             g.db.commit()
             flash(f"« {title} » a été ajouté au dossier.")
         return redirect(url_for("folder", node_id=node_id))

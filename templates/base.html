@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='filtres-v6') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='nouveautes-v1') }}">
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -26,7 +26,7 @@
 {% if g.user %}
 <nav class="rail" aria-label="Modules">
   <div class="rail-aide">{% call help_menu('aide-menu', 'Aide sur le menu de droite', 'Le menu de droite') %}
-  <p><strong>Documents</strong> : vos dossiers et fichiers.{% if can_notify_documents %} <strong>Notifications</strong> : les mises à jour signalées par les collègues.{% endif %}</p>
+  <p><strong>Documents</strong> : vos dossiers et fichiers. <strong>Nouveautés</strong> : ce que les collègues ont déposé ou modifié, automatiquement.{% if can_notify_documents %} <strong>Notifications</strong> : les mises à jour signalées par les collègues.{% endif %}</p>
   {% if ipr_visible %}<p><strong>Annuaire</strong> : {{ 'comptes, invitations et groupes' if g.user.admin else 'les adresses des membres' }}.</p>
   <p><strong>Événements</strong> (formations, journées) et <strong>Réunions</strong> (avec ordre du jour et visio) : chacun indique s’il vient. <strong>Créneaux</strong> : réserver une place (entretiens, visites). <strong>Questionnaires</strong> : interroger le groupe. <strong>Marque-pages</strong> : les liens utiles. <strong>Publications</strong> : annonces avec pièces jointes.</p>{% endif %}
   {% if nuage_storage %}<p><strong>Grist</strong> et <strong>Docs</strong> : ouvrent ces outils dans un autre onglet.</p>{% endif %}
@@ -35,6 +35,7 @@
   <p>Survolez une entrée avec la souris pour un rappel rapide.</p>
   {% endcall %}</div>
   <a class="rail-doc" href="{{ url_for('folder') }}" title="Tous vos dossiers et documents"><span aria-hidden="true">▤</span>Documents</a>
+  <a class="rail-mail" href="{{ url_for('activite.page') }}" title="Ce qui a été déposé ou modifié dans vos dossiers" {% if request.endpoint == 'activite.page' %}aria-current="page"{% endif %}><span aria-hidden="true">🔔</span>Nouveautés{% if nouveautes_non_lues %} <span class="pastille">{{ nouveautes_non_lues }}</span>{% endif %}</a>
   {% if can_notify_documents %}
   <a class="rail-mail" href="{{ url_for('notifications.inbox') }}" title="Les mises à jour de documents signalées par vos collègues"><span aria-hidden="true">♢</span>Notifications{% if notification_unread %} ({{ notification_unread }}){% endif %}</a>
   {% endif %}
