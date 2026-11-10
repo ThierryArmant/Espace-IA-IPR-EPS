@@ -5,11 +5,11 @@
 {% block content %}
 {% if can_edit %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes et accès</h1>
-<p>Pour chaque groupe : ses membres et les dossiers qu’il peut consulter ou modifier.</p></div>
+<p>Pour chaque groupe : ses membres et les dossiers que le groupe peut ouvrir.</p></div>
 <div class="actions">{% call help_menu('aide-groupes-page', 'Aide sur les groupes et accès', 'Organiser les groupes et leurs accès') %}
 <p><strong>1. Créer un groupe</strong> : tapez son nom dans « Nouveau groupe » puis « Créer ». Sa fiche s’ouvre.</p>
 <p><strong>2. Membres</strong> : cochez les collègues (« Filtrer par nom » aide à retrouver quelqu’un).</p>
-<p><strong>3. Dossiers</strong> : pour chaque dossier principal, choisissez <strong>Consulter</strong> (lire et télécharger) ou <strong>Contribuer</strong> (consulter, déposer, créer des sous-dossiers). « — » : pas d’accès par ce groupe.</p>
+<p><strong>3. Dossiers que le groupe peut ouvrir</strong> : pour chaque dossier principal, choisissez <strong>Consulter</strong> (lire et télécharger) ou <strong>Contribuer</strong> (consulter, déposer, créer des sous-dossiers). « — » : pas d’accès par ce groupe.</p>
 <p><strong>4. Enregistrer le groupe</strong> : membres et accès sont enregistrés ensemble. Un nouveau membre reçoit aussitôt les accès du groupe.</p>
 <p><strong>Règle simple</strong> : un collègue a accès à un dossier seulement s’il est dans un groupe qui y a accès. Sans groupe, il ne voit rien.</p>
 {% endcall %}</div></div>
@@ -26,7 +26,7 @@
 <details class="panel fiche-groupe" id="groupe-{{ group.id }}" {% if opened == group.id %}open{% endif %}>
 <summary><strong>👥 {{ group.name }}</strong> <span class="badge granted">{{ sizes.get(group.id, 0) }} membre{{ 's' if sizes.get(group.id, 0) > 1 else '' }}</span>
 {% set ouverts = [] %}{% for folder in tops %}{% if group_access.get((folder.id, group.id)) %}{% set _ = ouverts.append(folder.name) %}{% endif %}{% endfor %}
-<span class="subtle">{{ ouverts|length }} dossier(s) ouvert(s)</span></summary>
+<span class="subtle">{{ ouverts|length }} dossier(s) que le groupe peut ouvrir</span></summary>
 <form method="post">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="fiche"><input type="hidden" name="groupe" value="{{ group.id }}">
 <div class="fiche-colonnes">
@@ -44,7 +44,8 @@
 <ul class="liste-membres">
 {% for person in people if person.id not in members_of[group.id] %}<li><label><input type="checkbox" name="membres" value="{{ person.id }}"> {{ person.name or person.email }}{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</label></li>
 {% endfor %}</ul></details></fieldset>
-<fieldset><legend>Dossiers</legend>
+<fieldset><legend>Dossiers que le groupe peut ouvrir</legend>
+<p class="subtle">Ce réglage vaut pour tous les membres du groupe.</p>
 {% if not tops %}<p class="empty">Aucun dossier principal.</p>{% endif %}
 <table class="acces-groupe"><tbody>
 {% for folder in tops %}{% set value = group_access.get((folder.id, group.id), '') %}
