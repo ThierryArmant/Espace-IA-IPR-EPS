@@ -109,14 +109,17 @@ class NuageStorage:
             size = prop.findtext(f"{DAV}getcontentlength", "0").strip()
             modified = prop.findtext(f"{DAV}getlastmodified", "").strip()
             try:
-                modified = parsedate_to_datetime(modified).strftime("%Y-%m-%d %H:%M")
+                stamp = parsedate_to_datetime(modified)
+                mtime = int(stamp.timestamp())
+                modified = stamp.strftime("%Y-%m-%d %H:%M")
             except (TypeError, ValueError):
-                modified = ""
+                modified, mtime = "", None
             file_id = prop.findtext(f"{OC}fileid", "").strip()
             files.append({
                 "name": name,
                 "size": int(size) if size.isdigit() else 0,
                 "modified": modified,
+                "mtime": mtime,
                 "editor": (f"{self.base_url}/index.php/f/{file_id}"
                            if re.fullmatch(r"[1-9][0-9]{0,19}", file_id) else None),
             })
@@ -205,6 +208,65 @@ class NuageStorage:
             return None
 
 
+def copy_stream(source, destination, path, item):
+    """Copie un fichier d'un compte Nuage à l'autre en flux, en gardant sa date."""
+    response = source.open(path)
+    headers = {**destination.auth, "Content-Type": "application/octet-stream",
+               "Content-Length": str(item["size"])}
+    if item.get("mtime"):
+        headers["X-OC-Mtime"] = str(item["mtime"])
+    request = Request(destination.url(path), data=response, method="PUT", headers=headers)
+    try:
+        answer = build_opener(NoRedirect()).open(request, timeout=600)
+        status = answer.status
+        answer.close()
+    except HTTPError as error:
+        status = error.code
+    except NETWORK_ERRORS as error:
+        raise StorageError("transfert interrompu") from error
+    finally:
+        response.close()
+    if status not in {201, 204}:
+        raise StorageError(f"refusé par le compte d’arrivée ({status})")
+
+
+def copy_tree(source, destination, echo=print):
+    """Recopie tout le dossier de départ vers l'autre compte. Peut être relancée : ce qui est
+    déjà copié (même nom, même taille) est sauté."""
+    totals = {"dossiers": 0, "copies": 0, "deja": 0, "erreurs": 0, "octets": 0}
+    failures = []
+
+    def walk(path):
+        content = source.listing(path)
+        if content is None:
+            raise StorageError(f"Dossier introuvable dans le compte de départ : {'/'.join(path) or '(racine)'}")
+        folders, files = content
+        destination.make_folders(path)
+        totals["dossiers"] += 1
+        existing = destination.listing(path) or ([], [])
+        sizes = {item["name"]: item["size"] for item in existing[1]}
+        for item in files:
+            label = "/".join((*path, item["name"]))
+            if sizes.get(item["name"]) == item["size"]:
+                totals["deja"] += 1
+                continue
+            try:
+                copy_stream(source, destination, (*path, item["name"]), item)
+            except StorageError as error:
+                totals["erreurs"] += 1
+                failures.append(f"{label} : {error}")
+                echo(f"  ✗ {label} ({error})")
+                continue
+            totals["copies"] += 1
+            totals["octets"] += item["size"]
+            echo(f"  ✓ {label} ({item['size'] / 1024 / 1024:.1f} Mo)")
+        for name in folders:
+            walk((*path, name))
+
+    walk(())
+    return totals, failures
+
+
 def authorize_service_account(echo, wait=600):
     """Obtient un mot de passe d'application Nuage (flux de connexion v2)."""
     status, body = nuage_request(f"{NUAGE_LOGIN}/index.php/login/v2", "POST", payload=b"",
@@ -215,7 +277,7 @@ def authorize_service_account(echo, wait=600):
     login_url = check_flow_url(data["login"], "flow")
     poll_url = check_flow_url(data["poll"]["endpoint"], "poll")
     token = data["poll"]["token"]
-    echo("1. Ouvrez ce lien en étant connecté au compte Nuage qui contient les dossiers :")
+    echo("1. Ouvrez ce lien en étant connecté au bon compte Nuage :")
     echo("   " + login_url)
     echo("2. Autorisez l’accès. Cette fenêtre attend la confirmation…")
     deadline = time.monotonic() + wait
@@ -410,7 +472,7 @@ def clean(database=None, ask=input):
 
 
 def main(argv):
-    """python nuage_stockage.py autoriser | verifier  (sur le serveur, en SSH)."""
+    """python nuage_stockage.py autoriser | verifier | nouveau-compte | copier | basculer (en SSH)."""
     action = argv[1] if len(argv) > 1 else ""
     if action == "autoriser":
         login, password, server = authorize_service_account(print)
@@ -443,11 +505,70 @@ def main(argv):
         for name in content[0][:20]:
             print("  •", name)
         return 0
+    if action == "nouveau-compte":
+        print("Branchement du NOUVEAU compte Nuage (le hub continue d’utiliser l’ancien pour l’instant).")
+        login, password, server = authorize_service_account(print)
+        folder = _settings_file().parent
+        folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+        secret = folder / "nuage_password_nouveau"
+        descriptor = os.open(secret, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+            output.write(password + "\n")
+        _write_settings({"HUB_NOUVEAU_LOGIN": login, "HUB_NOUVEAU_URL": server,
+                         "HUB_NOUVEAU_APP_PASSWORD_FILE": str(secret)})
+        print(f"Nouveau compte enregistré : {login} sur {server}")
+        print("Étape suivante : python nuage_stockage.py copier")
+        return 0
+    if action in {"copier", "basculer"}:
+        _load_settings()
+        source = NuageStorage.from_environment(os.environ.get("HUB_LOCAL_HTTP") == "1")
+        login = os.environ.get("HUB_NOUVEAU_LOGIN", "").strip()
+        secret = os.environ.get("HUB_NOUVEAU_APP_PASSWORD_FILE", "")
+        server = os.environ.get("HUB_NOUVEAU_URL", "")
+        if not source or not login or not secret or not server:
+            print("Lancez d’abord « python nuage_stockage.py nouveau-compte ».")
+            return 1
+        password = Path(secret).read_text(encoding="utf-8").strip()
+        root = "/".join(source.root)
+        target = NuageStorage(login, password, root, server)
+        if login == source.login and server == source.base_url:
+            print("Le nouveau compte est le même que l’ancien : rien à faire.")
+            return 1
+        if action == "copier":
+            print(f"Copie de « {root} »")
+            print(f"  de  {source.login} ({source.base_url})")
+            print(f"  vers {login} ({server})")
+            print("Rien n’est stocké sur le serveur du hub. Relançable sans risque : le déjà copié est sauté.")
+            print()
+            totals, failures = copy_tree(source, target)
+            print()
+            print(f"Terminé : {totals['dossiers']} dossier(s), {totals['copies']} fichier(s) copié(s) "
+                  f"({totals['octets'] / 1024 / 1024:.0f} Mo), {totals['deja']} déjà présent(s), "
+                  f"{totals['erreurs']} erreur(s).")
+            if failures:
+                print("Relancez « copier » pour réessayer les fichiers en erreur.")
+                return 1
+            print("Étape suivante : python nuage_stockage.py basculer")
+            return 0
+        # basculer : le hub utilise désormais le nouveau compte.
+        if target.listing(()) is None:
+            print(f"« {root} » est introuvable dans le nouveau compte : lancez d’abord « copier ».")
+            return 1
+        old_secret = os.environ.get("HUB_NUAGE_APP_PASSWORD_FILE", "")
+        _write_settings({"HUB_ANCIEN_LOGIN": source.login, "HUB_ANCIEN_URL": source.base_url,
+                         "HUB_ANCIEN_APP_PASSWORD_FILE": old_secret,
+                         "HUB_NUAGE_LOGIN": login, "HUB_NUAGE_URL": server,
+                         "HUB_NUAGE_APP_PASSWORD_FILE": secret})
+        for key in ("HUB_NUAGE_LOGIN", "HUB_NUAGE_URL", "HUB_NUAGE_APP_PASSWORD_FILE"):
+            os.environ.pop(key, None)
+        print(f"Le hub utilise maintenant {login} ({server}).")
+        print("Redémarrez le site : bash ~/.ia-ipr-eps/deploy.sh")
+        return main([argv[0], "verifier"])
     if action == "etat":
         return report(argv[2] if len(argv) > 2 else None)
     if action == "nettoyer":
         return clean(argv[2] if len(argv) > 2 else None)
-    print("Usage : python nuage_stockage.py autoriser | verifier | etat | nettoyer")
+    print("Usage : python nuage_stockage.py autoriser | verifier | etat | nettoyer | nouveau-compte | copier | basculer")
     return 1
 
 
