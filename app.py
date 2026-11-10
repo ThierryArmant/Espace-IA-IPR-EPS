@@ -932,6 +932,43 @@ def create_app():
         g.db.commit()
         return redirect(url_for("directory") + "#groupes")
 
+    def remove_account(user):
+        """Supprime un compte (ou le laisse suspendu s'il a publié des contenus) et affiche le message."""
+        user_id = user["id"]
+        authored = sum(g.db.execute(query, (user_id,)).fetchone()[0] for query in (
+            "SELECT COUNT(*) FROM ipr_entries WHERE author_id=?",
+            "SELECT COUNT(*) FROM document_notifications WHERE sender_id=?",
+            "SELECT COUNT(*) FROM folder_links WHERE author_id=?",
+        ))
+        if authored:
+            g.db.execute("UPDATE users SET active=0 WHERE id=?", (user_id,))
+            g.db.execute("DELETE FROM memberships WHERE user_id=?", (user_id,))
+            g.db.execute("DELETE FROM rules WHERE subject_kind='user' AND subject=?", (user_id,))
+            g.db.commit()
+            flash(f"{user['name'] or user['email']} a publié des contenus dans l’espace : le compte reste suspendu "
+                  "pour ne pas les effacer. Il n’a plus aucun accès.")
+            return
+        for query in ("DELETE FROM ipr_responses WHERE user_id=?",
+                      "DELETE FROM document_notification_recipients WHERE user_id=?",
+                      "DELETE FROM login_codes WHERE user_id=?",
+                      "DELETE FROM invites WHERE user_id=?",
+                      "DELETE FROM memberships WHERE user_id=?",
+                      "DELETE FROM rules WHERE subject_kind='user' AND subject=?",
+                      "DELETE FROM users WHERE id=?"):
+            g.db.execute(query, (user_id,))
+        g.db.commit()
+        flash(f"{user['name'] or user['email']} a été supprimé(e) de l’espace.")
+
+    @app.post("/annuaire/compte/<int:user_id>/retirer")
+    def remove_user_from_hub(user_id):
+        """Depuis le tableau détaillé : retire une personne de l'espace en une seule fois."""
+        require_admin()
+        user = g.db.execute("SELECT * FROM users WHERE id=? AND admin=0", (user_id,)).fetchone()
+        if not user:
+            abort(404)
+        remove_account(user)
+        return redirect(url_for("autorisations.grid"))
+
     @app.post("/annuaire/compte/<int:user_id>/supprimer")
     def delete_user(user_id):
         require_admin()
@@ -943,25 +980,7 @@ def create_app():
         if request.form.get("confirm") != "yes":
             flash("Cochez la case de confirmation pour supprimer ce compte.")
             return redirect(url_for("directory"))
-        authored = sum(g.db.execute(query, (user_id,)).fetchone()[0] for query in (
-            "SELECT COUNT(*) FROM ipr_entries WHERE author_id=?",
-            "SELECT COUNT(*) FROM document_notifications WHERE sender_id=?",
-            "SELECT COUNT(*) FROM folder_links WHERE author_id=?",
-        ))
-        if authored:
-            flash(f"{user['name'] or user['email']} a publié des contenus dans l’espace : le compte reste suspendu "
-                  "pour ne pas les effacer. Il n’a plus aucun accès.")
-            return redirect(url_for("directory"))
-        for query in ("DELETE FROM ipr_responses WHERE user_id=?",
-                      "DELETE FROM document_notification_recipients WHERE user_id=?",
-                      "DELETE FROM login_codes WHERE user_id=?",
-                      "DELETE FROM invites WHERE user_id=?",
-                      "DELETE FROM memberships WHERE user_id=?",
-                      "DELETE FROM rules WHERE subject_kind='user' AND subject=?",
-                      "DELETE FROM users WHERE id=?"):
-            g.db.execute(query, (user_id,))
-        g.db.commit()
-        flash(f"{user['name'] or user['email']} a été supprimé(e) de l’espace.")
+        remove_account(user)
         return redirect(url_for("directory"))
 
     @app.post("/annuaire/compte/<int:user_id>")

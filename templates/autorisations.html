@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
-{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='4') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='autorisations.js', v='5') }}" defer></script>{% endblock %}
 {% block content %}
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Exceptions individuelles</h1>
 <p>Le tableau détaillé, personne par personne et sous-dossier par sous-dossier. Pour le cas général, passez par <a href="{{ url_for('autorisations.groups_page') }}">Groupes et accès</a>.</p></div>
@@ -52,7 +52,8 @@
 {% for person in people %}
 <tr class="ligne-personne" data-groupes=" {{ person_groups.get(person.id, [])|join(' ') }} "><th scope="row">{{ person.name or person.email }}<br><span class="subtle">{{ person.email if person.name else '' }}{% if not person.activated %} · invitation à envoyer{% elif not person.active %} · suspendu{% endif %}</span>
 {% if person.id in no_parent_access %}<br><span class="badge denied" title="Sans accès à « {{ parent.name }} », les réglages de cette ligne restent sans effet.">Pas d’accès à « {{ parent.name }} »</span>{% endif %}
-<br>{{ bulk('Toute la ligne', 'row-' ~ person.id) }}</th>
+<br>{{ bulk('Toute la ligne', 'row-' ~ person.id) }}
+{% if g.user.admin and not person.admin %}<button class="quiet retirer-personne" formaction="{{ url_for('remove_user_from_hub', user_id=person.id) }}" formnovalidate data-nom="{{ person.name or person.email }}" title="Retirer cette personne de l’espace (groupes et accès compris)">✕ Retirer de l’espace</button>{% endif %}</th>
 {% for folder in folders %}{% set value = cells[(folder.id, person.id)] %}
 <td><select name="acces-{{ folder.id }}-{{ person.id }}" data-col="{{ folder.id }}" data-row="{{ person.id }}" aria-label="{{ person.name or person.email }} — {{ folder.name }}">{{ options(value, top) }}</select>{% if (folder.id, person.id) in via_group %}<br><span class="subtle">par groupe</span>{% endif %}</td>
 {% endfor %}</tr>

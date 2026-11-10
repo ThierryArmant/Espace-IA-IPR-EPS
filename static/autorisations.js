@@ -60,3 +60,11 @@ if (toutAfficher) toutAfficher.addEventListener("click", () => {
   filtreGroupe.value = "";
   filtrer();
 });
+// « Retirer de l'espace » : confirmation avant suppression.
+for (const bouton of document.querySelectorAll("button.retirer-personne")) {
+  bouton.addEventListener("click", (event) => {
+    if (!window.confirm(`Retirer ${bouton.dataset.nom} de l’espace ?\nLa personne perd ses groupes et ses accès ; les documents restent dans leurs dossiers.`)) {
+      event.preventDefault();
+    }
+  });
+}

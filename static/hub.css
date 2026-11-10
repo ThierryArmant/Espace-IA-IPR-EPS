@@ -391,3 +391,4 @@ main .quiet:hover { background: #e3edf7; }
 .membres-actuels li { background: #e6f4ea; border-radius: .4rem; padding: .2rem .45rem; }
 .ajout-membres { margin-top: .6rem; border-top: 1px solid var(--border); padding-top: .5rem; }
 .ajout-membres > summary { cursor: pointer; font-weight: 700; margin-bottom: .4rem; }
+.retirer-personne { margin-top: .3rem; font-size: .72rem; color: #9b1c1c !important; padding: .15rem .4rem; }
