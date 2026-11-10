@@ -108,6 +108,7 @@ def create_app():
         db.executescript(TOOLS_SCHEMA)
         db.executescript(SETTINGS_SCHEMA)
         db.executescript(ACTIVITY_SCHEMA)
+        db.execute("CREATE TABLE IF NOT EXISTS presence(user_id INTEGER PRIMARY KEY, seen INTEGER NOT NULL)")
 
     @app.template_test("readable")
     def readable(mask):
@@ -280,6 +281,24 @@ def create_app():
         if (request.endpoint not in {"login", "activate", None} and not request.endpoint.startswith("academique.")
                 and g.user is None):
             return redirect(url_for("login"))
+
+    @app.after_request
+    def note_presence(response):
+        """Note qu'une personne est en ligne (au plus une écriture par minute)."""
+        user = g.get("user")
+        if user is not None and request.endpoint not in {"static", "health"}:
+            now = int(time.time())
+            if now - int(session.get("vu", 0)) >= 60:
+                try:
+                    db = connect()
+                    db.execute("INSERT INTO presence(user_id, seen) VALUES(?, ?) "
+                               "ON CONFLICT(user_id) DO UPDATE SET seen=excluded.seen", (user["id"], now))
+                    db.commit()
+                    db.close()
+                    session["vu"] = now
+                except sqlite3.Error:
+                    pass
+        return response
 
     @app.teardown_request
     def close_db(_error):
@@ -501,7 +520,20 @@ def create_app():
                                files=visible_files, rights=rights, search=search,
                                nuage_connected=connected, nuage_error=nuage_error,
                                nuage_files=[(name, link) for name, link in nuage_files if search in name.casefold()],
-                               mirror_files=mirror_files, missing_folders=missing, content_mask=content_mask)
+                               mirror_files=mirror_files, missing_folders=missing, content_mask=content_mask,
+                               online=online_people() if node_id == 1 else [])
+
+    def online_people():
+        """Personnes actives sur le Hub dans les 5 dernières minutes."""
+        try:
+            return g.db.execute(
+                """SELECT users.id, COALESCE(NULLIF(users.name,''), users.email) AS label FROM presence
+                   JOIN users ON users.id = presence.user_id
+                   WHERE users.active=1 AND (presence.seen >= ? OR users.id = ?)
+                   UNION SELECT id, COALESCE(NULLIF(name,''), email) FROM users WHERE id = ?
+                   ORDER BY label COLLATE NOCASE""", (int(time.time()) - 300, g.user["id"], g.user["id"])).fetchall()
+        except sqlite3.Error:
+            return []
 
     @app.post("/dossier/<int:node_id>/ajouter")
     def add_folder(node_id):
