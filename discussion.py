@@ -1,9 +1,9 @@
-"""Discussion commune de l'espace, affichée sous « En ligne » dans l'explorateur.
+"""Discussions instantanées entre membres connectés (à la manière d'une messagerie).
 
-Pas d'autre connexion que celle du Hub : l'identité affichée est l'adresse mail
-du compte. La discussion est éphémère : quand plus personne n'a le Hub ouvert
-depuis IDLE_SECONDS, tous les messages sont effacés (et au plus tard après
-RETENTION_DAYS jours).
+On clique sur une personne « En ligne » pour ouvrir une discussion ; on peut y
+ajouter d'autres personnes. L'identité affichée est l'adresse mail du compte.
+Les discussions sont éphémères : une discussion dont aucun participant n'a eu le
+Hub ouvert depuis IDLE_SECONDS est effacée avec tous ses messages.
 """
 import sqlite3
 import time
@@ -11,87 +11,186 @@ import time
 from flask import Blueprint, abort, g, jsonify, request
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS chat(
-    id INTEGER PRIMARY KEY,
+DROP TABLE IF EXISTS chat;
+DROP TABLE IF EXISTS chat_state;
+CREATE TABLE IF NOT EXISTS conversations(id INTEGER PRIMARY KEY, created INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS conversation_members(
+    conversation_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
+    last_read INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY(conversation_id, user_id)
+);
+CREATE TABLE IF NOT EXISTS conversation_messages(
+    id INTEGER PRIMARY KEY,
+    conversation_id INTEGER NOT NULL,
+    user_id INTEGER,
     body TEXT NOT NULL,
     created INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS chat_created ON chat(created);
-CREATE TABLE IF NOT EXISTS chat_state(key TEXT PRIMARY KEY, value INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS conversation_messages_conv ON conversation_messages(conversation_id, id);
 """
-RETENTION_DAYS = 30
-MAX_LENGTH = 500
-PAGE = 60
 IDLE_SECONDS = 10 * 60
+ONLINE_SECONDS = 5 * 60
+MAX_LENGTH = 1000
+MAX_MEMBERS = 30
 
 
 def register_discussion(app):
     bp = Blueprint("discussion", __name__)
 
-    def serialize(row):
-        mine = row["user_id"] == g.user["id"]
-        return {
-            "id": row["id"],
-            "auteur": row["email"] or "compte supprimé",
-            "nom": row["name"] or "",
-            "texte": row["body"],
-            "heure": time.strftime("%d/%m %H:%M", time.localtime(row["created"])),
-            "moi": mine,
-            "supprimable": mine or bool(g.user["admin"]),
-        }
+    def now():
+        return int(time.time())
 
-    def keep_alive():
-        """Efface la discussion si plus personne ne l'a ouverte depuis IDLE_SECONDS, puis note
-        qu'elle est ouverte (au plus une écriture par minute)."""
-        now = int(time.time())
-        row = g.db.execute("SELECT value FROM chat_state WHERE key='ouverte'").fetchone()
-        last = row[0] if row else 0
-        if now - last < 60:
-            return
+    def cleanup():
+        """Efface les discussions dont aucun participant n'est revenu depuis IDLE_SECONDS."""
         try:
-            if now - last > IDLE_SECONDS:
-                g.db.execute("DELETE FROM chat")
-            g.db.execute("INSERT INTO chat_state VALUES('ouverte', ?) "
-                         "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (now,))
-            g.db.commit()
+            stale = [row[0] for row in g.db.execute(
+                """SELECT c.id FROM conversations c WHERE c.created < :limit AND NOT EXISTS (
+                       SELECT 1 FROM conversation_members m JOIN presence p ON p.user_id = m.user_id
+                       WHERE m.conversation_id = c.id AND p.seen >= :limit)""",
+                {"limit": now() - IDLE_SECONDS})]
+            for conversation in stale:
+                g.db.execute("DELETE FROM conversation_messages WHERE conversation_id=?", (conversation,))
+                g.db.execute("DELETE FROM conversation_members WHERE conversation_id=?", (conversation,))
+                g.db.execute("DELETE FROM conversations WHERE id=?", (conversation,))
+            if stale:
+                g.db.commit()
         except sqlite3.Error:
             g.db.rollback()
 
-    @bp.get("/discussion/messages")
-    def messages():
-        keep_alive()
+    def member_of(conversation_id):
+        row = g.db.execute("SELECT 1 FROM conversation_members WHERE conversation_id=? AND user_id=?",
+                           (conversation_id, g.user["id"])).fetchone()
+        if row is None:
+            abort(404)
+
+    def members(conversation_id):
+        return g.db.execute(
+            """SELECT u.id, u.email, COALESCE(NULLIF(u.name,''), u.email) AS nom FROM conversation_members m
+               JOIN users u ON u.id = m.user_id WHERE m.conversation_id=? ORDER BY u.email""",
+            (conversation_id,)).fetchall()
+
+    def title(conversation_id):
+        others = [row["email"] for row in members(conversation_id) if row["id"] != g.user["id"]]
+        return ", ".join(others) if others else "Vous seul(e)"
+
+    def online():
+        return g.db.execute(
+            """SELECT u.id, u.email, COALESCE(NULLIF(u.name,''), u.email) AS nom FROM presence p
+               JOIN users u ON u.id = p.user_id
+               WHERE u.active=1 AND p.seen >= ? AND u.id <> ? ORDER BY nom COLLATE NOCASE""",
+            (now() - ONLINE_SECONDS, g.user["id"])).fetchall()
+
+    def active_user(user_id):
+        row = g.db.execute("SELECT id FROM users WHERE id=? AND active=1", (user_id,)).fetchone()
+        if row is None:
+            abort(404)
+        return row["id"]
+
+    @bp.get("/discussions/etat")
+    def state():
+        cleanup()
+        rows = g.db.execute(
+            """SELECT m.conversation_id AS id,
+                      (SELECT COUNT(*) FROM conversation_messages x WHERE x.conversation_id = m.conversation_id
+                         AND x.id > m.last_read AND COALESCE(x.user_id, 0) <> :me) AS non_lus,
+                      (SELECT MAX(id) FROM conversation_messages x WHERE x.conversation_id = m.conversation_id) AS dernier
+               FROM conversation_members m WHERE m.user_id = :me ORDER BY dernier DESC""",
+            {"me": g.user["id"]}).fetchall()
+        return jsonify(
+            conversations=[{"id": row["id"], "titre": title(row["id"]), "non_lus": row["non_lus"],
+                            "dernier": row["dernier"] or 0} for row in rows],
+            en_ligne=[{"id": row["id"], "email": row["email"], "nom": row["nom"]} for row in online()])
+
+    @bp.post("/discussions/nouvelle")
+    def start():
+        other = active_user(request.form.get("avec", type=int))
+        if other == g.user["id"]:
+            abort(400, "Choisissez une autre personne.")
+        # Reprendre la discussion à deux existante plutôt que d'en créer une seconde.
+        row = g.db.execute(
+            """SELECT a.conversation_id FROM conversation_members a
+               JOIN conversation_members b ON b.conversation_id = a.conversation_id AND b.user_id = ?
+               WHERE a.user_id = ? AND (SELECT COUNT(*) FROM conversation_members c
+                                       WHERE c.conversation_id = a.conversation_id) = 2""",
+            (other, g.user["id"])).fetchone()
+        if row:
+            return jsonify(id=row[0])
+        cursor = g.db.execute("INSERT INTO conversations(created) VALUES(?)", (now(),))
+        conversation = cursor.lastrowid
+        g.db.executemany("INSERT INTO conversation_members(conversation_id, user_id) VALUES(?, ?)",
+                         [(conversation, g.user["id"]), (conversation, other)])
+        g.db.commit()
+        return jsonify(id=conversation)
+
+    @bp.get("/discussions/<int:conversation_id>")
+    def read(conversation_id):
+        member_of(conversation_id)
         after = request.args.get("apres", 0, type=int)
         rows = g.db.execute(
-            """SELECT chat.*, users.email, users.name FROM chat LEFT JOIN users ON users.id = chat.user_id
-               WHERE chat.id > ? AND chat.created >= ? ORDER BY chat.id DESC LIMIT ?""",
-            (after, int(time.time()) - RETENTION_DAYS * 86400, PAGE)).fetchall()
-        ids = [row[0] for row in g.db.execute("SELECT id FROM chat WHERE created >= ?",
-                                              (int(time.time()) - RETENTION_DAYS * 86400,))]
-        return jsonify(messages=[serialize(row) for row in reversed(rows)], existants=ids)
+            """SELECT x.id, x.user_id, x.body, x.created, u.email FROM conversation_messages x
+               LEFT JOIN users u ON u.id = x.user_id
+               WHERE x.conversation_id=? AND x.id > ? ORDER BY x.id LIMIT 200""",
+            (conversation_id, after)).fetchall()
+        last = max([after] + [row["id"] for row in rows])
+        if rows:
+            try:
+                g.db.execute("UPDATE conversation_members SET last_read=MAX(last_read, ?) "
+                             "WHERE conversation_id=? AND user_id=?", (last, conversation_id, g.user["id"]))
+                g.db.commit()
+            except sqlite3.Error:
+                g.db.rollback()
+        return jsonify(
+            titre=title(conversation_id),
+            membres=[{"id": row["id"], "email": row["email"], "nom": row["nom"]} for row in members(conversation_id)],
+            messages=[{"id": row["id"], "auteur": row["email"] or "—", "texte": row["body"],
+                       "heure": time.strftime("%H:%M", time.localtime(row["created"])),
+                       "moi": row["user_id"] == g.user["id"],
+                       "systeme": row["user_id"] is None} for row in rows])
 
-    @bp.post("/discussion")
-    def send():
-        body = " ".join(request.form.get("texte", "").split())
+    @bp.post("/discussions/<int:conversation_id>/envoyer")
+    def send(conversation_id):
+        member_of(conversation_id)
+        body = request.form.get("texte", "").strip()
         if not body:
             abort(400, "Message vide.")
         if len(body) > MAX_LENGTH:
             abort(400, f"Message trop long ({MAX_LENGTH} caractères au plus).")
-        keep_alive()
-        now = int(time.time())
-        g.db.execute("DELETE FROM chat WHERE created < ?", (now - RETENTION_DAYS * 86400,))
-        g.db.execute("INSERT INTO chat(user_id, body, created) VALUES(?, ?, ?)", (g.user["id"], body, now))
+        g.db.execute("INSERT INTO conversation_messages(conversation_id, user_id, body, created) VALUES(?,?,?,?)",
+                     (conversation_id, g.user["id"], body, now()))
         g.db.commit()
         return jsonify(ok=True)
 
-    @bp.post("/discussion/<int:message_id>/supprimer")
-    def delete(message_id):
-        row = g.db.execute("SELECT user_id FROM chat WHERE id=?", (message_id,)).fetchone()
-        if row is None:
-            abort(404)
-        if row["user_id"] != g.user["id"] and not g.user["admin"]:
-            abort(403)
-        g.db.execute("DELETE FROM chat WHERE id=?", (message_id,))
+    @bp.post("/discussions/<int:conversation_id>/ajouter")
+    def add(conversation_id):
+        member_of(conversation_id)
+        other = active_user(request.form.get("avec", type=int))
+        count = g.db.execute("SELECT COUNT(*) FROM conversation_members WHERE conversation_id=?",
+                             (conversation_id,)).fetchone()[0]
+        if count >= MAX_MEMBERS:
+            abort(400, "Discussion complète.")
+        added = g.db.execute("INSERT OR IGNORE INTO conversation_members(conversation_id, user_id) VALUES(?, ?)",
+                             (conversation_id, other)).rowcount
+        if added:
+            email = g.db.execute("SELECT email FROM users WHERE id=?", (other,)).fetchone()[0]
+            g.db.execute("INSERT INTO conversation_messages(conversation_id, user_id, body, created) VALUES(?,?,?,?)",
+                         (conversation_id, None, f"{g.user['email']} a ajouté {email}", now()))
+        g.db.commit()
+        return jsonify(ok=True)
+
+    @bp.post("/discussions/<int:conversation_id>/quitter")
+    def leave(conversation_id):
+        member_of(conversation_id)
+        g.db.execute("DELETE FROM conversation_members WHERE conversation_id=? AND user_id=?",
+                     (conversation_id, g.user["id"]))
+        left = g.db.execute("SELECT COUNT(*) FROM conversation_members WHERE conversation_id=?",
+                            (conversation_id,)).fetchone()[0]
+        if left == 0:
+            g.db.execute("DELETE FROM conversation_messages WHERE conversation_id=?", (conversation_id,))
+            g.db.execute("DELETE FROM conversations WHERE id=?", (conversation_id,))
+        else:
+            g.db.execute("INSERT INTO conversation_messages(conversation_id, user_id, body, created) VALUES(?,?,?,?)",
+                         (conversation_id, None, f"{g.user['email']} a quitté la discussion", now()))
         g.db.commit()
         return jsonify(ok=True)
 

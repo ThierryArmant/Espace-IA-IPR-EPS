@@ -64,7 +64,7 @@
 {% endfor %}
 </ul>
 {% endmacro %}
-{% block scripts %}<script src="{{ url_for('static', filename='depot.js') }}" defer></script><script src="{{ url_for('static', filename='discussion.js', v='2') }}" defer></script><script src="{{ url_for('static', filename='explorateur-prive.js', v='3') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='depot.js') }}" defer></script><script src="{{ url_for('static', filename='explorateur-prive.js', v='3') }}" defer></script>{% endblock %}
 {% block sidebar %}
 {% set active=trail|map(attribute='id')|list %}
 <aside class="sidebar" aria-label="Arborescence">
@@ -81,20 +81,8 @@
 {% if online %}<div class="en-ligne" tabindex="0" aria-label="Personnes en ligne : {{ online|length }}">
 <span class="en-ligne-titre"><span class="point-vert" aria-hidden="true"></span>En ligne ({{ online|length }}) ▾</span>
 <ul class="en-ligne-liste">
-{% for person in online %}<li class="pastille-personne"><span class="point-vert" aria-hidden="true"></span>{{ person.label }}{% if person.id == g.user.id %} (vous){% endif %}</li>{% endfor %}
+{% for person in online %}<li class="pastille-personne"><span class="point-vert" aria-hidden="true"></span>{{ person.label }}{% if person.id == g.user.id %} (vous){% else %}<button type="button" class="discuter" data-discuter="{{ person.id }}" title="Ouvrir une discussion avec {{ person.label }}">💬 Discuter</button>{% endif %}</li>{% endfor %}
 </ul></div>{% endif %}
-<section class="discussion" aria-label="Discussion de l’espace" data-url="{{ url_for('discussion.messages') }}" data-envoi="{{ url_for('discussion.send') }}" data-suppr="{{ url_for('discussion.delete', message_id=0) }}" data-csrf="{{ csrf }}">
-<div class="actions"><h2>💬 Discussion</h2>
-{% call help_menu('aide-discussion', 'Aide sur la discussion', 'La discussion de l’espace') %}
-<p>Un fil commun à tous les membres de l’espace. Votre <strong>adresse mail</strong> apparaît comme signature.</p>
-<p>La discussion est <strong>éphémère</strong> : quand plus personne n’a l’espace ouvert depuis 10 minutes, tous les messages sont effacés. Vous pouvez aussi supprimer les vôtres (✕) ; les animateurs peuvent supprimer tout message.</p>
-<p>N’y mettez pas d’informations confidentielles sur des personnes : déposez plutôt les documents dans un dossier.</p>
-{% endcall %}</div>
-<ol class="discussion-fil" aria-live="polite"><li class="subtle">Chargement…</li></ol>
-<form class="discussion-envoi"><label class="sr-only" for="discussion-texte">Votre message</label>
-<textarea id="discussion-texte" name="texte" rows="2" maxlength="500" placeholder="Écrire un message… (Entrée pour envoyer)"></textarea>
-<button>Envoyer</button></form>
-</section>
 </aside>
 {% endblock %}
 {% block content %}
