@@ -286,7 +286,7 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
             flash(f"{changes} changement(s) enregistré(s) dans les groupes." if changes else "Aucun changement.")
             return redirect(url_for("autorisations.groups_page"))
         people = g.db.execute(
-            "SELECT id,email,name,active,password IS NOT NULL AS activated FROM users "
+            "SELECT id,email,name,admin,active,password IS NOT NULL AS activated FROM users "
             "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
         group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
         members = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
 {% block title %}{{ 'Groupes et accès' if can_edit else 'Groupes' }} · IA-IPR EPS{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='3') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='4') }}" defer></script>{% endblock %}
 {% block content %}
 {% if can_edit %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes et accès</h1>
@@ -54,6 +54,19 @@
 <div class="actions"><button>Enregistrer le groupe</button></div>
 </form></details>
 {% endfor %}
+{% if g.user.admin %}<section class="card carte-depart"><div class="actions"><h2>Retirer quelqu’un de l’espace</h2>
+{% call help_menu('aide-depart', 'Aide sur le retrait définitif', 'Départ à la retraite, fin de mission…') %}
+<p>Pour un collègue qui quitte définitivement le groupe de travail (retraite, mutation, fin de mission).</p>
+<p>La personne disparaît des listes, des groupes et des accès. <strong>Ses documents restent</strong> dans leurs dossiers.</p>
+<p>Si elle a publié des événements, réunions ou liens, son compte est seulement suspendu (sans aucun accès) pour ne pas effacer ces contenus.</p>
+<p>Pour la retirer d’un seul groupe, décochez plutôt son nom dans la fiche du groupe.</p>
+{% endcall %}</div>
+<form method="post" action="{{ url_for('remove_user_from_hub') }}" class="actions retrait-definitif">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="retour" value="groupes">
+<label>Personne <select name="personne" required><option value="">Choisir un nom…</option>
+{% for person in people if not person.admin %}<option value="{{ person.id }}">{{ person.name or person.email }}</option>{% endfor %}</select></label>
+<button class="danger retirer-personne-liste">✕ Retirer définitivement</button></form>
+<p class="subtle">Une confirmation est demandée. Les animateurs n’apparaissent pas dans cette liste.</p></section>{% endif %}
 <section class="card"><div class="actions"><h2>Exceptions individuelles</h2>
 {% call help_menu('aide-exceptions', 'Aide sur les exceptions', 'Quand utiliser ce tableau ?') %}
 <p>Le tableau détaillé règle l’accès <strong>personne par personne</strong> et <strong>sous-dossier par sous-dossier</strong>.</p>

@@ -959,14 +959,19 @@ def create_app():
         g.db.commit()
         flash(f"{user['name'] or user['email']} a été supprimé(e) de l’espace.")
 
+    @app.post("/annuaire/compte/retirer")
     @app.post("/annuaire/compte/<int:user_id>/retirer")
-    def remove_user_from_hub(user_id):
+    def remove_user_from_hub(user_id=None):
         """Depuis le tableau détaillé : retire une personne de l'espace en une seule fois."""
         require_admin()
+        if user_id is None:
+            user_id = request.form.get("personne", type=int)
         user = g.db.execute("SELECT * FROM users WHERE id=? AND admin=0", (user_id,)).fetchone()
         if not user:
             abort(404)
         remove_account(user)
+        if request.form.get("retour") == "groupes":
+            return redirect(url_for("autorisations.groups_page"))
         return redirect(url_for("autorisations.grid"))
 
     @app.post("/annuaire/compte/<int:user_id>/supprimer")

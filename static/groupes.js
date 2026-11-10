@@ -43,3 +43,14 @@ for (const fiche of document.querySelectorAll(".fiche-groupe")) {
     });
   }
 }
+// Retrait définitif : confirmation avec le nom choisi.
+const retrait = document.querySelector("form.retrait-definitif");
+if (retrait) {
+  retrait.addEventListener("submit", (event) => {
+    const choix = retrait.querySelector("select");
+    const nom = choix.options[choix.selectedIndex].text;
+    if (!window.confirm(`Retirer définitivement ${nom} de l’espace ?\nLa personne perd ses groupes et ses accès ; ses documents restent dans leurs dossiers.`)) {
+      event.preventDefault();
+    }
+  });
+}
