@@ -392,3 +392,5 @@ main .quiet:hover { background: #e3edf7; }
 .ajout-membres { margin-top: .6rem; border-top: 1px solid var(--border); padding-top: .5rem; }
 .ajout-membres > summary { cursor: pointer; font-weight: 700; margin-bottom: .4rem; }
 .retirer-personne { margin-top: .3rem; font-size: .72rem; color: #9b1c1c !important; padding: .15rem .4rem; }
+.tableau-affectations { padding: .6rem .9rem; margin-block: .8rem; }
+.tableau-affectations > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }

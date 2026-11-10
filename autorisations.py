@@ -116,85 +116,19 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
 
     @bp.route("/autorisations", methods=["GET", "POST"])
     def grid():
+        """Ancien tableau personne par personne : supprimé, les accès passent par les groupes."""
         if not can_manage():
-            abort(403, "Ce tableau est réservé au groupe « Gestion des autorisations ».")
-        parent_id = request.values.get("dossier", 1, type=int)
-        parent = find_node(parent_id) if find_node else None
-        if parent_id != 1 and (parent is None or parent["kind"] != "folder"):
-            abort(404)
-        top = parent_id == 1
-        folders = g.db.execute(
-            "SELECT id,name FROM nodes WHERE parent=? AND kind='folder' "
-            "ORDER BY position IS NULL, position, id", (parent_id,)).fetchall()
-        people = g.db.execute(
-            "SELECT id,email,name,admin,active,password IS NOT NULL AS activated FROM users "
-            "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
-        folder_ids = {row["id"] for row in folders}
-        person_ids = {row["id"] for row in people}
-        rules = {(row["node"], row["subject"]): row["mask"] for row in g.db.execute(
-            "SELECT node,subject,mask FROM rules WHERE subject_kind='user'")}
-        group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
-        group_ids = {row["id"] for row in group_rows}
-        group_rules = {(row["node"], row["subject"]): row["mask"] for row in g.db.execute(
-            "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")}
-        allowed_values = set(levels) | ({"aucun"} if not top else set())
-        if request.method == "POST":
-            changed = 0
-            for key, value in request.form.items():
-                match = re.fullmatch(r"acces-(g-)?(\d+)-(\d+)", key)
-                if not match or value not in allowed_values:
-                    continue
-                kind = "group" if match[1] else "user"
-                folder, subject = int(match[2]), int(match[3])
-                if folder not in folder_ids or subject not in (group_ids if kind == "group" else person_ids):
-                    abort(400)
-                current = (group_rules if kind == "group" else rules).get((folder, subject))
-                if cell_value(current, top) == value:
-                    continue
-                if value:
-                    g.db.execute("""INSERT INTO rules VALUES(?, ?, ?, ?)
-                                    ON CONFLICT(node,subject_kind,subject) DO UPDATE SET mask=excluded.mask""",
-                                 (folder, kind, subject, levels.get(value, 0)))
-                elif current is not None:
-                    g.db.execute("DELETE FROM rules WHERE node=? AND subject_kind=? AND subject=?",
-                                 (folder, kind, subject))
-                else:
-                    continue
-                changed += 1
-            g.db.commit()
-            flash(f"{changed} autorisation(s) mise(s) à jour." if changed else "Aucun changement.")
-            return redirect(url_for("autorisations.grid", dossier=parent_id) if not top
-                            else url_for("autorisations.grid"))
-        via_group = {(row["node"], row["user_id"]) for row in g.db.execute(
-            """SELECT r.node, m.user_id FROM rules r JOIN memberships m
-               ON r.subject_kind='group' AND r.subject=m.group_id WHERE r.mask & ? <> 0""", (view,))}
-        cells = {(folder["id"], person["id"]): cell_value(rules.get((folder["id"], person["id"])), top)
-                 for folder in folders for person in people}
-        group_cells = {(folder["id"], group["id"]): cell_value(group_rules.get((folder["id"], group["id"])), top)
-                       for folder in folders for group in group_rows}
-        group_sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
-        person_groups = {}
-        for group, person in g.db.execute("SELECT group_id, user_id FROM memberships"):
-            person_groups.setdefault(person, []).append(group)
-        no_parent_access = set()
-        trail = []
-        if not top:
-            no_parent_access = {person["id"] for person in people
-                                if not rights(parent, person, structure=False) & view}
-            node = parent
-            while node is not None and node["parent"] is not None:
-                trail.append(node)
-                node = find_node(node["parent"])
-            trail.reverse()
-        has_children = {row[0] for row in g.db.execute(
-            "SELECT DISTINCT parent FROM nodes WHERE kind='folder' AND parent IN (%s)"
-            % ",".join("?" * len(folder_ids)), tuple(folder_ids))} if folder_ids else set()
-        return render_template("autorisations.html", folders=folders, people=people, cells=cells,
-                               via_group=via_group, managers_group=MANAGERS_GROUP,
-                               has_group=managers_group() is not None, top=top, parent=parent,
-                               trail=trail, no_parent_access=no_parent_access, has_children=has_children,
-                               group_rows=group_rows, group_cells=group_cells, group_sizes=group_sizes,
-                               person_groups=person_groups)
+            abort(403, "Cette page est réservée aux animateurs.")
+        return redirect(url_for("autorisations.groups_page"))
+
+    @bp.post("/groupes/acces-individuels/supprimer")
+    def clear_individual_rules():
+        if not can_manage():
+            abort(403)
+        count = g.db.execute("DELETE FROM rules WHERE subject_kind='user'").rowcount
+        g.db.commit()
+        flash(f"{count} accès individuel(s) supprimé(s) : les accès passent désormais uniquement par les groupes.")
+        return redirect(url_for("autorisations.groups_page"))
 
     @bp.route("/groupes", methods=["GET", "POST"])
     def groups_page():
@@ -284,7 +218,7 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
             g.db.commit()
             changes = len(before ^ wanted)
             flash(f"{changes} changement(s) enregistré(s) dans les groupes." if changes else "Aucun changement.")
-            return redirect(url_for("autorisations.groups_page"))
+            return redirect(url_for("autorisations.groups_page", tableau=1) + "#tableau")
         people = g.db.execute(
             "SELECT id,email,name,admin,active,password IS NOT NULL AS activated FROM users "
             "ORDER BY COALESCE(NULLIF(name,''), email) COLLATE NOCASE").fetchall()
@@ -295,7 +229,9 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
                             "ORDER BY position IS NULL, position, id").fetchall() if can_edit else []
         group_access = {(row["node"], row["subject"]): cell_value(row["mask"], True) for row in g.db.execute(
             "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")} if can_edit else {}
-        return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes,
+        individual_rules = g.db.execute(
+            "SELECT COUNT(*) FROM rules WHERE subject_kind='user'").fetchone()[0] if can_edit else 0
+        return render_template("groupes.html", individual_rules=individual_rules, people=people, group_rows=group_rows, members=members, sizes=sizes,
                                can_edit=can_edit, tops=tops, group_access=group_access,
                                opened=request.args.get("ouvert", type=int),
                                members_of={row["id"]: {p for (gr, p) in members if gr == row["id"]} for row in group_rows})
@@ -324,6 +260,6 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         g.db.commit()
         flash(f"{created} personne(s) ajoutée(s). Envoyez-leur ensuite l’invitation depuis l’annuaire."
               + (f" Lignes non reconnues : {' | '.join(errors[:5])}" if errors else ""))
-        return redirect(url_for("autorisations.grid"))
+        return redirect(url_for("autorisations.groups_page"))
 
     app.register_blueprint(bp)

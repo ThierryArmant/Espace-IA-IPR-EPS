@@ -54,3 +54,9 @@ if (retrait) {
     }
   });
 }
+const vider = document.querySelector("form.vider-individuels");
+if (vider) {
+  vider.addEventListener("submit", (event) => {
+    if (!window.confirm("Supprimer tous les accès réglés personne par personne ?\nNe resteront que les accès donnés par les groupes.")) event.preventDefault();
+  });
+}

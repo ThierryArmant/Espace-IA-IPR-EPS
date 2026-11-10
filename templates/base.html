@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Espace IA-IPR EPS{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='groupes-acces-v6') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='hub.css',v='groupes-acces-v7') }}">
 <script src="{{ url_for('static', filename='gaufre.js') }}?v=3" defer></script>
 {% block scripts %}{% endblock %}
 </head>
@@ -56,7 +56,7 @@
   <a class="rail-ipr" href="{{ url_for('ipr.module_page', module=key) }}" title="{{ description }}" {% if request.view_args and request.view_args.get('module') == key %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
   {% endfor %}
   {% endif %}
-  <a class="rail-team" href="{{ url_for('autorisations.groups_page') }}" title="{{ 'Les groupes, leurs membres et leurs dossiers' if can_manage_access else 'Voir qui fait partie de quel groupe' }}" {% if request.endpoint in ('autorisations.groups_page', 'autorisations.grid') %}aria-current="page"{% endif %}><span aria-hidden="true">👥</span>{{ 'Groupes et accès' if can_manage_access else 'Groupes' }}</a>
+  <a class="rail-team" href="{{ url_for('autorisations.groups_page') }}" title="{{ 'Les groupes, leurs membres et leurs dossiers' if can_manage_access else 'Voir qui fait partie de quel groupe' }}" {% if request.endpoint == 'autorisations.groups_page' %}aria-current="page"{% endif %}><span aria-hidden="true">👥</span>{{ 'Groupes et accès' if can_manage_access else 'Groupes' }}</a>
   <a class="rail-doc" href="{{ url_for('outils.guide') }}" title="Guide de prise en main" {% if request.endpoint == 'outils.guide' %}aria-current="page"{% endif %}><span aria-hidden="true">❓</span>Aide</a>
   {% if g.user.admin %}
   <a class="rail-mail" href="{{ url_for('messages') }}" title="Préparer un courriel pour un membre"><span aria-hidden="true">✉️</span>Demandes</a>

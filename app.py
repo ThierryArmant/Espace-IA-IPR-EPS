@@ -839,6 +839,8 @@ def create_app():
         if request.method == "POST":
             kind = request.form.get("kind")
             subject = request.form.get("subject", type=int)
+            if kind == "user" and request.form.get("action") != "inherit":
+                abort(400, "Les accès se règlent par groupe.")
             available = people() if kind == "user" else groups() if kind == "group" else ()
             if subject not in {row["id"] for row in available}:
                 abort(400, "Destinataire introuvable.")
@@ -962,7 +964,7 @@ def create_app():
     @app.post("/annuaire/compte/retirer")
     @app.post("/annuaire/compte/<int:user_id>/retirer")
     def remove_user_from_hub(user_id=None):
-        """Depuis le tableau détaillé : retire une personne de l'espace en une seule fois."""
+        """Depuis Groupes et accès : retire une personne de l'espace en une seule fois."""
         require_admin()
         if user_id is None:
             user_id = request.form.get("personne", type=int)
@@ -970,9 +972,7 @@ def create_app():
         if not user:
             abort(404)
         remove_account(user)
-        if request.form.get("retour") == "groupes":
-            return redirect(url_for("autorisations.groups_page"))
-        return redirect(url_for("autorisations.grid"))
+        return redirect(url_for("autorisations.groups_page"))
 
     @app.post("/annuaire/compte/<int:user_id>/supprimer")
     def delete_user(user_id):

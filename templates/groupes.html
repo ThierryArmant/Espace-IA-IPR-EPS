@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
 {% block title %}{{ 'Groupes et accès' if can_edit else 'Groupes' }} · IA-IPR EPS{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='4') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='5') }}" defer></script>{% endblock %}
 {% block content %}
 {% if can_edit %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes et accès</h1>
@@ -11,12 +11,16 @@
 <p><strong>2. Membres</strong> : cochez les collègues (« Filtrer par nom » aide à retrouver quelqu’un).</p>
 <p><strong>3. Dossiers</strong> : pour chaque dossier principal, choisissez <strong>Consulter</strong> (lire et télécharger) ou <strong>Contribuer</strong> (consulter, déposer, créer des sous-dossiers). « — » : pas d’accès par ce groupe.</p>
 <p><strong>4. Enregistrer le groupe</strong> : membres et accès sont enregistrés ensemble. Un nouveau membre reçoit aussitôt les accès du groupe.</p>
-<p><strong>Cas particuliers</strong> (une personne hors groupe, un sous-dossier fermé) : « Exceptions individuelles » en bas de page.</p>
+<p><strong>Règle simple</strong> : un collègue a accès à un dossier seulement s’il est dans un groupe qui y a accès. Sans groupe, il ne voit rien.</p>
 {% endcall %}</div></div>
 <section class="card"><form method="post" class="actions nouveau-groupe">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="creer">
 <label>Nouveau groupe <input name="name" maxlength="80" required placeholder="Par exemple « Formateurs APSA »"></label>
 <button>Créer</button></form></section>
+{% if individual_rules %}<section class="card notice-ancien"><p><strong>{{ individual_rules }} accès individuel(s)</strong> viennent de l’ancien tableau (réglés personne par personne). Ils donnent encore des accès en dehors des groupes.</p>
+<p class="subtle">Ouvrez d’abord les dossiers à vos groupes ci-dessous, puis supprimez ces accès individuels : seuls les groupes compteront.</p>
+<form method="post" action="{{ url_for('autorisations.clear_individual_rules') }}" class="vider-individuels"><input type="hidden" name="csrf" value="{{ csrf }}">
+<button class="danger">Supprimer les {{ individual_rules }} accès individuels</button></form></section>{% endif %}
 {% if not group_rows %}<p class="empty">Aucun groupe pour l’instant : créez le premier ci-dessus.</p>{% endif %}
 {% for group in group_rows %}
 <details class="panel fiche-groupe" id="groupe-{{ group.id }}" {% if opened == group.id %}open{% endif %}>
@@ -49,11 +53,29 @@
 <option value="consulter" {% if value=='consulter' %}selected{% endif %}>Consulter</option>
 <option value="contribuer" {% if value=='contribuer' %}selected{% endif %}>Contribuer</option></select></td></tr>
 {% endfor %}</tbody></table>
-<p class="subtle">Pour régler l’accès du groupe à un sous-dossier : « Exceptions individuelles » ci-dessous, puis « Sous-dossiers › ».</p>
+<p class="subtle">Les sous-dossiers suivent ce réglage. Pour fermer un sous-dossier à un groupe : ouvrez-le, puis « Droits d’accès ».</p>
 </fieldset></div>
 <div class="actions"><button>Enregistrer le groupe</button></div>
 </form></details>
 {% endfor %}
+{% if group_rows %}<details class="panel tableau-affectations" id="tableau" {% if request.args.get('tableau') %}open{% endif %}>
+<summary><strong>▦ Tableau des affectations</strong> <span class="subtle">tous les collègues en lignes, les groupes en colonnes</span></summary>
+<form method="post" action="{{ url_for('autorisations.groups_page', tableau=1) }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% for group in group_rows %}<input type="hidden" name="groupes" value="{{ group.id }}">{% endfor %}
+<div class="panel-head"><h2>{{ people|length }} collègue(s) · {{ group_rows|length }} groupe(s)</h2><button>Enregistrer les affectations</button></div>
+<label class="filtre-grille">Filtrer par nom <input id="filtre-groupes" type="search" autocomplete="off" placeholder="Tapez quelques lettres d’un nom"></label>
+<div class="table-wrap"><table class="grille-acces grille-groupes"><thead><tr><th>Collègue</th>
+{% for group in group_rows %}<th>{{ group.name }}<br><span class="badge granted" data-compte="{{ group.id }}">{{ sizes.get(group.id, 0) }}</span><br>
+<button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="1">Tout cocher</button> <button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="0">Tout décocher</button></th>{% endfor %}</tr></thead><tbody>
+{% for person in people %}
+<tr><th scope="row">{{ person.name or person.email }}{% if person.name %}<br><span class="subtle">{{ person.email }}</span>{% endif %}</th>
+{% for group in group_rows %}<td><input type="checkbox" name="m-{{ group.id }}-{{ person.id }}" data-groupe="{{ group.id }}" aria-label="{{ person.name or person.email }} dans {{ group.name }}" {% if (group.id, person.id) in members %}checked{% endif %}></td>{% endfor %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="subtle">Les accès aux dossiers se règlent dans la fiche de chaque groupe, ci-dessus.</p>
+<div class="actions"><button>Enregistrer les affectations</button></div>
+</form></details>{% endif %}
 {% if g.user.admin %}<section class="card carte-depart"><div class="actions"><h2>Retirer quelqu’un de l’espace</h2>
 {% call help_menu('aide-depart', 'Aide sur le retrait définitif', 'Départ à la retraite, fin de mission…') %}
 <p>Pour un collègue qui quitte définitivement le groupe de travail (retraite, mutation, fin de mission).</p>
@@ -67,12 +89,15 @@
 {% for person in people if not person.admin %}<option value="{{ person.id }}">{{ person.name or person.email }}</option>{% endfor %}</select></label>
 <button class="danger retirer-personne-liste">✕ Retirer définitivement</button></form>
 <p class="subtle">Une confirmation est demandée. Les animateurs n’apparaissent pas dans cette liste.</p></section>{% endif %}
-<section class="card"><div class="actions"><h2>Exceptions individuelles</h2>
-{% call help_menu('aide-exceptions', 'Aide sur les exceptions', 'Quand utiliser ce tableau ?') %}
-<p>Le tableau détaillé règle l’accès <strong>personne par personne</strong> et <strong>sous-dossier par sous-dossier</strong>.</p>
-<p>Utilisez-le seulement pour un cas particulier : un collègue qui n’est dans aucun groupe, ou un sous-dossier à fermer à quelqu’un. Dans la plupart des cas, les groupes suffisent.</p>
+{% if g.user.admin %}<section class="card"><div class="actions"><h2>Ajouter des personnes à l’espace</h2>
+{% call help_menu('aide-ajout-personnes', 'Aide sur l’ajout de personnes', 'Ajouter des collègues par liste') %}
+<p>Collez une personne par ligne : « NOM Prénom » ou « NOM Prénom ; adresse ». Sans adresse, le Hub propose prenom.nom@ac-aix-marseille.fr — vérifiez-la.</p>
+<p>Les personnes arrivent « en attente d’activation » : mettez-les dans un groupe ci-dessus, puis envoyez l’invitation depuis l’Annuaire (« Inviter en une fois »).</p>
 {% endcall %}</div>
-<p><a class="button secondary" href="{{ url_for('autorisations.grid') }}">Ouvrir le tableau détaillé</a></p></section>
+<form method="post" action="{{ url_for('autorisations.add_people') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Personnes <textarea name="people" rows="5" placeholder="DUPONT Marie&#10;MARTIN Jean ; jean.martin2@ac-aix-marseille.fr"></textarea></label>
+<button>Ajouter</button></form></section>{% endif %}
 {% else %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes</h1>
 <p>Qui fait partie de quel groupe. Cette page est en consultation : seuls les animateurs peuvent la modifier.</p></div></div>
