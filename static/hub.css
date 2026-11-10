@@ -386,3 +386,8 @@ main .quiet:hover { background: #e3edf7; }
 .acces-groupe th { text-align: start; font-weight: 600; padding: .3rem .4rem .3rem 0; }
 .acces-groupe td { padding: .3rem 0; }
 .filtre-fiche { width: 100%; margin-bottom: .3rem; }
+.titre-liste { font-weight: 700; margin: .1rem 0 .3rem; }
+.membres-actuels { list-style: none; margin: 0 0 .3rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .15rem .8rem; }
+.membres-actuels li { background: #e6f4ea; border-radius: .4rem; padding: .2rem .45rem; }
+.ajout-membres { margin-top: .6rem; border-top: 1px solid var(--border); padding-top: .5rem; }
+.ajout-membres > summary { cursor: pointer; font-weight: 700; margin-bottom: .4rem; }

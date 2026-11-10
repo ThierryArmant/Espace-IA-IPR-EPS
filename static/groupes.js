@@ -30,7 +30,7 @@ if (filtre) {
 // Fiches « Groupes et accès » : filtre et « Tout cocher » propres à chaque fiche.
 for (const fiche of document.querySelectorAll(".fiche-groupe")) {
   const filtreFiche = fiche.querySelector(".filtre-fiche");
-  const lignes = [...fiche.querySelectorAll(".liste-membres li")];
+  const lignes = [...fiche.querySelectorAll(".liste-membres li")]; // seulement la liste « Ajouter »
   if (filtreFiche) {
     filtreFiche.addEventListener("input", () => {
       const texte = filtreFiche.value.trim().toLowerCase();

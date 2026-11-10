@@ -297,7 +297,8 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
             "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")} if can_edit else {}
         return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes,
                                can_edit=can_edit, tops=tops, group_access=group_access,
-                               opened=request.args.get("ouvert", type=int))
+                               opened=request.args.get("ouvert", type=int),
+                               members_of={row["id"]: {p for (gr, p) in members if gr == row["id"]} for row in group_rows})
 
     @bp.post("/autorisations/personnes")
     def add_people():

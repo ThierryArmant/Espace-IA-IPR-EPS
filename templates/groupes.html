@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
 {% block title %}{{ 'Groupes et accès' if can_edit else 'Groupes' }} · IA-IPR EPS{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='2') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='3') }}" defer></script>{% endblock %}
 {% block content %}
 {% if can_edit %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes et accès</h1>
@@ -27,11 +27,19 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="fiche"><input type="hidden" name="groupe" value="{{ group.id }}">
 <div class="fiche-colonnes">
 <fieldset><legend>Membres</legend>
-<input class="filtre-fiche" type="search" autocomplete="off" placeholder="Filtrer par nom" aria-label="Filtrer les collègues de {{ group.name }}">
+{% set dedans = people|selectattr('id', 'in', members_of[group.id])|list %}
+<p class="titre-liste">Dans le groupe ({{ dedans|length }})</p>
+{% if dedans %}<ul class="membres-actuels">
+{% for person in dedans %}<li><label title="Décochez pour retirer du groupe"><input type="checkbox" name="membres" value="{{ person.id }}" checked> {{ person.name or person.email }}</label></li>
+{% endfor %}</ul>
+<p class="subtle">Décochez un nom pour le retirer, puis « Enregistrer le groupe ».</p>
+{% else %}<p class="empty">Personne pour l’instant : ajoutez des collègues ci-dessous.</p>{% endif %}
+<details class="ajout-membres" {% if not dedans %}open{% endif %}><summary>➕ Ajouter des collègues</summary>
+<input class="filtre-fiche" type="search" autocomplete="off" placeholder="Filtrer par nom" aria-label="Filtrer les collègues à ajouter à {{ group.name }}">
 <p class="actions"><button type="button" class="quiet tout-fiche" data-etat="1">Tout cocher</button> <button type="button" class="quiet tout-fiche" data-etat="0">Tout décocher</button></p>
 <ul class="liste-membres">
-{% for person in people %}<li><label><input type="checkbox" name="membres" value="{{ person.id }}" {% if (group.id, person.id) in members %}checked{% endif %}> {{ person.name or person.email }}{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</label></li>
-{% endfor %}</ul></fieldset>
+{% for person in people if person.id not in members_of[group.id] %}<li><label><input type="checkbox" name="membres" value="{{ person.id }}"> {{ person.name or person.email }}{% if person.name %} <span class="subtle">{{ person.email }}</span>{% endif %}</label></li>
+{% endfor %}</ul></details></fieldset>
 <fieldset><legend>Dossiers</legend>
 {% if not tops %}<p class="empty">Aucun dossier principal.</p>{% endif %}
 <table class="acces-groupe"><tbody>
