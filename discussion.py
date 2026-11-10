@@ -124,7 +124,9 @@ def register_discussion(app):
         return jsonify(
             presentation=not introduced,
             conversations=[{"id": row["id"], "titre": title(row["id"]), "non_lus": row["non_lus"],
-                            "dernier": row["dernier"] or 0} for row in rows],
+                            "dernier": row["dernier"] or 0,
+                            "avec": [m["id"] for m in members(row["id"]) if m["id"] != g.user["id"]]}
+                           for row in rows],
             en_ligne=[{"id": row["id"], "email": short_name(row["email"]), "nom": row["email"]} for row in online()])
 
     @bp.post("/discussions/presentation-vue")

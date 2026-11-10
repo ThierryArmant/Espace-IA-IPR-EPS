@@ -475,3 +475,13 @@ th.col-retrait { font-size: .75rem; }
 .grimpeur.depuis-connectes.descendu .grimpeur-dessin { transform: none; }
 @media (prefers-reduced-motion: reduce) { .grimpeur.depuis-connectes > * { transition: none; } }
 .grimpeur.depuis-connectes:not(.toque) .grimpeur-dessin { animation: none; }
+/* Discussions rangées dans « ● En ligne » quand l'explorateur est là */
+#messagerie.avec-explorateur .msg-bouton, #messagerie.avec-explorateur .msg-liste { display: none; }
+#messagerie.avec-explorateur .msg-fenetre { position: fixed; right: auto; bottom: auto; }
+.en-ligne-titre .msg-pastille { margin-inline-start: .2rem; }
+.en-ligne-sous-titre { font-size: .72rem; font-weight: 700; color: #5b6472; margin-top: .3rem; }
+.pastille-groupe { background: #ebe6f9; color: #2d2350; }
+.discuter.discuter-alerte { background: #1fa64a !important; color: white !important; font-weight: 700; }
+.en-ligne-vide { font-size: .75rem; padding: .2rem .4rem; }
+.grimpeur.depuis-connectes > .grimpeur-bulle { transform: translateY(-320px); }
+.grimpeur.depuis-connectes.descendu > .grimpeur-bulle { transform: translateY(0); }

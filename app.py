@@ -1164,6 +1164,7 @@ def create_app():
     register_tools(app, allowed, rights, VIEW, WRITE)
     register_activity(app, rights, find_node, VIEW)
     register_discussion(app)
+    app.jinja_env.globals["short_name"] = short_name
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
                                  require_admin=require_admin, view=VIEW, download=DOWNLOAD, write=WRITE)

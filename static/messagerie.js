@@ -33,6 +33,50 @@ if (racine) {
   liste.hidden = true;
   racine.append(liste, bouton);
 
+  // Quand l'explorateur est affiché, les discussions se rangent à côté des noms dans « ● En ligne ».
+  const explorateur = document.querySelector(".sidebar .en-ligne");
+  if (explorateur) racine.classList.add("avec-explorateur");
+  const dessinerEnLigne = () => {
+    if (!explorateur) return;
+    const listeEnLigne = explorateur.querySelector(".en-ligne-liste");
+    const titreEnLigne = explorateur.querySelector(".en-ligne-titre");
+    const nonLus = etat.conversations.reduce((total, c) => total + c.non_lus, 0);
+    titreEnLigne.textContent = "";
+    titreEnLigne.append(el("span", "point-vert"), `En ligne (${etat.en_ligne.length + 1}) ▾`);
+    if (nonLus) titreEnLigne.append(el("span", "msg-pastille", `💬 ${nonLus}`));
+    listeEnLigne.textContent = "";
+    const moi = el("li", "pastille-personne");
+    moi.append(el("span", "point-vert"), `${racine.dataset.moiCourt} (vous)`);
+    listeEnLigne.append(moi);
+    for (const p of etat.en_ligne) {
+      const li = el("li", "pastille-personne");
+      li.title = p.nom;
+      li.append(el("span", "point-vert"), p.email);
+      const aDeux = etat.conversations.find((c) => c.avec.length === 1 && c.avec[0] === p.id);
+      const bouton = el("button", "discuter", aDeux && aDeux.non_lus ? `💬 ${aDeux.non_lus} nouveau${aDeux.non_lus > 1 ? "x" : ""}` : "💬 Discuter");
+      bouton.type = "button";
+      if (aDeux && aDeux.non_lus) bouton.classList.add("discuter-alerte");
+      bouton.addEventListener("click", () => (aDeux ? ouvrir(aDeux.id) : demarrer(p.id)));
+      li.append(bouton);
+      listeEnLigne.append(li);
+    }
+    const autres = etat.conversations.filter((c) => !(c.avec.length === 1 && etat.en_ligne.some((p) => p.id === c.avec[0])));
+    if (autres.length) {
+      listeEnLigne.append(el("li", "en-ligne-sous-titre", "Discussions en cours"));
+      for (const c of autres) {
+        const li = el("li", "pastille-personne pastille-groupe");
+        li.append(el("span", "", c.avec.length > 1 ? "👥" : "💬"), el("span", "msg-ligne-titre", c.titre));
+        const bouton = el("button", "discuter", c.non_lus ? `${c.non_lus} nouveau${c.non_lus > 1 ? "x" : ""}` : "Ouvrir");
+        bouton.type = "button";
+        if (c.non_lus) bouton.classList.add("discuter-alerte");
+        bouton.addEventListener("click", () => ouvrir(c.id));
+        li.append(bouton);
+        listeEnLigne.append(li);
+      }
+    }
+    if (!etat.en_ligne.length) listeEnLigne.append(el("li", "subtle en-ligne-vide", "Personne d’autre n’est en ligne."));
+  };
+
   const majBouton = () => {
     const nonLus = etat.conversations.reduce((total, c) => total + c.non_lus, 0);
     bouton.textContent = nonLus ? `💬 Discussions · ${nonLus} nouveau${nonLus > 1 ? "x" : ""}` : "💬 Discussions";
@@ -127,6 +171,12 @@ if (racine) {
     liste.hidden = true;
     bouton.setAttribute("aria-expanded", "false");
     if (ouverte !== id) { ouverte = id; dernierLu = 0; fil.textContent = ""; }
+    if (explorateur) {
+      const bord = document.querySelector(".sidebar").getBoundingClientRect();
+      const haut = explorateur.getBoundingClientRect();
+      fenetre.style.left = `${Math.round(bord.right + 8)}px`;
+      fenetre.style.top = `${Math.max(80, Math.round(haut.top))}px`;
+    }
     fenetre.hidden = false;
     choixAjout.hidden = true;
     await lire();
@@ -322,6 +372,7 @@ if (racine) {
       etat = await reponse.json();
     } catch { return; }
     majBouton();
+    dessinerEnLigne();
     if (etat.presentation && !enPresentation && !presentationFaite) { presentationFaite = true; presenter(); }
     if (!liste.hidden) dessinerListe();
     for (const c of etat.conversations) {
