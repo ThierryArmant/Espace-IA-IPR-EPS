@@ -961,6 +961,8 @@ def create_app():
         g.db.commit()
         flash(f"{user['name'] or user['email']} a été supprimé(e) de l’espace.")
 
+    app.config["HUB_REMOVE_ACCOUNT"] = remove_account
+
     @app.post("/annuaire/compte/retirer")
     @app.post("/annuaire/compte/<int:user_id>/retirer")
     def remove_user_from_hub(user_id=None):

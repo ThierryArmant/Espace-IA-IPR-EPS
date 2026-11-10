@@ -43,13 +43,15 @@ for (const fiche of document.querySelectorAll(".fiche-groupe")) {
     });
   }
 }
-// Retrait définitif : confirmation avec le nom choisi.
-const retrait = document.querySelector("form.retrait-definitif");
-if (retrait) {
-  retrait.addEventListener("submit", (event) => {
-    const choix = retrait.querySelector("select");
-    const nom = choix.options[choix.selectedIndex].text;
-    if (!window.confirm(`Retirer définitivement ${nom} de l’espace ?\nLa personne perd ses groupes et ses accès ; ses documents restent dans leurs dossiers.`)) {
+// Tableau : confirmation si des personnes sont cochées « Retirer de l'espace ».
+const affectations = document.querySelector("form.form-affectations");
+if (affectations) {
+  for (const caseRetrait of affectations.querySelectorAll(".case-retrait")) {
+    caseRetrait.addEventListener("change", () => caseRetrait.closest("tr").classList.toggle("ligne-retrait", caseRetrait.checked));
+  }
+  affectations.addEventListener("submit", (event) => {
+    const noms = [...affectations.querySelectorAll(".case-retrait:checked")].map((c) => c.dataset.nom);
+    if (noms.length && !window.confirm(`Retirer définitivement de l’espace :\n• ${noms.join("\n• ")}\n\nCes personnes perdent leurs groupes et leurs accès ; leurs documents restent.`)) {
       event.preventDefault();
     }
   });

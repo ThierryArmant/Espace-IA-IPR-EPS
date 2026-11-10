@@ -11,7 +11,7 @@ import re
 import sqlite3
 import unicodedata
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, url_for
 
 MANAGERS_GROUP = "Gestion des autorisations"
 EMAIL_DOMAIN = "ac-aix-marseille.fr"
@@ -217,7 +217,17 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
                 g.db.execute("INSERT INTO memberships(user_id,group_id) VALUES(?,?)", (person, group))
             g.db.commit()
             changes = len(before ^ wanted)
-            flash(f"{changes} changement(s) enregistré(s) dans les groupes." if changes else "Aucun changement.")
+            leaving = {int(x) for x in request.form.getlist("retirer") if x.isdigit()}
+            if leaving and not g.user["admin"]:
+                abort(403, "Le retrait de l’espace est réservé aux animateurs.")
+            removed = 0
+            for person in sorted(leaving):
+                user = g.db.execute("SELECT * FROM users WHERE id=? AND admin=0", (person,)).fetchone()
+                if user is not None:
+                    current_app.config["HUB_REMOVE_ACCOUNT"](user)
+                    removed += 1
+            if changes or not removed:
+                flash(f"{changes} changement(s) enregistré(s) dans les groupes." if changes else "Aucun changement dans les groupes.")
             return redirect(url_for("autorisations.groups_page", tableau=1) + "#tableau")
         people = g.db.execute(
             "SELECT id,email,name,admin,active,password IS NOT NULL AS activated FROM users "
