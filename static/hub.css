@@ -397,3 +397,12 @@ main .quiet:hover { background: #e3edf7; }
 .col-retrait { background: #fbeff0; color: #842d36; text-align: center; }
 th.col-retrait { font-size: .75rem; }
 .ligne-retrait th, .ligne-retrait td { background: #f6d9dc; text-decoration: line-through; }
+/* Fiches de groupe : couleur du dossier principal correspondant (comme sur l'accueil) */
+.fiche-groupe.fiche-bleu > summary { background: #e1edfa; }
+.fiche-groupe.fiche-menthe > summary { background: #dff1e8; }
+.fiche-groupe.fiche-lavande > summary { background: #ebe6f9; }
+.fiche-groupe.fiche-rose > summary { background: #f8e5ed; }
+.fiche-groupe.fiche-sable > summary { background: #faefd8; }
+.fiche-groupe > summary { margin: -.6rem -.9rem 0; padding: .6rem .9rem; border-radius: inherit; }
+.fiche-groupe[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.acces-groupe tr[class^="tone-"] th { padding-inline-start: .5rem; border-radius: .4rem 0 0 .4rem; }

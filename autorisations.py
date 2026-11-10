@@ -235,13 +235,29 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
         members = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")}
         sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
-        tops = g.db.execute("SELECT id,name FROM nodes WHERE parent=1 AND kind='folder' "
-                            "ORDER BY position IS NULL, position, id").fetchall() if can_edit else []
+        tops = g.db.execute("SELECT id,name,color FROM nodes WHERE parent=1 AND kind='folder' "
+                            "ORDER BY position IS NULL, position, id").fetchall()
+        # Même couleur pastel que sur la page d'accueil pour chaque dossier principal.
+        palette = ["bleu", "menthe", "lavande", "rose", "sable", "menthe"]
+        folder_tone = {row["id"]: (palette[index % len(palette)] if (row["color"] or "bleu") == "bleu" else row["color"])
+                       for index, row in enumerate(tops)}
+        # Un groupe prend la couleur du dossier dont le premier mot figure dans son nom (CMI → CMI EPS).
+        group_tone = {}
+        for group in group_rows:
+            words = set(group["name"].casefold().split())
+            for row in tops:
+                first = row["name"].casefold().split()[0] if row["name"].split() else ""
+                if first and first in words:
+                    group_tone[group["id"]] = folder_tone[row["id"]]
+                    break
+        if not can_edit:
+            tops = []
         group_access = {(row["node"], row["subject"]): cell_value(row["mask"], True) for row in g.db.execute(
             "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")} if can_edit else {}
         individual_rules = g.db.execute(
             "SELECT COUNT(*) FROM rules WHERE subject_kind='user'").fetchone()[0] if can_edit else 0
-        return render_template("groupes.html", individual_rules=individual_rules, people=people, group_rows=group_rows, members=members, sizes=sizes,
+        return render_template("groupes.html", individual_rules=individual_rules, people=people,
+                               folder_tone=folder_tone, group_tone=group_tone, group_rows=group_rows, members=members, sizes=sizes,
                                can_edit=can_edit, tops=tops, group_access=group_access,
                                opened=request.args.get("ouvert", type=int),
                                members_of={row["id"]: {p for (gr, p) in members if gr == row["id"]} for row in group_rows})
