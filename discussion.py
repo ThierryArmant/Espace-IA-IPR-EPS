@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS conversation_messages(
     created INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS conversation_messages_conv ON conversation_messages(conversation_id, id);
+CREATE TABLE IF NOT EXISTS messagerie_presentee(user_id INTEGER PRIMARY KEY);
 """
 IDLE_SECONDS = 10 * 60
 ONLINE_SECONDS = 5 * 60
@@ -118,10 +119,19 @@ def register_discussion(app):
                       (SELECT MAX(id) FROM conversation_messages x WHERE x.conversation_id = m.conversation_id) AS dernier
                FROM conversation_members m WHERE m.user_id = :me ORDER BY dernier DESC""",
             {"me": g.user["id"]}).fetchall()
+        introduced = g.db.execute("SELECT 1 FROM messagerie_presentee WHERE user_id=?",
+                                  (g.user["id"],)).fetchone() is not None
         return jsonify(
+            presentation=not introduced,
             conversations=[{"id": row["id"], "titre": title(row["id"]), "non_lus": row["non_lus"],
                             "dernier": row["dernier"] or 0} for row in rows],
             en_ligne=[{"id": row["id"], "email": short_name(row["email"]), "nom": row["email"]} for row in online()])
+
+    @bp.post("/discussions/presentation-vue")
+    def introduced():
+        g.db.execute("INSERT OR IGNORE INTO messagerie_presentee(user_id) VALUES(?)", (g.user["id"],))
+        g.db.commit()
+        return jsonify(ok=True)
 
     @bp.post("/discussions/nouvelle")
     def start():

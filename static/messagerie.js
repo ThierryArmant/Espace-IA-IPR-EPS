@@ -200,21 +200,119 @@ if (racine) {
   document.body.append(grimpeur);
   let minuterieGrimpeur = null;
   let discussionAnnoncee = null;
+  let enPresentation = false;
+  let toquer = () => {};
+
+  // « Toc toc » fabriqué par le navigateur (aucun fichier son).
+  let sonEnAttente = false;
+  toquer = () => {
+    try {
+      const contexte = new (window.AudioContext || window.webkitAudioContext)();
+      if (contexte.state === "suspended") { sonEnAttente = true; contexte.close(); return; }
+      for (const debut of [0, 0.2]) {
+        const oscillateur = contexte.createOscillator();
+        const volume = contexte.createGain();
+        oscillateur.type = "triangle";
+        oscillateur.frequency.setValueAtTime(220, contexte.currentTime + debut);
+        oscillateur.frequency.exponentialRampToValueAtTime(90, contexte.currentTime + debut + 0.09);
+        volume.gain.setValueAtTime(0.0001, contexte.currentTime + debut);
+        volume.gain.exponentialRampToValueAtTime(0.5, contexte.currentTime + debut + 0.005);
+        volume.gain.exponentialRampToValueAtTime(0.0001, contexte.currentTime + debut + 0.12);
+        oscillateur.connect(volume).connect(contexte.destination);
+        oscillateur.start(contexte.currentTime + debut);
+        oscillateur.stop(contexte.currentTime + debut + 0.13);
+      }
+      setTimeout(() => contexte.close(), 600);
+    } catch { /* son indisponible */ }
+  };
+  // Le navigateur n'autorise le son qu'après un premier geste : on rejoue alors le « toc toc ».
+  document.addEventListener("pointerdown", () => { if (sonEnAttente) { sonEnAttente = false; toquer(); } }, { once: false });
+
+  const bulle = grimpeur.querySelector(".grimpeur-bulle");
+  const presenter = () => {
+    enPresentation = true;
+    bulle.innerHTML = "";
+    const titreBulle = el("strong", "", "Toc toc ! Eh, je suis là… ouvre-moi !");
+    const indice = el("span", "grimpeur-de", "Cliquez sur moi");
+    bulle.append(titreBulle, indice);
+    grimpeur.setAttribute("aria-label", "Présentation de la messagerie : cliquez pour ouvrir");
+    placer();
+    grimpeur.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => grimpeur.classList.add("descendu")));
+    setTimeout(() => { grimpeur.classList.add("toque"); toquer(); }, 1300);
+    setTimeout(() => grimpeur.classList.remove("toque"), 2300);
+    setTimeout(() => { if (enPresentation && !grimpeur.classList.contains("ouvert")) { grimpeur.classList.add("toque"); toquer(); setTimeout(() => grimpeur.classList.remove("toque"), 1000); } }, 6000);
+  };
+  const expliquer = () => {
+    grimpeur.classList.add("ouvert");
+    bulle.innerHTML = "";
+    bulle.append(
+      el("strong", "", "Salut ! Je suis le grimpeur de la messagerie 🧗"),
+      el("span", "grimpeur-texte", "Je descends en rappel chaque fois qu’un collègue vous écrit : cliquez sur moi pour lire son message."),
+      el("span", "grimpeur-texte", "Pour écrire à quelqu’un : dans l’explorateur, passez la souris sur « ● En ligne », puis « 💬 Discuter ». Vos discussions sont aussi en bas à droite."),
+      el("span", "grimpeur-texte", "Les discussions s’effacent quand tout le monde est parti."),
+    );
+    const compris = el("span", "grimpeur-compris", "Compris !");
+    bulle.append(compris);
+  };
+  // Le grimpeur descend depuis « ● En ligne » quand l'explorateur est affiché ; sinon depuis le haut de l'écran.
+  const placer = () => {
+    const ancre = document.querySelector(".sidebar .en-ligne");
+    const rect = ancre ? ancre.getBoundingClientRect() : null;
+    if (rect && rect.width > 0 && rect.bottom > 0 && rect.bottom < window.innerHeight - 200) {
+      grimpeur.classList.add("depuis-connectes");
+      grimpeur.style.left = `${Math.round(rect.left + 14)}px`;
+      grimpeur.style.top = `${Math.round(rect.bottom - 2)}px`;
+    } else {
+      grimpeur.classList.remove("depuis-connectes");
+      grimpeur.style.left = "";
+      grimpeur.style.top = "";
+    }
+  };
   const cacherGrimpeur = () => {
     grimpeur.classList.remove("descendu");
     clearTimeout(minuterieGrimpeur);
     setTimeout(() => { if (!grimpeur.classList.contains("descendu")) grimpeur.hidden = true; }, 700);
   };
+  const cogner = () => {
+    grimpeur.classList.remove("toque");
+    void grimpeur.offsetWidth;  // relance l'animation
+    grimpeur.classList.add("toque");
+    toquer();
+    setTimeout(() => grimpeur.classList.remove("toque"), 1000);
+  };
   const annoncer = (conversation) => {
+    // Pas de grimpeur pendant la présentation, ni quand la fenêtre de discussion est ouverte.
+    if (enPresentation || !fenetre.hidden) return;
     discussionAnnoncee = conversation.id;
     grimpeur.querySelector(".grimpeur-de").textContent = conversation.titre;
     grimpeur.setAttribute("aria-label", `Vous avez un message de ${conversation.titre}. Ouvrir la discussion.`);
+    const dejaLa = !grimpeur.hidden && grimpeur.classList.contains("descendu");
+    if (!dejaLa) placer();
     grimpeur.hidden = false;
-    requestAnimationFrame(() => requestAnimationFrame(() => grimpeur.classList.add("descendu")));
+    if (dejaLa) {
+      cogner();
+    } else {
+      requestAnimationFrame(() => requestAnimationFrame(() => grimpeur.classList.add("descendu")));
+      setTimeout(cogner, 1300);  // il cogne une fois arrivé en bas
+    }
     clearTimeout(minuterieGrimpeur);
-    minuterieGrimpeur = setTimeout(cacherGrimpeur, 12000);
+    minuterieGrimpeur = setTimeout(cacherGrimpeur, 15000);
   };
-  grimpeur.addEventListener("click", () => { if (discussionAnnoncee !== null) ouvrir(discussionAnnoncee); });
+  grimpeur.addEventListener("click", () => {
+    if (enPresentation) {
+      if (!grimpeur.classList.contains("ouvert")) { expliquer(); return; }
+      enPresentation = false;
+      grimpeur.classList.remove("ouvert");
+      poster(racine.dataset.presentation, {});
+      cacherGrimpeur();
+      setTimeout(() => {
+        bulle.innerHTML = '<strong>Vous avez un message !</strong><span class="grimpeur-de"></span>';
+      }, 800);
+      return;
+    }
+    if (discussionAnnoncee !== null) ouvrir(discussionAnnoncee);
+  });
 
   // ---------- Relevé régulier ----------
   const actualiser = async () => {
@@ -224,6 +322,7 @@ if (racine) {
       etat = await reponse.json();
     } catch { return; }
     majBouton();
+    if (etat.presentation && !enPresentation && !presentationFaite) { presentationFaite = true; presenter(); }
     if (!liste.hidden) dessinerListe();
     for (const c of etat.conversations) {
       const avant = vus.get(c.id) || 0;
@@ -233,6 +332,7 @@ if (racine) {
     try { sessionStorage.setItem("hub-messages-vus", JSON.stringify([...vus])); } catch { /* stockage indisponible */ }
     racine.classList.toggle("msg-actif", etat.conversations.length > 0 || etat.en_ligne.length > 0);
   };
+  let presentationFaite = false;
   let tour = 0;
   setInterval(() => {
     tour += 1;

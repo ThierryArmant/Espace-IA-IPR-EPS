@@ -459,3 +459,19 @@ th.col-retrait { font-size: .75rem; }
 .msg-fenetre[hidden], .msg-liste[hidden], .grimpeur[hidden], .msg-ajout[hidden] { display: none; }
 .msg-actions button, .pastille-personne .discuter, .msg-ligne { color: #1d2b3a; }
 .msg-actions button:hover, .pastille-personne .discuter:hover { background: #e1edfa; }
+/* Présentation du grimpeur (première connexion) */
+.grimpeur.toque .grimpeur-dessin { animation: grimpeur-toque .25s ease-in-out 4; }
+@keyframes grimpeur-toque { 50% { transform: scale(1.12) rotate(-6deg); } }
+.grimpeur.toque .grimpeur-bulle { animation: grimpeur-toque .25s ease-in-out 4; }
+.grimpeur.ouvert .grimpeur-bulle { max-width: 19rem; }
+.grimpeur-texte { display: block; margin-top: .35rem; font-size: .78rem; color: #1d2b3a; line-height: 1.35; }
+.grimpeur-compris { display: inline-block; margin-top: .5rem; background: #1fa64a; color: white; border-radius: 999px; padding: .2rem .8rem; font-weight: 700; font-size: .78rem; }
+@media (prefers-reduced-motion: reduce) { .grimpeur.toque .grimpeur-dessin, .grimpeur.toque .grimpeur-bulle { animation: none; } }
+/* Grimpeur suspendu à « ● En ligne » : la corde part de l'étiquette */
+.grimpeur.depuis-connectes { right: auto; transform: none; transition: none; overflow: hidden; padding-inline-end: .6rem; padding-bottom: .6rem; }
+.grimpeur.depuis-connectes > * { transform: translateY(-105%); transition: transform 1.2s cubic-bezier(.3,1.4,.5,1); }
+.grimpeur.depuis-connectes.descendu > * { transform: translateY(0); }
+.grimpeur.depuis-connectes .grimpeur-dessin { transform-origin: top center; }
+.grimpeur.depuis-connectes.descendu .grimpeur-dessin { transform: none; }
+@media (prefers-reduced-motion: reduce) { .grimpeur.depuis-connectes > * { transition: none; } }
+.grimpeur.depuis-connectes:not(.toque) .grimpeur-dessin { animation: none; }
