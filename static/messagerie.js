@@ -52,7 +52,7 @@ if (racine) {
       const li = el("li", "pastille-personne");
       li.title = p.nom;
       li.append(el("span", "point-vert"), p.email);
-      const aDeux = etat.conversations.find((c) => c.avec.length === 1 && c.avec[0] === p.id);
+      const aDeux = etat.conversations.find((c) => !c.salon && c.avec.length === 1 && c.avec[0] === p.id);
       const bouton = el("button", "discuter", aDeux && aDeux.non_lus ? `💬 ${aDeux.non_lus} nouveau${aDeux.non_lus > 1 ? "x" : ""}` : "💬 Discuter");
       bouton.type = "button";
       if (aDeux && aDeux.non_lus) bouton.classList.add("discuter-alerte");
@@ -60,7 +60,23 @@ if (racine) {
       li.append(bouton);
       listeEnLigne.append(li);
     }
-    const autres = etat.conversations.filter((c) => !(c.avec.length === 1 && etat.en_ligne.some((p) => p.id === c.avec[0])));
+    // Salons de groupe : une discussion ouverte à tous les membres du groupe.
+    if ((etat.salons || []).length) {
+      listeEnLigne.append(el("li", "en-ligne-sous-titre", "Salons de mes groupes"));
+      for (const salon of etat.salons) {
+        const conversation = etat.conversations.find((c) => c.id === salon.conversation);
+        const li = el("li", "pastille-personne pastille-groupe");
+        li.append(el("span", "", "👥"), el("span", "msg-ligne-titre", `${salon.nom} · ${salon.en_ligne} en ligne`));
+        const nonLus = conversation ? conversation.non_lus : 0;
+        const bouton = el("button", "discuter", nonLus ? `${nonLus} nouveau${nonLus > 1 ? "x" : ""}` : "Entrer");
+        bouton.type = "button";
+        if (nonLus) bouton.classList.add("discuter-alerte");
+        bouton.addEventListener("click", () => entrerSalon(salon.groupe));
+        li.append(bouton);
+        listeEnLigne.append(li);
+      }
+    }
+    const autres = etat.conversations.filter((c) => !c.salon && !(c.avec.length === 1 && etat.en_ligne.some((p) => p.id === c.avec[0])));
     if (autres.length) {
       listeEnLigne.append(el("li", "en-ligne-sous-titre", "Discussions en cours"));
       for (const c of autres) {
@@ -88,13 +104,23 @@ if (racine) {
     liste.textContent = "";
     liste.append(el("h2", "", "Mes discussions"));
     if (!etat.conversations.length) liste.append(el("p", "subtle", "Aucune discussion en cours."));
-    for (const c of etat.conversations) {
+    for (const c of etat.conversations.filter((x) => !x.salon || x.non_lus)) {
       const ligne = el("button", "msg-ligne");
       ligne.type = "button";
       ligne.append(el("span", "msg-ligne-titre", c.titre));
       if (c.non_lus) ligne.append(el("span", "msg-pastille", String(c.non_lus)));
       ligne.addEventListener("click", () => ouvrir(c.id));
       liste.append(ligne);
+    }
+    if ((etat.salons || []).length) {
+      liste.append(el("h2", "", "Salons de mes groupes"));
+      for (const salon of etat.salons) {
+        const ligne = el("button", "msg-ligne");
+        ligne.type = "button";
+        ligne.append(el("span", "", "👥"), el("span", "msg-ligne-titre", `${salon.nom} · ${salon.en_ligne} en ligne`));
+        ligne.addEventListener("click", () => entrerSalon(salon.groupe));
+        liste.append(ligne);
+      }
     }
     liste.append(el("h2", "", "Démarrer avec une personne en ligne"));
     if (!etat.en_ligne.length) liste.append(el("p", "subtle", "Personne d’autre n’est en ligne pour l’instant."));
@@ -162,7 +188,9 @@ if (racine) {
     if (reponse.status === 404) { fermer(); return; }
     if (!reponse.ok) return;
     const donnees = await reponse.json();
-    titre.textContent = donnees.titre;
+    titre.textContent = donnees.salon ? `👥 ${donnees.titre}` : donnees.titre;
+    btnAjouter.hidden = donnees.salon;
+    btnQuitter.hidden = donnees.salon;
     titre.title = donnees.membres.map((m) => m.email).join("\n");
     ajouterMessages(donnees.messages);
   };
@@ -185,6 +213,11 @@ if (racine) {
     actualiser();
   };
   const fermer = () => { fenetre.hidden = true; ouverte = null; };
+  const entrerSalon = async (groupe) => {
+    const reponse = await poster(`${urlBase}/salon/${groupe}`, {});
+    if (reponse.ok) ouvrir((await reponse.json()).id);
+    else window.alert("Le salon n’a pas pu s’ouvrir. Rechargez la page et réessayez.");
+  };
   const demarrer = async (personne) => {
     const reponse = await poster(urlNouvelle, { avec: personne });
     if (reponse.ok) ouvrir((await reponse.json()).id);
@@ -333,7 +366,7 @@ if (racine) {
   };
   const annoncer = (conversation) => {
     // Pas de grimpeur pendant la présentation, ni quand la fenêtre de discussion est ouverte.
-    if (enPresentation || !fenetre.hidden) return;
+    if (enPresentation || enRecap || !fenetre.hidden) return;
     discussionAnnoncee = conversation.id;
     grimpeur.querySelector(".grimpeur-de").textContent = conversation.titre;
     grimpeur.setAttribute("aria-label", `Vous avez un message de ${conversation.titre}. Ouvrir la discussion.`);
@@ -349,7 +382,35 @@ if (racine) {
     clearTimeout(minuterieGrimpeur);
     minuterieGrimpeur = setTimeout(cacherGrimpeur, 15000);
   };
+  // Récapitulatif des salons de groupe à la connexion.
+  let enRecap = false;
+  const recapituler = (recap) => {
+    enRecap = true;
+    discussionAnnoncee = recap[0].id;
+    bulle.innerHTML = "";
+    bulle.append(el("strong", "", "Pendant votre absence…"));
+    for (const salon of recap) {
+      bulle.append(el("span", "grimpeur-texte grimpeur-salon", `👥 Salon ${salon.salon} : ${salon.nombre} nouveau${salon.nombre > 1 ? "x" : ""} message${salon.nombre > 1 ? "s" : ""}`));
+      for (const m of salon.derniers) bulle.append(el("span", "grimpeur-texte grimpeur-extrait", `${m.auteur} : ${m.texte}`));
+    }
+    bulle.append(el("span", "grimpeur-compris", recap.length > 1 ? `Ouvrir le salon ${recap[0].salon}` : "Ouvrir le salon"));
+    grimpeur.classList.add("ouvert");
+    grimpeur.setAttribute("aria-label", "Récapitulatif des salons de groupe : cliquez pour ouvrir");
+    placer();
+    grimpeur.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => grimpeur.classList.add("descendu")));
+    setTimeout(cogner, 1300);
+    clearTimeout(minuterieGrimpeur);
+    minuterieGrimpeur = setTimeout(() => { finRecap(); cacherGrimpeur(); }, 30000);
+  };
+  const finRecap = () => {
+    enRecap = false;
+    grimpeur.classList.remove("ouvert");
+    setTimeout(() => { bulle.innerHTML = '<strong>Vous avez un message !</strong><span class="grimpeur-de"></span>'; }, 800);
+  };
+
   grimpeur.addEventListener("click", () => {
+    if (enRecap) { const cible = discussionAnnoncee; finRecap(); ouvrir(cible); return; }
     if (enPresentation) {
       if (!grimpeur.classList.contains("ouvert")) { expliquer(); return; }
       enPresentation = false;
@@ -374,6 +435,13 @@ if (racine) {
     majBouton();
     dessinerEnLigne();
     if (etat.presentation && !enPresentation && !presentationFaite) { presentationFaite = true; presenter(); }
+    else if ((etat.recap || []).length && !enPresentation) {
+      recapituler(etat.recap);
+      for (const salon of etat.recap) {
+        const c = etat.conversations.find((x) => x.id === salon.id);
+        if (c) vus.set(c.id, c.dernier);  // déjà annoncé par le récapitulatif
+      }
+    }
     if (!liste.hidden) dessinerListe();
     for (const c of etat.conversations) {
       const avant = vus.get(c.id) || 0;

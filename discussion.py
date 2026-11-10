@@ -2,14 +2,16 @@
 
 On clique sur une personne « En ligne » pour ouvrir une discussion ; on peut y
 ajouter d'autres personnes. L'identité affichée est l'adresse mail du compte.
-Les discussions sont éphémères : une discussion dont aucun participant n'a eu le
-Hub ouvert depuis IDLE_SECONDS est effacée avec tous ses messages.
+Les discussions privées sont éphémères : une discussion dont aucun participant
+n'a eu le Hub ouvert depuis IDLE_SECONDS est effacée avec tous ses messages.
+Chaque groupe a aussi un salon, visible de ses membres et des animateurs ; ses
+messages sont gardés ROOM_DAYS jours et résumés par le grimpeur à la connexion.
 """
 import re
 import sqlite3
 import time
 
-from flask import Blueprint, abort, g, jsonify, request
+from flask import Blueprint, abort, g, jsonify, request, session
 
 SCHEMA = """
 DROP TABLE IF EXISTS chat;
@@ -32,6 +34,7 @@ CREATE INDEX IF NOT EXISTS conversation_messages_conv ON conversation_messages(c
 CREATE TABLE IF NOT EXISTS messagerie_presentee(user_id INTEGER PRIMARY KEY);
 """
 IDLE_SECONDS = 10 * 60
+ROOM_DAYS = 7          # les salons de groupe gardent leurs messages 7 jours (pour le récapitulatif)
 ONLINE_SECONDS = 5 * 60
 MAX_LENGTH = 1000
 MAX_MEMBERS = 30
@@ -57,6 +60,14 @@ def short_name(email):
     return f"{pretty} {initial}." if initial else pretty
 
 
+def upgrade(db):
+    columns = {row[1] for row in db.execute("PRAGMA table_info(conversations)")}
+    if "group_id" not in columns:
+        db.execute("ALTER TABLE conversations ADD COLUMN group_id INTEGER")
+    db.execute("CREATE UNIQUE INDEX IF NOT EXISTS conversations_salon ON conversations(group_id) "
+               "WHERE group_id IS NOT NULL")
+
+
 def register_discussion(app):
     bp = Blueprint("discussion", __name__)
 
@@ -67,10 +78,16 @@ def register_discussion(app):
         """Efface les discussions dont aucun participant n'est revenu depuis IDLE_SECONDS."""
         try:
             stale = [row[0] for row in g.db.execute(
-                """SELECT c.id FROM conversations c WHERE c.created < :limit AND NOT EXISTS (
+                """SELECT c.id FROM conversations c WHERE c.group_id IS NULL AND c.created < :limit AND NOT EXISTS (
                        SELECT 1 FROM conversation_members m JOIN presence p ON p.user_id = m.user_id
                        WHERE m.conversation_id = c.id AND p.seen >= :limit)""",
                 {"limit": now() - IDLE_SECONDS})]
+            purged = g.db.execute(
+                """DELETE FROM conversation_messages WHERE created < ? AND conversation_id IN (
+                       SELECT id FROM conversations WHERE group_id IS NOT NULL)""",
+                (now() - ROOM_DAYS * 86400,)).rowcount
+            if purged and not stale:
+                g.db.commit()
             for conversation in stale:
                 g.db.execute("DELETE FROM conversation_messages WHERE conversation_id=?", (conversation,))
                 g.db.execute("DELETE FROM conversation_members WHERE conversation_id=?", (conversation,))
@@ -85,6 +102,9 @@ def register_discussion(app):
                            (conversation_id, g.user["id"])).fetchone()
         if row is None:
             abort(404)
+        group_id = g.db.execute("SELECT group_id FROM conversations WHERE id=?", (conversation_id,)).fetchone()[0]
+        if group_id is not None and not in_group(group_id):
+            abort(404)
 
     def members(conversation_id):
         return g.db.execute(
@@ -92,7 +112,41 @@ def register_discussion(app):
                JOIN users u ON u.id = m.user_id WHERE m.conversation_id=? ORDER BY u.email""",
             (conversation_id,)).fetchall()
 
+    def room_of(conversation_id):
+        row = g.db.execute("SELECT c.group_id, gr.name FROM conversations c LEFT JOIN groups gr ON gr.id = c.group_id "
+                           "WHERE c.id=?", (conversation_id,)).fetchone()
+        return (row["group_id"], row["name"]) if row and row["group_id"] is not None else (None, None)
+
+    def my_groups():
+        """Les groupes de la personne ; les animateurs voient les salons de tous les groupes."""
+        if g.user["admin"]:
+            return g.db.execute("SELECT id, name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
+        return g.db.execute("""SELECT gr.id, gr.name FROM memberships s JOIN groups gr ON gr.id = s.group_id
+                               WHERE s.user_id=? ORDER BY gr.name COLLATE NOCASE""", (g.user["id"],)).fetchall()
+
+    def in_group(group_id):
+        return bool(g.user["admin"]) or g.db.execute(
+            "SELECT 1 FROM memberships WHERE group_id=? AND user_id=?", (group_id, g.user["id"])).fetchone() is not None
+
+    def sync_rooms():
+        """Inscrit la personne aux salons ouverts de ses groupes, la retire des autres."""
+        groups = [row["id"] for row in my_groups()] or [-1]
+        marks = ",".join("?" * len(groups))
+        changed = g.db.execute(
+            f"""DELETE FROM conversation_members WHERE user_id=? AND conversation_id IN (
+                   SELECT id FROM conversations WHERE group_id IS NOT NULL AND group_id NOT IN ({marks}))""",
+            (g.user["id"], *groups)).rowcount
+        changed += g.db.execute(
+            f"""INSERT OR IGNORE INTO conversation_members(conversation_id, user_id)
+                SELECT id, ? FROM conversations WHERE group_id IN ({marks})""",
+            (g.user["id"], *groups)).rowcount
+        if changed:
+            g.db.commit()
+
     def title(conversation_id):
+        group_id, group_name = room_of(conversation_id)
+        if group_id is not None:
+            return f"Salon {group_name}"
         others = [short_name(row["email"]) for row in members(conversation_id) if row["id"] != g.user["id"]]
         return ", ".join(others) if others else "Vous seul(e)"
 
@@ -112,6 +166,10 @@ def register_discussion(app):
     @bp.get("/discussions/etat")
     def state():
         cleanup()
+        try:
+            sync_rooms()
+        except sqlite3.Error:
+            g.db.rollback()
         rows = g.db.execute(
             """SELECT m.conversation_id AS id,
                       (SELECT COUNT(*) FROM conversation_messages x WHERE x.conversation_id = m.conversation_id
@@ -121,13 +179,56 @@ def register_discussion(app):
             {"me": g.user["id"]}).fetchall()
         introduced = g.db.execute("SELECT 1 FROM messagerie_presentee WHERE user_id=?",
                                   (g.user["id"],)).fetchone() is not None
+        recap = []
+        if introduced and not session.get("recap_salons"):
+            session["recap_salons"] = 1
+            for row in rows:
+                group_id, group_name = room_of(row["id"])
+                if group_id is None or not row["non_lus"]:
+                    continue
+                last = g.db.execute(
+                    """SELECT x.body, u.email FROM conversation_messages x LEFT JOIN users u ON u.id = x.user_id
+                       WHERE x.conversation_id=? AND x.user_id IS NOT NULL ORDER BY x.id DESC LIMIT 3""",
+                    (row["id"],)).fetchall()
+                recap.append({"id": row["id"], "salon": group_name, "nombre": row["non_lus"],
+                              "derniers": [{"auteur": short_name(m["email"]),
+                                            "texte": m["body"][:90] + ("…" if len(m["body"]) > 90 else "")}
+                                           for m in reversed(last)]})
         return jsonify(
             presentation=not introduced,
+            recap=recap,
             conversations=[{"id": row["id"], "titre": title(row["id"]), "non_lus": row["non_lus"],
-                            "dernier": row["dernier"] or 0,
+                            "dernier": row["dernier"] or 0, "salon": room_of(row["id"])[0] is not None,
                             "avec": [m["id"] for m in members(row["id"]) if m["id"] != g.user["id"]]}
                            for row in rows],
+            salons=[{"groupe": group["id"], "nom": group["name"],
+                     "en_ligne": g.db.execute(
+                         """SELECT COUNT(*) FROM memberships s JOIN presence p ON p.user_id = s.user_id
+                            JOIN users u ON u.id = s.user_id
+                            WHERE s.group_id=? AND u.active=1 AND (p.seen >= ? OR u.id = ?)""",
+                         (group["id"], now() - ONLINE_SECONDS, g.user["id"])).fetchone()[0],
+                     "conversation": (g.db.execute("SELECT id FROM conversations WHERE group_id=?",
+                                                   (group["id"],)).fetchone() or [None])[0]}
+                    for group in my_groups()],
             en_ligne=[{"id": row["id"], "email": short_name(row["email"]), "nom": row["email"]} for row in online()])
+
+    @bp.post("/discussions/salon/<int:group_id>")
+    def open_room(group_id):
+        if g.db.execute("SELECT 1 FROM groups WHERE id=?", (group_id,)).fetchone() is None or not in_group(group_id):
+            abort(404)
+        row = g.db.execute("SELECT id FROM conversations WHERE group_id=?", (group_id,)).fetchone()
+        if row is None:
+            conversation = g.db.execute("INSERT INTO conversations(created, group_id) VALUES(?, ?)",
+                                        (now(), group_id)).lastrowid
+        else:
+            conversation = row[0]
+        g.db.execute("""INSERT OR IGNORE INTO conversation_members(conversation_id, user_id)
+                        SELECT ?, user_id FROM memberships WHERE group_id=?
+                        UNION SELECT ?, id FROM users WHERE admin=1 AND active=1""", (conversation, group_id, conversation))
+        g.db.execute("INSERT OR IGNORE INTO conversation_members(conversation_id, user_id) VALUES(?, ?)",
+                     (conversation, g.user["id"]))
+        g.db.commit()
+        return jsonify(id=conversation)
 
     @bp.post("/discussions/presentation-vue")
     def introduced():
@@ -144,6 +245,7 @@ def register_discussion(app):
         row = g.db.execute(
             """SELECT a.conversation_id FROM conversation_members a
                JOIN conversation_members b ON b.conversation_id = a.conversation_id AND b.user_id = ?
+               JOIN conversations k ON k.id = a.conversation_id AND k.group_id IS NULL
                WHERE a.user_id = ? AND (SELECT COUNT(*) FROM conversation_members c
                                        WHERE c.conversation_id = a.conversation_id) = 2""",
             (other, g.user["id"])).fetchone()
@@ -175,6 +277,7 @@ def register_discussion(app):
                 g.db.rollback()
         return jsonify(
             titre=title(conversation_id),
+            salon=room_of(conversation_id)[0] is not None,
             membres=[{"id": row["id"], "email": row["email"], "nom": short_name(row["email"])} for row in members(conversation_id)],
             messages=[{"id": row["id"], "auteur": short_name(row["email"]), "texte": row["body"],
                        "heure": time.strftime("%H:%M", time.localtime(row["created"])),
@@ -197,6 +300,8 @@ def register_discussion(app):
     @bp.post("/discussions/<int:conversation_id>/ajouter")
     def add(conversation_id):
         member_of(conversation_id)
+        if room_of(conversation_id)[0] is not None:
+            abort(400, "Un salon de groupe est ouvert à tous les membres du groupe.")
         other = active_user(request.form.get("avec", type=int))
         count = g.db.execute("SELECT COUNT(*) FROM conversation_members WHERE conversation_id=?",
                              (conversation_id,)).fetchone()[0]
@@ -214,6 +319,8 @@ def register_discussion(app):
     @bp.post("/discussions/<int:conversation_id>/quitter")
     def leave(conversation_id):
         member_of(conversation_id)
+        if room_of(conversation_id)[0] is not None:
+            abort(400, "On ne quitte pas un salon de groupe : fermez simplement la fenêtre.")
         g.db.execute("DELETE FROM conversation_members WHERE conversation_id=? AND user_id=?",
                      (conversation_id, g.user["id"]))
         left = g.db.execute("SELECT COUNT(*) FROM conversation_members WHERE conversation_id=?",
