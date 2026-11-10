@@ -51,7 +51,7 @@ if (affectations) {
   }
   affectations.addEventListener("submit", (event) => {
     const noms = [...affectations.querySelectorAll(".case-retrait:checked")].map((c) => c.dataset.nom);
-    if (noms.length && !window.confirm(`Retirer définitivement de l’espace :\n• ${noms.join("\n• ")}\n\nCes personnes perdent leurs groupes et leurs accès ; leurs documents restent.`)) {
+    if (noms.length && !window.confirm(`Supprimer définitivement :\n• ${noms.join("\n• ")}\n\nCes personnes perdent leurs groupes et leurs accès ; leurs documents restent.`)) {
       event.preventDefault();
     }
   });

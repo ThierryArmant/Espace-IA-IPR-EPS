@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_help.html" import help_menu %}
 {% block title %}{{ 'Groupes et accès' if can_edit else 'Groupes' }} · IA-IPR EPS{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='6') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='groupes.js', v='7') }}" defer></script>{% endblock %}
 {% block content %}
 {% if can_edit %}
 <div class="hero tone-menthe"><div><p class="eyebrow">ORGANISATION</p><h1>Groupes et accès</h1>
@@ -59,7 +59,7 @@
 </form></details>
 {% endfor %}
 {% if group_rows %}<details class="panel tableau-affectations" id="tableau" {% if request.args.get('tableau') %}open{% endif %}>
-<summary><strong>▦ Tableau des affectations</strong> <span class="subtle">affecter aux groupes ou retirer de l’espace</span></summary>
+<summary><strong>▦ Tableau des affectations</strong> <span class="subtle">affecter aux groupes ou supprimer définitivement</span></summary>
 <form method="post" action="{{ url_for('autorisations.groups_page', tableau=1) }}" class="form-affectations">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 {% for group in group_rows %}<input type="hidden" name="groupes" value="{{ group.id }}">{% endfor %}
@@ -68,14 +68,14 @@
 <div class="table-wrap"><table class="grille-acces grille-groupes"><thead><tr><th>Collègue</th>
 {% for group in group_rows %}<th>{{ group.name }}<br><span class="badge granted" data-compte="{{ group.id }}">{{ sizes.get(group.id, 0) }}</span><br>
 <button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="1">Tout cocher</button> <button type="button" class="quiet tout" data-groupe="{{ group.id }}" data-etat="0">Tout décocher</button></th>{% endfor %}
-{% if g.user.admin %}<th class="col-retrait">✕ Retirer<br>de l’espace</th>{% endif %}</tr></thead><tbody>
+{% if g.user.admin %}<th class="col-retrait">✕ Supprimer<br>définitivement</th>{% endif %}</tr></thead><tbody>
 {% for person in people %}
 <tr><th scope="row">{{ person.name or person.email }}{% if person.name %}<br><span class="subtle">{{ person.email }}</span>{% endif %}</th>
 {% for group in group_rows %}<td><input type="checkbox" name="m-{{ group.id }}-{{ person.id }}" data-groupe="{{ group.id }}" aria-label="{{ person.name or person.email }} dans {{ group.name }}" {% if (group.id, person.id) in members %}checked{% endif %}></td>{% endfor %}
-{% if g.user.admin %}<td class="col-retrait">{% if not person.admin %}<input type="checkbox" name="retirer" value="{{ person.id }}" class="case-retrait" data-nom="{{ person.name or person.email }}" aria-label="Retirer {{ person.name or person.email }} de l’espace">{% else %}<span class="subtle" title="Les animateurs ne peuvent pas être retirés ici">—</span>{% endif %}</td>{% endif %}</tr>
+{% if g.user.admin %}<td class="col-retrait">{% if not person.admin %}<input type="checkbox" name="retirer" value="{{ person.id }}" class="case-retrait" data-nom="{{ person.name or person.email }}" aria-label="Supprimer définitivement {{ person.name or person.email }}">{% else %}<span class="subtle" title="Les animateurs ne peuvent pas être supprimés ici">—</span>{% endif %}</td>{% endif %}</tr>
 {% endfor %}
 </tbody></table></div>
-<p class="subtle">Cochez une colonne de groupe pour <strong>affecter</strong> la personne. Cochez « ✕ Retirer de l’espace » pour la <strong>supprimer définitivement</strong> (retraite, départ) : une confirmation est demandée, ses documents restent. Les accès aux dossiers se règlent dans la fiche de chaque groupe.</p>
+<p class="subtle">Cochez une colonne de groupe pour <strong>affecter</strong> la personne. Cochez « ✕ Supprimer définitivement » pour la <strong>supprimer de l’espace</strong> (retraite, départ) : une confirmation est demandée, ses documents restent. Les accès aux dossiers se règlent dans la fiche de chaque groupe.</p>
 <div class="actions"><button>Enregistrer les affectations</button></div>
 </form></details>{% endif %}
 
