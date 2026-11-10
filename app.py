@@ -521,7 +521,7 @@ def create_app():
                                nuage_connected=connected, nuage_error=nuage_error,
                                nuage_files=[(name, link) for name, link in nuage_files if search in name.casefold()],
                                mirror_files=mirror_files, missing_folders=missing, content_mask=content_mask,
-                               online=online_people() if node_id == 1 else [])
+                               online=online_people())
 
     def online_people():
         """Personnes actives sur le Hub dans les 5 dernières minutes."""

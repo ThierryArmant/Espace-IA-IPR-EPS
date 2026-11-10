@@ -413,3 +413,5 @@ th.col-retrait { font-size: .75rem; }
 .en-ligne:hover .en-ligne-liste, .en-ligne:focus-within .en-ligne-liste { display: grid; gap: .3rem; }
 .pastille-personne { display: flex; align-items: center; gap: .4rem; padding: .25rem .6rem; border-radius: 999px; background: #e6f4ea; color: #1d4d2c; font-size: .8rem; font-weight: 600; }
 .point-vert { width: .6rem; height: .6rem; border-radius: 50%; background: #1fa64a; box-shadow: 0 0 0 2px #fff; flex: none; }
+.sidebar .en-ligne { display: block; margin: 1.2rem 0 0; }
+.sidebar .en-ligne-liste { min-width: 100%; }
