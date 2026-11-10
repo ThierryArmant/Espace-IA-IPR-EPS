@@ -407,9 +407,9 @@ th.col-retrait { font-size: .75rem; }
 .fiche-groupe[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .acces-groupe tr[class^="tone-"] th { padding-inline-start: .5rem; border-radius: .4rem 0 0 .4rem; }
 /* Accueil : personnes en ligne (liste au survol) */
-.en-ligne { position: relative; display: inline-block; margin: .6rem 0 1rem; }
+.en-ligne { position: relative; display: inline-block; margin: .6rem 0 1rem; padding-bottom: .3rem; }
 .en-ligne-titre { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 999px; background: #ffffffe6; font-weight: 700; font-size: .85rem; cursor: default; }
-.en-ligne-liste { display: none; position: absolute; top: 100%; left: 0; z-index: 20; min-width: 15rem; max-height: 18rem; overflow-y: auto; margin: .25rem 0 0; padding: .5rem; list-style: none; background: white; border-radius: .7rem; box-shadow: 0 8px 24px #0002; }
+.en-ligne-liste { display: none; position: absolute; top: 100%; left: 0; z-index: 20; min-width: 15rem; max-height: 18rem; overflow-y: auto; margin: 0; padding: .5rem; list-style: none; background: white; border-radius: .7rem; box-shadow: 0 8px 24px #0002; }
 .en-ligne:hover .en-ligne-liste, .en-ligne:focus-within .en-ligne-liste { display: grid; gap: .3rem; }
 .pastille-personne { display: flex; align-items: center; gap: .4rem; padding: .25rem .6rem; border-radius: 999px; background: #e6f4ea; color: #1d4d2c; font-size: .8rem; font-weight: 600; }
 .point-vert { width: .6rem; height: .6rem; border-radius: 50%; background: #1fa64a; box-shadow: 0 0 0 2px #fff; flex: none; }
