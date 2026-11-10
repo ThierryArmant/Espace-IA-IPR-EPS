@@ -5,7 +5,8 @@ dossier Nuage de même chemin sous la racine (HUB_NUAGE_ROOT). Les fichiers
 restent dans Nuage. Le Hub décide seul qui voit, télécharge ou dépose, puis
 lit ou écrit dans Nuage avec le compte de service.
 
-Configuration (variables d'environnement du serveur, jamais dans le dépôt) :
+Configuration (variables d’environnement du serveur, jamais dans le dépôt ; changement de compte :
+« nouveau-compte », « copier » puis « basculer ») :
   HUB_NUAGE_LOGIN              identifiant renvoyé par « flask nuage-autoriser »
   HUB_NUAGE_APP_PASSWORD_FILE  fichier contenant le mot de passe d'application
   (ou HUB_NUAGE_APP_PASSWORD)  le mot de passe lui-même, si pas de fichier
