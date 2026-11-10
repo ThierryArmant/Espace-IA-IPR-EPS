@@ -26,6 +26,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from connexion_academique import register_academic_login
 from autorisations import SETTINGS_SCHEMA, register_authorizations, upgrade_users
 from activite import SCHEMA as ACTIVITY_SCHEMA, record as record_activity, register_activity
+from discussion import SCHEMA as CHAT_SCHEMA, register_discussion
 from document_notifications import register_document_notifications
 from outils import SCHEMA as TOOLS_SCHEMA, register_tools
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
@@ -108,6 +109,7 @@ def create_app():
         db.executescript(TOOLS_SCHEMA)
         db.executescript(SETTINGS_SCHEMA)
         db.executescript(ACTIVITY_SCHEMA)
+        db.executescript(CHAT_SCHEMA)
         db.execute("CREATE TABLE IF NOT EXISTS presence(user_id INTEGER PRIMARY KEY, seen INTEGER NOT NULL)")
 
     @app.template_test("readable")
@@ -1159,6 +1161,7 @@ def create_app():
     register_academic_login(app, os.environ.get("HUB_NUAGE_LOGIN_URL", "https://nuage.apps.education.fr"))
     register_tools(app, allowed, rights, VIEW, WRITE)
     register_activity(app, rights, find_node, VIEW)
+    register_discussion(app)
     if storage:
         mirror = register_mirror(app, storage, allowed=allowed, lineage=lineage, rights=rights,
                                  require_admin=require_admin, view=VIEW, download=DOWNLOAD, write=WRITE)

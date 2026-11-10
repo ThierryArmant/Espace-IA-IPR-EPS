@@ -415,3 +415,17 @@ th.col-retrait { font-size: .75rem; }
 .point-vert { width: .6rem; height: .6rem; border-radius: 50%; background: #1fa64a; box-shadow: 0 0 0 2px #fff; flex: none; }
 .sidebar .en-ligne { display: block; margin: 1.2rem 0 0; }
 .sidebar .en-ligne-liste { min-width: 100%; }
+
+/* Discussion de l'espace (explorateur) */
+.discussion { margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--border); }
+.discussion h2 { font-size: 1rem; margin: 0; }
+.discussion-fil { list-style: none; margin: .5rem 0; padding: 0; max-height: 18rem; overflow-y: auto; display: grid; gap: .4rem; }
+.discussion-fil li { background: #f3f6fb; border-radius: .6rem; padding: .35rem .55rem; font-size: .8rem; }
+.discussion-fil li.moi { background: #e6f4ea; }
+.discussion-fil li p { margin: .15rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.discussion-tete { display: flex; align-items: baseline; gap: .3rem; flex-wrap: wrap; font-size: .72rem; }
+.discussion-tete strong { overflow-wrap: anywhere; }
+.discussion-suppr { margin-inline-start: auto; background: none; border: 0; color: #9b1c1c; cursor: pointer; padding: 0 .2rem; font-size: .8rem; }
+.discussion-envoi { display: grid; gap: .3rem; }
+.discussion-envoi textarea { width: 100%; resize: vertical; font: inherit; font-size: .85rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
