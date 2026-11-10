@@ -5,6 +5,7 @@
 <div class="hero tone-lavande"><div><p class="eyebrow">ADMINISTRATION</p><h1>Exceptions individuelles</h1>
 <p>Le tableau détaillé, personne par personne et sous-dossier par sous-dossier. Pour le cas général, passez par <a href="{{ url_for('autorisations.groups_page') }}">Groupes et accès</a>.</p></div>
 <div class="actions">
+<a class="button secondary" href="{{ url_for('autorisations.groups_page') }}" title="Revenir à Groupes et accès">✕ Fermer le tableau détaillé</a>
 {% call help_menu('aide-autorisations', 'Aide sur le tableau des autorisations', 'Régler les accès') %}
 <p><strong>Consulter</strong> : lire et télécharger les documents du dossier et de ses sous-dossiers.</p>
 <p><strong>Contribuer</strong> : consulter, déposer des documents et créer des sous-dossiers.</p>
@@ -73,4 +74,5 @@
 <label>Personnes <textarea name="people" rows="8" placeholder="DUPONT Marie&#10;MARTIN Jean ; jean.martin2@ac-aix-marseille.fr"></textarea></label>
 <button>Ajouter</button></form></section>
 {% endif %}
+<p class="actions"><a class="button secondary" href="{{ url_for('autorisations.groups_page') }}">✕ Fermer le tableau détaillé</a></p>
 {% endblock %}
