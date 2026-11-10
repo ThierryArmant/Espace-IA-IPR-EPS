@@ -5,6 +5,7 @@ ajouter d'autres personnes. L'identité affichée est l'adresse mail du compte.
 Les discussions sont éphémères : une discussion dont aucun participant n'a eu le
 Hub ouvert depuis IDLE_SECONDS est effacée avec tous ses messages.
 """
+import re
 import sqlite3
 import time
 
@@ -33,6 +34,26 @@ IDLE_SECONDS = 10 * 60
 ONLINE_SECONDS = 5 * 60
 MAX_LENGTH = 1000
 MAX_MEMBERS = 30
+
+
+ACADEMIC_DOMAIN = "@ac-aix-marseille.fr"
+
+
+def short_name(email):
+    """prenom.nom@ac-aix-marseille.fr → « Prénom N. » ; autres adresses : inchangées."""
+    if not email:
+        return "—"
+    if not email.lower().endswith(ACADEMIC_DOMAIN):
+        return email
+    local = email[: -len(ACADEMIC_DOMAIN)]
+    first, _, last = local.partition(".")
+    first = re.sub(r"\d+", "", first)
+    last = re.sub(r"\d+", "", last)
+    pretty = "-".join(part.capitalize() for part in first.split("-") if part)
+    initial = last[:1].upper()
+    if not pretty:
+        return email
+    return f"{pretty} {initial}." if initial else pretty
 
 
 def register_discussion(app):
@@ -71,7 +92,7 @@ def register_discussion(app):
             (conversation_id,)).fetchall()
 
     def title(conversation_id):
-        others = [row["email"] for row in members(conversation_id) if row["id"] != g.user["id"]]
+        others = [short_name(row["email"]) for row in members(conversation_id) if row["id"] != g.user["id"]]
         return ", ".join(others) if others else "Vous seul(e)"
 
     def online():
@@ -100,7 +121,7 @@ def register_discussion(app):
         return jsonify(
             conversations=[{"id": row["id"], "titre": title(row["id"]), "non_lus": row["non_lus"],
                             "dernier": row["dernier"] or 0} for row in rows],
-            en_ligne=[{"id": row["id"], "email": row["email"], "nom": row["nom"]} for row in online()])
+            en_ligne=[{"id": row["id"], "email": short_name(row["email"]), "nom": row["email"]} for row in online()])
 
     @bp.post("/discussions/nouvelle")
     def start():
@@ -142,8 +163,8 @@ def register_discussion(app):
                 g.db.rollback()
         return jsonify(
             titre=title(conversation_id),
-            membres=[{"id": row["id"], "email": row["email"], "nom": row["nom"]} for row in members(conversation_id)],
-            messages=[{"id": row["id"], "auteur": row["email"] or "—", "texte": row["body"],
+            membres=[{"id": row["id"], "email": row["email"], "nom": short_name(row["email"])} for row in members(conversation_id)],
+            messages=[{"id": row["id"], "auteur": short_name(row["email"]), "texte": row["body"],
                        "heure": time.strftime("%H:%M", time.localtime(row["created"])),
                        "moi": row["user_id"] == g.user["id"],
                        "systeme": row["user_id"] is None} for row in rows])
@@ -174,7 +195,7 @@ def register_discussion(app):
         if added:
             email = g.db.execute("SELECT email FROM users WHERE id=?", (other,)).fetchone()[0]
             g.db.execute("INSERT INTO conversation_messages(conversation_id, user_id, body, created) VALUES(?,?,?,?)",
-                         (conversation_id, None, f"{g.user['email']} a ajouté {email}", now()))
+                         (conversation_id, None, f"{short_name(g.user['email'])} a ajouté {short_name(email)}", now()))
         g.db.commit()
         return jsonify(ok=True)
 
@@ -190,7 +211,7 @@ def register_discussion(app):
             g.db.execute("DELETE FROM conversations WHERE id=?", (conversation_id,))
         else:
             g.db.execute("INSERT INTO conversation_messages(conversation_id, user_id, body, created) VALUES(?,?,?,?)",
-                         (conversation_id, None, f"{g.user['email']} a quitté la discussion", now()))
+                         (conversation_id, None, f"{short_name(g.user['email'])} a quitté la discussion", now()))
         g.db.commit()
         return jsonify(ok=True)
 
