@@ -27,3 +27,19 @@ if (filtre) {
     }
   });
 }
+// Fiches « Groupes et accès » : filtre et « Tout cocher » propres à chaque fiche.
+for (const fiche of document.querySelectorAll(".fiche-groupe")) {
+  const filtreFiche = fiche.querySelector(".filtre-fiche");
+  const lignes = [...fiche.querySelectorAll(".liste-membres li")];
+  if (filtreFiche) {
+    filtreFiche.addEventListener("input", () => {
+      const texte = filtreFiche.value.trim().toLowerCase();
+      for (const ligne of lignes) ligne.hidden = texte !== "" && !ligne.textContent.toLowerCase().includes(texte);
+    });
+  }
+  for (const bouton of fiche.querySelectorAll("button.tout-fiche")) {
+    bouton.addEventListener("click", () => {
+      for (const ligne of lignes) if (!ligne.hidden) ligne.querySelector("input").checked = bouton.dataset.etat === "1";
+    });
+  }
+}

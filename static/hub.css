@@ -371,3 +371,18 @@ main .quiet:hover { background: #e3edf7; }
 /* Accueil + applications regroupés au centre de la bannière */
 .top .bouton-accueil { margin-inline: auto .6rem; }
 .top .barre-apps { margin-inline-end: auto; }
+
+/* Groupes et accès : une fiche par groupe */
+.fiche-groupe { padding: .6rem .9rem; margin-block: .6rem; }
+.fiche-groupe > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.fiche-colonnes { display: grid; grid-template-columns: minmax(16rem, 1.3fr) minmax(14rem, 1fr); gap: 1rem; margin-block: .8rem; }
+@media (max-width: 800px) { .fiche-colonnes { grid-template-columns: 1fr; } }
+.fiche-colonnes fieldset { border: 1px solid var(--border); border-radius: .6rem; padding: .6rem .8rem; min-width: 0; }
+.fiche-colonnes legend { font-weight: 700; padding-inline: .3rem; }
+.liste-membres { list-style: none; margin: 0; padding: 0; max-height: 22rem; overflow-y: auto; }
+.liste-membres li { padding: .15rem 0; }
+.liste-membres .subtle { font-size: .78rem; }
+.acces-groupe { width: 100%; border-collapse: collapse; }
+.acces-groupe th { text-align: start; font-weight: 600; padding: .3rem .4rem .3rem 0; }
+.acces-groupe td { padding: .3rem 0; }
+.filtre-fiche { width: 100%; margin-bottom: .3rem; }

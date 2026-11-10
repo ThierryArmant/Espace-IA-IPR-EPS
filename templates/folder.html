@@ -91,7 +91,7 @@
   {% call help_menu('aide-dossier', 'Aide sur ce dossier', 'Ce que vous pouvez faire ici') %}
   <p>Le <strong>cadenas</strong> à côté du titre indique votre accès : vert = autorisé, rouge = contenu fermé.</p>
   {% if mask is writable %}<p>Le bouton <strong>⋯</strong> regroupe les actions sur le dossier : ajouter un sous-dossier, renommer, supprimer (dossier vide){% if g.user.admin %}, monter ou descendre dans la liste, déplacer à l’intérieur du même dossier principal{% endif %}.</p>{% endif %}
-  {% if g.user.admin %}<p><strong>Droits d’accès</strong> règle finement un dossier ou un sous-dossier. Pour les dossiers principaux, le tableau <strong>Autorisations</strong> est plus simple.</p>
+  {% if g.user.admin %}<p><strong>Droits d’accès</strong> règle finement un dossier ou un sous-dossier. Pour les dossiers principaux, la page <strong>Groupes et accès</strong> est plus simple.</p>
   <p><strong>Reprendre les dossiers Nuage</strong> ajoute au Hub les dossiers créés directement dans Nuage.</p>{% endif %}
   <p>Plus bas : les outils pour créer ou déposer des documents, puis la liste des documents. Chaque zone a sa bulle <strong>?</strong>.</p>
   {% endcall %}

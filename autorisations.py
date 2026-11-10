@@ -204,6 +204,49 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         if request.method == "POST" and not can_edit:
             abort(403, "Seuls les animateurs peuvent modifier les groupes.")
         if request.method == "POST":
+            if request.form.get("action") == "fiche":
+                group = request.form.get("groupe", type=int)
+                if g.db.execute("SELECT 1 FROM groups WHERE id=?", (group,)).fetchone() is None:
+                    abort(400)
+                known_people = {row[0] for row in g.db.execute("SELECT id FROM users")}
+                wanted = {int(x) for x in request.form.getlist("membres") if x.isdigit()}
+                if not wanted <= known_people:
+                    abort(400)
+                before = {row[0] for row in g.db.execute(
+                    "SELECT user_id FROM memberships WHERE group_id=?", (group,))}
+                for person in before - wanted:
+                    g.db.execute("DELETE FROM memberships WHERE group_id=? AND user_id=?", (group, person))
+                for person in wanted - before:
+                    g.db.execute("INSERT INTO memberships(user_id,group_id) VALUES(?,?)", (person, group))
+                tops = {row[0] for row in g.db.execute("SELECT id FROM nodes WHERE parent=1 AND kind='folder'")}
+                access_changes = 0
+                for key, value in request.form.items():
+                    match = re.fullmatch(r"acces-(\d+)", key)
+                    if not match or value not in levels:
+                        continue
+                    folder = int(match[1])
+                    if folder not in tops:
+                        abort(400)
+                    row = g.db.execute("SELECT mask FROM rules WHERE node=? AND subject_kind='group' AND subject=?",
+                                       (folder, group)).fetchone()
+                    if cell_value(row[0] if row else None, True) == value:
+                        continue
+                    if value:
+                        g.db.execute("""INSERT INTO rules VALUES(?, 'group', ?, ?)
+                                        ON CONFLICT(node,subject_kind,subject) DO UPDATE SET mask=excluded.mask""",
+                                     (folder, group, levels[value]))
+                    else:
+                        g.db.execute("DELETE FROM rules WHERE node=? AND subject_kind='group' AND subject=?",
+                                     (folder, group))
+                    access_changes += 1
+                g.db.commit()
+                members_changes = len(before ^ wanted)
+                if members_changes or access_changes:
+                    flash(f"Groupe enregistré : {members_changes} changement(s) de membres, "
+                          f"{access_changes} changement(s) d’accès.")
+                else:
+                    flash("Aucun changement.")
+                return redirect(url_for("autorisations.groups_page", ouvert=group) + f"#groupe-{group}")
             if request.form.get("action") == "creer":
                 name = " ".join(request.form.get("name", "").split())
                 if not 1 <= len(name) <= 80 or any(c in name for c in "/\\:"):
@@ -211,8 +254,10 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
                 else:
                     try:
                         g.db.execute("INSERT INTO groups(name) VALUES(?)", (name,))
+                        new_id = g.db.execute("SELECT id FROM groups WHERE name=?", (name,)).fetchone()[0]
                         g.db.commit()
-                        flash(f"Groupe « {name} » créé : cochez maintenant ses membres dans sa colonne.")
+                        flash(f"Groupe « {name} » créé : cochez ses membres et choisissez ses dossiers, puis enregistrez.")
+                        return redirect(url_for("autorisations.groups_page", ouvert=new_id) + f"#groupe-{new_id}")
                     except sqlite3.IntegrityError:
                         g.db.rollback()
                         flash("Ce nom de groupe existe déjà.")
@@ -246,8 +291,13 @@ def register_authorizations(app, view, download, write, *, rights=None, find_nod
         group_rows = g.db.execute("SELECT id,name FROM groups ORDER BY name COLLATE NOCASE").fetchall()
         members = {(row[0], row[1]) for row in g.db.execute("SELECT group_id,user_id FROM memberships")}
         sizes = dict(g.db.execute("SELECT group_id, COUNT(*) FROM memberships GROUP BY group_id").fetchall())
+        tops = g.db.execute("SELECT id,name FROM nodes WHERE parent=1 AND kind='folder' "
+                            "ORDER BY position IS NULL, position, id").fetchall() if can_edit else []
+        group_access = {(row["node"], row["subject"]): cell_value(row["mask"], True) for row in g.db.execute(
+            "SELECT node,subject,mask FROM rules WHERE subject_kind='group'")} if can_edit else {}
         return render_template("groupes.html", people=people, group_rows=group_rows, members=members, sizes=sizes,
-                               can_edit=can_edit)
+                               can_edit=can_edit, tops=tops, group_access=group_access,
+                               opened=request.args.get("ouvert", type=int))
 
     @bp.post("/autorisations/personnes")
     def add_people():
