@@ -26,7 +26,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from connexion_academique import register_academic_login
 from autorisations import SETTINGS_SCHEMA, register_authorizations, upgrade_users
 from activite import SCHEMA as ACTIVITY_SCHEMA, record as record_activity, register_activity
-from discussion import SCHEMA as CHAT_SCHEMA, register_discussion
+from discussion import SCHEMA as CHAT_SCHEMA, register_discussion, short_name
 from document_notifications import register_document_notifications
 from outils import SCHEMA as TOOLS_SCHEMA, register_tools
 from ipr_modules import group_id as ipr_group_id, register_ipr_modules
@@ -528,12 +528,14 @@ def create_app():
     def online_people():
         """Personnes actives sur le Hub dans les 5 dernières minutes."""
         try:
-            return g.db.execute(
-                """SELECT users.id, COALESCE(NULLIF(users.name,''), users.email) AS label FROM presence
+            rows = g.db.execute(
+                """SELECT users.id, users.email AS email, COALESCE(NULLIF(users.name,''), users.email) AS label FROM presence
                    JOIN users ON users.id = presence.user_id
                    WHERE users.active=1 AND (presence.seen >= ? OR users.id = ?)
-                   UNION SELECT id, COALESCE(NULLIF(name,''), email) FROM users WHERE id = ?
+                   UNION SELECT id, email, COALESCE(NULLIF(name,''), email) FROM users WHERE id = ?
                    ORDER BY label COLLATE NOCASE""", (int(time.time()) - 300, g.user["id"], g.user["id"])).fetchall()
+            return sorted(({"id": row["id"], "label": short_name(row["email"]), "email": row["email"]} for row in rows),
+                          key=lambda person: person["label"].casefold())
         except sqlite3.Error:
             return []
 

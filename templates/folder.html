@@ -81,7 +81,7 @@
 {% if online %}<div class="en-ligne" tabindex="0" aria-label="Personnes en ligne : {{ online|length }}">
 <span class="en-ligne-titre"><span class="point-vert" aria-hidden="true"></span>En ligne ({{ online|length }}) ▾</span>
 <ul class="en-ligne-liste">
-{% for person in online %}<li class="pastille-personne"><span class="point-vert" aria-hidden="true"></span>{{ person.label }}{% if person.id == g.user.id %} (vous){% else %}<button type="button" class="discuter" data-discuter="{{ person.id }}" title="Ouvrir une discussion avec {{ person.label }}">💬 Discuter</button>{% endif %}</li>{% endfor %}
+{% for person in online %}<li class="pastille-personne" title="{{ person.email }}"><span class="point-vert" aria-hidden="true"></span>{{ person.label }}{% if person.id == g.user.id %} (vous){% else %}<button type="button" class="discuter" data-discuter="{{ person.id }}" title="Ouvrir une discussion avec {{ person.label }}">💬 Discuter</button>{% endif %}</li>{% endfor %}
 </ul></div>{% endif %}
 </aside>
 {% endblock %}
