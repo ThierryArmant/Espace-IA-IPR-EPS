@@ -2,7 +2,7 @@
 {% block content %}
 <section class="card"><p class="eyebrow">COLLABORATION</p><h1>{{ title }}</h1>
 <p>Ouvrez le brouillon dans votre messagerie pour le vérifier et l’envoyer.</p>
-{% if link %}<label>Lien individuel valable 48 heures <input readonly value="{{ link }}"></label>{% endif %}
+{% if link %}<label>Lien individuel valable 4 jours <input readonly value="{{ link }}"></label>{% endif %}
 <a class="button" href="{{ draft }}">Ouvrir dans ma messagerie</a>
 </section>
 {% endblock %}

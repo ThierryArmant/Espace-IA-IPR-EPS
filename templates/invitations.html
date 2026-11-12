@@ -4,7 +4,7 @@
 {% block content %}
 <p class="retour"><a class="button secondary" href="{{ url_for('directory') }}">← Annuaire</a></p>
 <div class="hero tone-menthe"><div><p class="eyebrow">ADMINISTRATION</p><h1>{{ invitations|length }} invitation(s) prête(s)</h1>
-<p>Chaque lien est personnel et valable 48 heures. Un lien précédent pour la même personne ne fonctionne plus.</p></div>
+<p>Chaque lien est personnel et valable 4 jours. Un lien précédent pour la même personne ne fonctionne plus.</p></div>
 <div class="actions">{% call help_menu('aide-invitations', 'Aide sur les invitations', 'Envoyer les invitations') %}
 <p>Cliquez sur <strong>Ouvrir le courriel</strong> : un brouillon déjà rédigé s’ouvre dans votre messagerie, avec le lien de la personne. Relisez, puis envoyez. Le bouton devient grisé pour vous aider à suivre où vous en êtes.</p>
 <p><strong>Envoyer depuis votre adresse académique :</strong> ouvrez votre messagerie académique dans un autre onglet, créez un nouveau message, puis utilisez « Copier l’adresse », « Copier l’objet » et « Copier le message » et collez chacun (Ctrl+V) à sa place. Ou, si votre adresse académique est configurée dans votre logiciel de messagerie, choisissez-la dans le champ « De » du brouillon.</p>

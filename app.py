@@ -1098,10 +1098,10 @@ def create_app():
         token = secrets.token_urlsafe(32)
         g.db.execute("DELETE FROM invites WHERE user_id=?", (user_id,))
         g.db.execute("INSERT INTO invites VALUES(?,?,?)",
-                     (hashlib.sha256(token.encode()).hexdigest(), user_id, int(time.time()) + 48 * 3600))
+                     (hashlib.sha256(token.encode()).hexdigest(), user_id, int(time.time()) + 4 * 86400))
         g.db.commit()
         link = public_link("activate", token=token)
-        body = "Bonjour,\n\nVoici votre invitation à l’espace IA-IPR EPS. Le lien est valable 48 heures.\n\n" + link
+        body = "Bonjour,\n\nVoici votre invitation à l’espace IA-IPR EPS. Le lien est valable 4 jours.\n\n" + link
         return render_template("message.html", title="Invitation prête", link=link,
                                draft=mailto(email, "Invitation à l’espace IA-IPR EPS", body))
 
@@ -1119,7 +1119,7 @@ def create_app():
         if not pending:
             flash("Aucun compte en attente d’activation.")
             return redirect(url_for("directory"))
-        expires = int(time.time()) + 48 * 3600
+        expires = int(time.time()) + 4 * 86400
         invitations = []
         for person in pending:
             token = secrets.token_urlsafe(32)
@@ -1130,7 +1130,7 @@ def create_app():
             hello = f"Bonjour {person['name'].split()[-1]}," if person["name"] else "Bonjour,"
             body = (f"{hello}\n\nVous êtes invité(e) à rejoindre l’espace de travail IA-IPR EPS, "
                     "qui remplace Résana pour nos documents partagés.\n\n"
-                    "Pour activer votre accès, cliquez sur ce lien (valable 48 heures) "
+                    "Pour activer votre accès, cliquez sur ce lien (valable 4 jours) "
                     "et choisissez votre mot de passe :\n\n" + link +
                     "\n\nEnsuite, connectez-vous avec votre adresse académique. "
                     "Les boutons ? de chaque page vous guident.\n\nBien cordialement,")
