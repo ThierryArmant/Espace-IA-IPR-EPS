@@ -82,18 +82,15 @@ def register_discussion(app):
                        SELECT 1 FROM conversation_members m JOIN presence p ON p.user_id = m.user_id
                        WHERE m.conversation_id = c.id AND p.seen >= :limit)""",
                 {"limit": now() - IDLE_SECONDS})]
-            purged = g.db.execute(
+            g.db.execute(
                 """DELETE FROM conversation_messages WHERE created < ? AND conversation_id IN (
                        SELECT id FROM conversations WHERE group_id IS NOT NULL)""",
-                (now() - ROOM_DAYS * 86400,)).rowcount
-            if purged and not stale:
-                g.db.commit()
+                (now() - ROOM_DAYS * 86400,))
             for conversation in stale:
                 g.db.execute("DELETE FROM conversation_messages WHERE conversation_id=?", (conversation,))
                 g.db.execute("DELETE FROM conversation_members WHERE conversation_id=?", (conversation,))
                 g.db.execute("DELETE FROM conversations WHERE id=?", (conversation,))
-            if stale:
-                g.db.commit()
+            g.db.commit()  # toujours valider : ne jamais garder le verrou d'écriture pendant la requête
         except sqlite3.Error:
             g.db.rollback()
 
@@ -140,8 +137,7 @@ def register_discussion(app):
             f"""INSERT OR IGNORE INTO conversation_members(conversation_id, user_id)
                 SELECT id, ? FROM conversations WHERE group_id IN ({marks})""",
             (g.user["id"], *groups)).rowcount
-        if changed:
-            g.db.commit()
+        g.db.commit()  # toujours valider, même sans changement, pour libérer le verrou
 
     def title(conversation_id):
         group_id, group_name = room_of(conversation_id)

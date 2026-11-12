@@ -291,16 +291,18 @@ def create_app():
         user = g.get("user")
         if user is not None and request.endpoint not in {"static", "health"}:
             now = int(time.time())
-            if now - int(session.get("vu", 0)) >= 60:
+            db = g.get("db")
+            if db is not None and now - int(session.get("vu", 0)) >= 60:
+                # Même connexion que la requête : jamais d'attente sur son propre verrou.
+                # Ce que la page n'a pas validé serait de toute façon annulé à la fermeture.
                 try:
-                    db = connect()
+                    db.rollback()
                     db.execute("INSERT INTO presence(user_id, seen) VALUES(?, ?) "
                                "ON CONFLICT(user_id) DO UPDATE SET seen=excluded.seen", (user["id"], now))
                     db.commit()
-                    db.close()
                     session["vu"] = now
                 except sqlite3.Error:
-                    pass
+                    db.rollback()
         return response
 
     @app.teardown_request
