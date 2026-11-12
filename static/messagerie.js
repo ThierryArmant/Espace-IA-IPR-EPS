@@ -453,10 +453,12 @@ if (racine) {
   };
   let presentationFaite = false;
   let tour = 0;
+  // Relevé léger pour ne pas charger le serveur : toutes les 16 s (onglet visible) ou 2 min
+  // (onglet caché) ; la fenêtre de discussion ouverte est relue toutes les 4 s.
   setInterval(() => {
     tour += 1;
     const visible = document.visibilityState === "visible";
-    if (visible || tour % 15 === 0) actualiser();
+    if ((visible && tour % 4 === 0) || tour % 30 === 0) actualiser();
     if (visible && ouverte !== null) lire();
   }, 4000);
   actualiser();
